@@ -65,7 +65,7 @@ fun MainScreen() {
                 title = {
                     Text(
                         text = "거래소",
-                        color = Color.White
+                        color = Color.Black
                     )
                 },
                 actions = {
@@ -167,10 +167,10 @@ fun CoinListHeader() {
             style = MaterialTheme.typography.bodySmall
         )
         Text(
-            text = "하한가",
+            text = "현재가",
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
         )
         Text(
             text = "전일대비",
@@ -223,7 +223,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
         Text(
             text = String.format("%,.2f", coin.lowPrice),
             modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onSurface,
+            color = changeColor,
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.End
         )
