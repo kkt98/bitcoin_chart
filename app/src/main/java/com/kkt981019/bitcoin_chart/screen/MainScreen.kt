@@ -21,6 +21,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -31,43 +32,44 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    // 기본 테마 색상 사용
+    // Material3 테마의 컬러
     val backgroundColor = MaterialTheme.colorScheme.background
     val surfaceColor = MaterialTheme.colorScheme.surface
 
-    // 검색 상태
+    // 검색어 상태
     var searchQuery by remember { mutableStateOf("") }
 
     // 탭 상태
     val tabTitles = listOf("KRW", "BTC", "USDT")
     var selectedTabIndex by remember { mutableStateOf(0) }
 
-    // 코인 리스트 예시 데이터
+    // 코인 리스트 예시 데이터 (하한가를 추가)
     val coinList = listOf(
-        CoinData("비트코인", "BTC/USDT", 28753.25, 0.87, 261998602.0),
-        CoinData("리플", "XRP/USDT", 0.48, 3.12, 119056.0),
-        CoinData("솔라나", "SOL/USDT", 22.15, -1.23, 75123.0)
-        // ...
+        CoinData("비트코인", "BTC/USDT", currentPrice = 28753.25, lowPrice = 28000.0, changeRate = 0.87, volume = 261998602.0),
+        CoinData("리플",    "XRP/USDT", currentPrice =     0.48, lowPrice =     0.45, changeRate = 3.12, volume =     119056.0),
+        CoinData("솔라나",  "SOL/USDT", currentPrice =    22.15, lowPrice =    21.90, changeRate = -1.23, volume =     75123.0)
+        // 필요에 따라 데이터 추가
     )
 
     Scaffold(
-        Modifier.background(backgroundColor) ,
+        modifier = Modifier.background(backgroundColor),
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "거래소",
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = Color.White
                     )
                 },
                 actions = {
-                    // 우측에 추가 아이콘이나 버튼이 필요하다면 배치
+                    // 우측에 추가 아이콘이나 버튼이 필요하면 배치
                 },
                 modifier = Modifier.background(surfaceColor)
             )
@@ -82,13 +84,13 @@ fun MainScreen() {
             SearchBar(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
-                backgroundColor = surfaceColor
+                backgroundColor = Color.White
             )
 
             // 탭 영역
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                Modifier.background(backgroundColor),
+                modifier = Modifier.background(backgroundColor),
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 tabTitles.forEachIndexed { index, title ->
@@ -99,6 +101,9 @@ fun MainScreen() {
                     )
                 }
             }
+
+            // 헤더 (한글명 / 하한가 / 전일대비 / 거래대금)
+            CoinListHeader()
 
             // 코인 리스트
             LazyColumn(
@@ -112,6 +117,7 @@ fun MainScreen() {
     }
 }
 
+/** 검색 영역 **/
 @Composable
 fun SearchBar(
     query: String,
@@ -120,16 +126,10 @@ fun SearchBar(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .padding(8.dp),
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            tint = Color.Gray
-        )
+
         Spacer(modifier = Modifier.width(8.dp))
         TextField(
             value = query,
@@ -138,28 +138,70 @@ fun SearchBar(
             placeholder = {
                 Text(text = "코인명/심볼 검색", color = Color.Gray)
             },
-//            colors = TextFieldDefaults.colors(
-//                textColor = MaterialTheme.colorScheme.onSurface,
-//                backgroundColor = Color.Transparent,
-//                cursorColor = MaterialTheme.colorScheme.primary,
-//                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-//                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-//            )
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Black
+            ),
+            leadingIcon = { Icon(  // 왼쪽 Icon 지정
+                imageVector = Icons.Default.Search
+                , contentDescription = null
+            )}
         )
     }
 }
 
+/** 열(컬럼) 헤더: "한글명 / 하한가 / 전일대비 / 거래대금" **/
+@Composable
+fun CoinListHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = "한글명",
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = "하한가",
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = "전일대비",
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = "거래대금",
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
+}
+
+/** 코인 정보 데이터 모델 (하한가 추가) **/
 data class CoinData(
-    val name: String,
-    val symbol: String,
+    val name: String,        // 한글명
+    val symbol: String,      // 예: BTC/USDT
     val currentPrice: Double,
-    val changeRate: Double,  // +면 상승, -면 하락
-    val volume: Double
+    val lowPrice: Double,    // 하한가
+    val changeRate: Double,  // 전일대비(%, +면 상승, -면 하락)
+    val volume: Double       // 거래대금
 )
 
+/** 코인 리스트 아이템 **/
 @Composable
 fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
-    // 상승/하락에 따라 텍스트 색상 구분 (예시로 상승은 빨간색, 하락은 파란색)
+    // 전일대비(%)가 +면 빨간색, -면 파란색
     val changeColor = if (coin.changeRate >= 0) Color.Red else Color.Blue
 
     Row(
@@ -169,41 +211,38 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
             .padding(vertical = 8.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 코인명과 심볼
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = coin.name,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = coin.symbol,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        // 현재가
+        // 한글명
         Text(
-            text = String.format("%,.2f", coin.currentPrice),
-            color = MaterialTheme.colorScheme.onSurface,
+            text = coin.name,
             modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        // 하한가
+        Text(
+            text = String.format("%,.2f", coin.lowPrice),
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.End
         )
 
-        // 변동률
+        // 전일대비
         Text(
             text = String.format("%.2f%%", coin.changeRate),
-            color = changeColor,
             modifier = Modifier.weight(1f),
+            color = changeColor,
+            style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.End
         )
 
-        // 거래량
+        // 거래대금
         Text(
             text = String.format("%,.0f", coin.volume),
-            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.End
         )
     }
