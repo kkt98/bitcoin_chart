@@ -212,19 +212,17 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 한글명
-        Text(
-            text = coin.name,
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.bodySmall
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = coin.name, style = MaterialTheme.typography.bodyMedium)
+            Text(text = coin.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        }
 
-        // 하한가
+        // 현재가
         Text(
             text = String.format("%,.2f", coin.lowPrice),
             modifier = Modifier.weight(1f),
             color = changeColor,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.End
         )
 
@@ -233,7 +231,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
             text = String.format("%.2f%%", coin.changeRate),
             modifier = Modifier.weight(1f),
             color = changeColor,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.End
         )
 
@@ -242,7 +240,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
             text = String.format("%,.0f", coin.volume),
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.End
         )
     }
