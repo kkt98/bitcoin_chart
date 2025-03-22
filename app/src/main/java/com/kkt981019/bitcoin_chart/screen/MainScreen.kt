@@ -21,11 +21,11 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,10 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.RetrofitViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    viewModel : RetrofitViewModel = hiltViewModel()
+) {
     // Material3 테마의 컬러
     val backgroundColor = MaterialTheme.colorScheme.background
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -56,6 +60,12 @@ fun MainScreen() {
         CoinData("솔라나",  "SOL/USDT", currentPrice =    22.15, lowPrice =    21.90, changeRate = -1.23, volume =     75123.0)
         // 필요에 따라 데이터 추가
     )
+
+    val allMarkets by viewModel.allMarkets.observeAsState(emptyList())
+
+    val krwMarketNames = allMarkets
+        ?.filter { it.market.startsWith("KRW-") }
+        ?.map { it.koreanName }
 
     Scaffold(
         modifier = Modifier.background(backgroundColor),
@@ -82,8 +92,7 @@ fun MainScreen() {
             // 검색 영역
             SearchBar(
                 query = searchQuery,
-                onQueryChange = { searchQuery = it },
-                backgroundColor = Color.White
+                onQueryChange = { searchQuery = it }
             )
 
             // 탭 영역
@@ -109,7 +118,7 @@ fun MainScreen() {
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(coinList) { coin ->
-                    CoinItemRow(coin, backgroundColor = backgroundColor)
+                    CoinItemRow(coin, backgroundColor = backgroundColor, krwMarketNames)
                 }
             }
         }
@@ -121,7 +130,6 @@ fun MainScreen() {
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    backgroundColor: Color
 ) {
     Row(
         modifier = Modifier
@@ -151,7 +159,7 @@ fun SearchBar(
     }
 }
 
-/** 열(컬럼) 헤더: "한글명 / 하한가 / 전일대비 / 거래대금" **/
+/** 열(컬럼) 헤더: "한글명 / 현재가 / 전일대비 / 거래대금" **/
 @Composable
 fun CoinListHeader() {
     Row(
@@ -191,7 +199,7 @@ fun CoinListHeader() {
 data class CoinData(
     val name: String,        // 한글명
     val symbol: String,      // 예: BTC/USDT
-    val currentPrice: Double,
+    val currentPrice: Double,// 현재가
     val lowPrice: Double,    // 하한가
     val changeRate: Double,  // 전일대비(%, +면 상승, -면 하락)
     val volume: Double       // 거래대금
@@ -199,7 +207,7 @@ data class CoinData(
 
 /** 코인 리스트 아이템 **/
 @Composable
-fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
+fun CoinItemRow(coin: CoinData, backgroundColor: Color, krwMarketNames: List<String>?) {
     // 전일대비(%)가 +면 빨간색, -면 파란색
     val changeColor = if (coin.changeRate >= 0) Color.Red else Color.Blue
 
@@ -212,7 +220,10 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
     ) {
         // 한글명
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = coin.name, style = MaterialTheme.typography.bodyMedium)
+
+            krwMarketNames?.forEach {
+                Text(text = it, style = MaterialTheme.typography.bodyMedium)
+            }
             Text(text = coin.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
 

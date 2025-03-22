@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-    id("org.jetbrains.kotlin.kapt") // kapt 플러그인 추가
+    id("kotlin-kapt") // kapt 플러그인 추가|
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -68,10 +69,11 @@ dependencies {
     implementation (libs.androidx.work.runtime)
 
     //hilt
-    implementation(libs.androidx.hilt.navigation.fragment)
-    implementation(libs.androidx.hilt.work)
-    // When using Kotlin.
-    kapt(libs.androidx.hilt.compiler)
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation (libs.androidx.hilt.navigation.compose)
+    kapt(libs.hilt.android.compiler)
+    implementation (libs.androidx.runtime.livedata)
 
     // 레트로핏
     implementation(libs.retrofit)
