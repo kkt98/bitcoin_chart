@@ -19,7 +19,6 @@ class RetrofitViewModel @Inject constructor(
             emit(names)
         } catch (e: Exception) {
             // 에러 발생 시 빈 리스트 반환 및 로그 출력
-            Log.d("asdasdas", e.message.toString())
         }
     }
 
