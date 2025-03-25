@@ -53,19 +53,32 @@ fun MainScreen(
     val tabTitles = listOf("KRW", "BTC", "USDT")
     var selectedTabIndex by remember { mutableStateOf(0) }
 
-    // 코인 리스트 예시 데이터 (하한가를 추가)
-    val coinList = listOf(
-        CoinData("비트코인", "BTC/USDT", currentPrice = 28753.25, lowPrice = 28000.0, changeRate = 0.87, volume = 261998602.0),
-        CoinData("리플",    "XRP/USDT", currentPrice =     0.48, lowPrice =     0.45, changeRate = 3.12, volume =     119056.0),
-        CoinData("솔라나",  "SOL/USDT", currentPrice =    22.15, lowPrice =    21.90, changeRate = -1.23, volume =     75123.0)
-        // 필요에 따라 데이터 추가
-    )
 
     val allMarkets by viewModel.allMarkets.observeAsState(emptyList())
+
+    val coinList by viewModel.coinList.observeAsState(emptyList())
 
     val krwMarketNames = allMarkets
         ?.filter { it.market.startsWith("KRW-") }
         ?.map { it.koreanName }
+
+    val krwMarketSymbol = allMarkets
+        ?.filter { it.market.startsWith("KRW-") }
+        ?.map { it.market }
+
+//    val coinList = allMarkets!!
+//        .filter { it.market.startsWith("KRW-") }
+//        .map { market ->
+//            CoinData(
+//                name = market.koreanName,  // 한글명
+//                symbol = market.market,    // 심볼 (예: KRW-BTC)
+//                currentPrice =" 28753.25",   // 실제 시세 데이터로 교체 필요
+//                lowPrice = 28000.0,        // 실제 데이터로 교체 필요
+//                changeRate = 0.87,         // 실제 데이터로 교체 필요
+//                volume = 261998602.0       // 실제 데이터로 교체 필요
+//            )
+//        }
+
 
     Scaffold(
         modifier = Modifier.background(backgroundColor),
@@ -118,7 +131,7 @@ fun MainScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(coinList) { coin ->
-                    CoinItemRow(coin, backgroundColor = backgroundColor, krwMarketNames)
+                    CoinItemRow(coin, backgroundColor = backgroundColor)
                 }
             }
         }
@@ -199,15 +212,15 @@ fun CoinListHeader() {
 data class CoinData(
     val name: String,        // 한글명
     val symbol: String,      // 예: BTC/USDT
-    val currentPrice: Double,// 현재가
-    val lowPrice: Double,    // 하한가
+    val currentPrice: String,// 현재가
+    val lowPrice: String,    // 하한가
     val changeRate: Double,  // 전일대비(%, +면 상승, -면 하락)
     val volume: Double       // 거래대금
 )
 
 /** 코인 리스트 아이템 **/
 @Composable
-fun CoinItemRow(coin: CoinData, backgroundColor: Color, krwMarketNames: List<String>?) {
+fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
     // 전일대비(%)가 +면 빨간색, -면 파란색
     val changeColor = if (coin.changeRate >= 0) Color.Red else Color.Blue
 
@@ -221,15 +234,14 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, krwMarketNames: List<Str
         // 한글명
         Column(modifier = Modifier.weight(1f)) {
 
-            krwMarketNames?.forEach {
-                Text(text = it, style = MaterialTheme.typography.bodyMedium)
-            }
+            Text(text = coin.name, style = MaterialTheme.typography.bodyMedium)
+
             Text(text = coin.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
 
         // 현재가
         Text(
-            text = String.format("%,.2f", coin.lowPrice),
+            text = coin.lowPrice,
             modifier = Modifier.weight(1f),
             color = changeColor,
             style = MaterialTheme.typography.bodyMedium,
