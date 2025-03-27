@@ -1,6 +1,7 @@
 package com.kkt981019.bitcoin_chart.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +36,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.network.Data.CoinData
 import com.kkt981019.bitcoin_chart.viewmodel.RetrofitViewModel
+import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,33 +55,9 @@ fun MainScreen(
     // 탭 상태
     val tabTitles = listOf("KRW", "BTC", "USDT")
     var selectedTabIndex by remember { mutableStateOf(0) }
-
-
-    val allMarkets by viewModel.allMarkets.observeAsState(emptyList())
+    var useLanguage by remember { mutableStateOf(false) }
 
     val coinList by viewModel.coinList.observeAsState(emptyList())
-
-    val krwMarketNames = allMarkets
-        ?.filter { it.market.startsWith("KRW-") }
-        ?.map { it.koreanName }
-
-    val krwMarketSymbol = allMarkets
-        ?.filter { it.market.startsWith("KRW-") }
-        ?.map { it.market }
-
-//    val coinList = allMarkets!!
-//        .filter { it.market.startsWith("KRW-") }
-//        .map { market ->
-//            CoinData(
-//                name = market.koreanName,  // 한글명
-//                symbol = market.market,    // 심볼 (예: KRW-BTC)
-//                currentPrice =" 28753.25",   // 실제 시세 데이터로 교체 필요
-//                lowPrice = 28000.0,        // 실제 데이터로 교체 필요
-//                changeRate = 0.87,         // 실제 데이터로 교체 필요
-//                volume = 261998602.0       // 실제 데이터로 교체 필요
-//            )
-//        }
-
 
     Scaffold(
         modifier = Modifier.background(backgroundColor),
@@ -124,14 +103,20 @@ fun MainScreen(
             }
 
             // 헤더 (한글명 / 하한가 / 전일대비 / 거래대금)
-            CoinListHeader()
+            CoinListHeader(
+                useLanguage,
+                onToggleLanguage =  { useLanguage = !useLanguage },
+//                onCurrentPriceClick = TODO(),
+//                onChangeRateClick = TODO(),
+//                onVolumeClick = TODO()
+            )
 
             // 코인 리스트
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(coinList) { coin ->
-                    CoinItemRow(coin, backgroundColor = backgroundColor)
+                    CoinItemRow(coin, backgroundColor = backgroundColor, useLanguage)
                 }
             }
         }
@@ -172,57 +157,61 @@ fun SearchBar(
     }
 }
 
-/** 열(컬럼) 헤더: "한글명 / 현재가 / 전일대비 / 거래대금" **/
-@Composable
-fun CoinListHeader() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+    /** 열(컬럼) 헤더: "한글명 / 현재가 / 전일대비 / 거래대금" **/
+    @Composable
+    fun CoinListHeader(
+        useEnglish: Boolean,
+        onToggleLanguage: () -> Unit,
+        onCurrentPriceClick: () -> Unit = {},
+        onChangeRateClick: () -> Unit = {},
+        onVolumeClick: () -> Unit = {}
     ) {
-        Text(
-            text = "한글명",
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Start,
-            style = MaterialTheme.typography.bodySmall
-        )
-        Text(
-            text = "현재가",
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Text(
-            text = "전일대비",
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall
-        )
-        Text(
-            text = "거래대금",
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall
-        )
-    }
-    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
-}
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
 
-/** 코인 정보 데이터 모델 (하한가 추가) **/
-data class CoinData(
-    val name: String,        // 한글명
-    val symbol: String,      // 예: BTC/USDT
-    val currentPrice: String,// 현재가
-    val lowPrice: String,    // 하한가
-    val changeRate: Double,  // 전일대비(%, +면 상승, -면 하락)
-    val volume: Double       // 거래대금
-)
+        ) {
+            Text(
+                text = if(useEnglish) "영문명" else "한글명",
+                modifier = Modifier.weight(1f)
+                    .clickable { onToggleLanguage() },
+                textAlign = TextAlign.Start,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = "현재가",
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text = "전일대비",
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = "거래대금",
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
+    }
 
 /** 코인 리스트 아이템 **/
 @Composable
-fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
+fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean) {
     // 전일대비(%)가 +면 빨간색, -면 파란색
-    val changeColor = if (coin.changeRate >= 0) Color.Red else Color.Blue
+    val changeColor = if ((coin.changeRate ?: 0.0) >= 0) Color.Red else Color.Blue
+
+    //소수점 아래 0이면 생략
+    val df = DecimalFormat("#,##0.##")
+
+    // 코인이름 영여 or 한글 설정
+    val coinName = if (useEnglish) coin.englishName else coin.koreanName
 
     Row(
         modifier = Modifier
@@ -234,14 +223,13 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
         // 한글명
         Column(modifier = Modifier.weight(1f)) {
 
-            Text(text = coin.name, style = MaterialTheme.typography.bodyMedium)
-
+            Text(text = coinName, style = MaterialTheme.typography.bodyMedium)
             Text(text = coin.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
 
         // 현재가
         Text(
-            text = coin.lowPrice,
+            text = df.format(coin.tradePrice),
             modifier = Modifier.weight(1f),
             color = changeColor,
             style = MaterialTheme.typography.bodyMedium,
@@ -250,7 +238,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
 
         // 전일대비
         Text(
-            text = String.format("%.2f%%", coin.changeRate),
+            text = String.format("%.2f%%", coin.changeRate!! * 100),
             modifier = Modifier.weight(1f),
             color = changeColor,
             style = MaterialTheme.typography.bodyMedium,
@@ -259,7 +247,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color) {
 
         // 거래대금
         Text(
-            text = String.format("%,.0f", coin.volume),
+            text = String.format("%,.0f백만", (coin.volume?.div(1_000_000))),
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyMedium,

@@ -4,8 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import androidx.lifecycle.switchMap
+import com.kkt981019.bitcoin_chart.network.Data.CoinData
 import com.kkt981019.bitcoin_chart.repository.RetrofitRepository
-import com.kkt981019.bitcoin_chart.screen.CoinData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
@@ -37,15 +37,17 @@ class RetrofitViewModel @Inject constructor(
 
                 Log.d("asdasd3", tickerList.toString())
                 val coins = krwMarkets.map { market ->
+
                     // 해당 market에 맞는 티커 데이터 찾기
                     val ticker = tickerList.find { it.market == market.market }
                     CoinData(
-                        name = market.koreanName,
+                        koreanName = market.koreanName,
+                        englishName = market.englishName,
                         symbol = market.market,
-                        currentPrice = "ticker?.tradePrice1.toString()",
-                        lowPrice = ticker?.tradePrice1.toString(),
-                        changeRate = 0.0,
-                        volume = 0.0
+                        currentPrice = "",
+                        tradePrice = ticker?.trade_price?.toDouble(),
+                        changeRate = ticker?.signed_change_rate?.toDouble(),
+                        volume = ticker?.acc_trade_price_24h?.toDouble()
                     )
                 }
                 emit(coins)

@@ -23,8 +23,6 @@ class RetrofitRepository @Inject constructor(private val api: UpbitApi) {
     suspend fun getAllPrice(markets: List<String>): List<TickerResponse>? {
         val marketParam = markets.joinToString(separator = ",")
 
-        Log.d("asdasd", marketParam + "!")
-
         val response = api.getTicker(marketParam)
         return if (response.isSuccessful) {
             response.body() ?: emptyList()
