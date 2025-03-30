@@ -55,9 +55,43 @@ fun MainScreen(
     // 탭 상태
     val tabTitles = listOf("KRW", "BTC", "USDT")
     var selectedTabIndex by remember { mutableStateOf(0) }
+
+
+    // 한글명, 영어명
     var useLanguage by remember { mutableStateOf(false) }
+    // 현재가 정렬 상태 (NONE: 원래 순서, DESC: 높은순, ASC: 낮은순)
+    var currentPriceSort by remember { mutableStateOf(PriceSort.NONE) }
+    // 어떤 기준으로 정렬할지 결정 ("none", "price", "rate")
+    var sortBy by remember { mutableStateOf("none") }
 
     val coinList by viewModel.coinList.observeAsState(emptyList())
+
+    // currentPriceSort 상태에 따라 coinList 정렬 (tradePrice가 null이면 0.0 사용)
+    val sortedCoinList = when (currentPriceSort) {
+        PriceSort.DESC -> coinList.sortedByDescending { it.tradePrice ?: 0.0 }
+        PriceSort.ASC -> coinList.sortedBy { it.tradePrice ?: 0.0 }
+        PriceSort.NONE -> coinList
+    }
+
+    val sortedByRate = when (currentPriceSort) {
+        PriceSort.DESC -> coinList.sortedByDescending { it.changeRate ?: 0.0 }
+        PriceSort.ASC -> coinList.sortedBy { it.changeRate ?: 0.0 }
+        PriceSort.NONE -> coinList
+    }
+
+    val sortedByVolume = when (currentPriceSort) {
+        PriceSort.DESC -> coinList.sortedByDescending { it.volume ?: 0.0 }
+        PriceSort.ASC -> coinList.sortedBy { it.volume ?: 0.0 }
+        PriceSort.NONE -> coinList
+    }
+
+    // 선택된 정렬 기준에 따라 표시할 리스트 결정
+    val displayedCoinList = when (sortBy) {
+        "price" -> sortedCoinList
+        "rate" -> sortedByRate
+        "volume" -> sortedByVolume
+        else -> coinList
+    }
 
     Scaffold(
         modifier = Modifier.background(backgroundColor),
@@ -106,16 +140,38 @@ fun MainScreen(
             CoinListHeader(
                 useLanguage,
                 onToggleLanguage =  { useLanguage = !useLanguage },
-//                onCurrentPriceClick = TODO(),
-//                onChangeRateClick = TODO(),
-//                onVolumeClick = TODO()
+                onCurrentPriceClick = {
+                    currentPriceSort = when (currentPriceSort) {
+                        PriceSort.NONE -> PriceSort.DESC
+                        PriceSort.DESC -> PriceSort.ASC
+                        PriceSort.ASC -> PriceSort.NONE
+                    }
+                    sortBy = "price"
+                },
+
+                onChangeRateClick = {
+                    currentPriceSort = when (currentPriceSort) {
+                        PriceSort.NONE -> PriceSort.DESC
+                        PriceSort.DESC -> PriceSort.ASC
+                        PriceSort.ASC -> PriceSort.NONE
+                    }
+                    sortBy = "rate"
+                },
+                onVolumeClick = {
+                    currentPriceSort = when (currentPriceSort) {
+                        PriceSort.NONE -> PriceSort.DESC
+                        PriceSort.DESC -> PriceSort.ASC
+                        PriceSort.ASC -> PriceSort.NONE
+                    }
+                    sortBy = "volume"
+                }
             )
 
             // 코인 리스트
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(coinList) { coin ->
+                items(displayedCoinList) { coin ->
                     CoinItemRow(coin, backgroundColor = backgroundColor, useLanguage)
                 }
             }
@@ -162,9 +218,9 @@ fun SearchBar(
     fun CoinListHeader(
         useEnglish: Boolean,
         onToggleLanguage: () -> Unit,
-        onCurrentPriceClick: () -> Unit = {},
-        onChangeRateClick: () -> Unit = {},
-        onVolumeClick: () -> Unit = {}
+        onCurrentPriceClick: () -> Unit,
+        onChangeRateClick: () -> Unit,
+        onVolumeClick: () -> Unit
     ) {
         Row(
             modifier = Modifier
@@ -174,26 +230,33 @@ fun SearchBar(
         ) {
             Text(
                 text = if(useEnglish) "영문명" else "한글명",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
                     .clickable { onToggleLanguage() },
                 textAlign = TextAlign.Start,
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
                 text = "현재가",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { (onCurrentPriceClick()) },
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
                 text = "전일대비",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { (onChangeRateClick()) },
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
                 text = "거래대금",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { (onVolumeClick()) },
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -256,3 +319,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean) {
     }
     Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
 }
+
+enum class PriceSort { NONE, DESC, ASC }
+
+//enum class RateSort { NONE, DESC, ASC }
