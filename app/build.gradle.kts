@@ -75,6 +75,9 @@ dependencies {
     kapt(libs.hilt.android.compiler)
     implementation (libs.androidx.runtime.livedata)
 
+    implementation (libs.androidx.lifecycle.livedata.ktx.v261)
+
+
     // 레트로핏
     implementation(libs.retrofit)
     // gson 변환기

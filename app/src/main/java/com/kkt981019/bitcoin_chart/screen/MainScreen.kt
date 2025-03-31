@@ -25,6 +25,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,15 @@ fun MainScreen(
     // 탭 상태
     val tabTitles = listOf("KRW", "BTC", "USDT")
     var selectedTabIndex by remember { mutableStateOf(0) }
+
+    // 탭 선택 시 접두어 업데이트
+    LaunchedEffect(selectedTabIndex) {
+        when (selectedTabIndex) {
+            0 -> viewModel.setMarketPrefix("KRW-")
+            1 -> viewModel.setMarketPrefix("BTC-")
+            2 -> viewModel.setMarketPrefix("USDT-")
+        }
+    }
 
 
     // 한글명, 영어명
@@ -172,7 +182,7 @@ fun MainScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(displayedCoinList) { coin ->
-                    CoinItemRow(coin, backgroundColor = backgroundColor, useLanguage)
+                    CoinItemRow(coin, backgroundColor = backgroundColor, useLanguage, selectedTabIndex)
                 }
             }
         }
@@ -213,15 +223,15 @@ fun SearchBar(
     }
 }
 
-    /** 열(컬럼) 헤더: "한글명 / 현재가 / 전일대비 / 거래대금" **/
-    @Composable
-    fun CoinListHeader(
-        useEnglish: Boolean,
-        onToggleLanguage: () -> Unit,
-        onCurrentPriceClick: () -> Unit,
-        onChangeRateClick: () -> Unit,
-        onVolumeClick: () -> Unit
-    ) {
+/** 열(컬럼) 헤더: "한글명 / 현재가 / 전일대비 / 거래대금" **/
+@Composable
+fun CoinListHeader(
+    useEnglish: Boolean,
+    onToggleLanguage: () -> Unit,
+    onCurrentPriceClick: () -> Unit,
+    onChangeRateClick: () -> Unit,
+    onVolumeClick: () -> Unit
+) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -266,12 +276,16 @@ fun SearchBar(
 
 /** 코인 리스트 아이템 **/
 @Composable
-fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean) {
+fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, selectedTabIndex: Int) {
     // 전일대비(%)가 +면 빨간색, -면 파란색
     val changeColor = if ((coin.changeRate ?: 0.0) >= 0) Color.Red else Color.Blue
 
-    //소수점 아래 0이면 생략
-    val df = DecimalFormat("#,##0.##")
+    //소수점 보여주기
+    val df = when (selectedTabIndex) {
+        0 -> DecimalFormat("#,##0.##")
+        1 -> DecimalFormat("0.00000000")
+        else-> DecimalFormat("#,##0.000#####")
+    }
 
     // 코인이름 영여 or 한글 설정
     val coinName = if (useEnglish) coin.englishName else coin.koreanName
@@ -321,5 +335,3 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean) {
 }
 
 enum class PriceSort { NONE, DESC, ASC }
-
-//enum class RateSort { NONE, DESC, ASC }
