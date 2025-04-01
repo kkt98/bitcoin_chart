@@ -50,6 +50,8 @@ fun MainScreen(
     val backgroundColor = MaterialTheme.colorScheme.background
     val surfaceColor = MaterialTheme.colorScheme.surface
 
+    val coinList by viewModel.coinList.observeAsState(emptyList())
+
     // 검색어 상태
     var searchQuery by remember { mutableStateOf("") }
 
@@ -66,15 +68,12 @@ fun MainScreen(
         }
     }
 
-
     // 한글명, 영어명
     var useLanguage by remember { mutableStateOf(false) }
     // 현재가 정렬 상태 (NONE: 원래 순서, DESC: 높은순, ASC: 낮은순)
     var currentPriceSort by remember { mutableStateOf(PriceSort.NONE) }
     // 어떤 기준으로 정렬할지 결정 ("none", "price", "rate")
     var sortBy by remember { mutableStateOf("none") }
-
-    val coinList by viewModel.coinList.observeAsState(emptyList())
 
     // currentPriceSort 상태에 따라 coinList 정렬 (tradePrice가 null이면 0.0 사용)
     val sortedCoinList = when (currentPriceSort) {
@@ -101,6 +100,16 @@ fun MainScreen(
         "rate" -> sortedByRate
         "volume" -> sortedByVolume
         else -> coinList
+    }
+
+    val finalFilterList = if (searchQuery.isNotBlank()) {
+        displayedCoinList.filter { coin ->
+            coin.koreanName.contains(searchQuery, ignoreCase = true) ||
+                    coin.englishName.contains(searchQuery, ignoreCase = true) ||
+                    coin.symbol.contains(searchQuery, ignoreCase = true)
+        }
+    } else {
+        displayedCoinList
     }
 
     Scaffold(
@@ -181,7 +190,7 @@ fun MainScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(displayedCoinList) { coin ->
+                items(finalFilterList) { coin ->
                     CoinItemRow(coin, backgroundColor = backgroundColor, useLanguage, selectedTabIndex)
                 }
             }
@@ -277,6 +286,7 @@ fun CoinListHeader(
 /** 코인 리스트 아이템 **/
 @Composable
 fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, selectedTabIndex: Int) {
+
     // 전일대비(%)가 +면 빨간색, -면 파란색
     val changeColor = if ((coin.changeRate ?: 0.0) >= 0) Color.Red else Color.Blue
 
@@ -285,6 +295,15 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         0 -> DecimalFormat("#,##0.##")
         1 -> DecimalFormat("0.00000000")
         else-> DecimalFormat("#,##0.000#####")
+    }
+
+    // valume
+    val volumeString = when (selectedTabIndex) {
+        0 -> {
+            "${DecimalFormat("#,##0").format(coin.volume?.div(1_000_000))}백만"
+        }
+        1 -> String.format("%.3f", coin.volume)
+        else-> String.format("%,.3f", coin.volume)
     }
 
     // 코인이름 영여 or 한글 설정
@@ -324,7 +343,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
 
         // 거래대금
         Text(
-            text = String.format("%,.0f백만", (coin.volume?.div(1_000_000))),
+            text = volumeString,
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyMedium,
