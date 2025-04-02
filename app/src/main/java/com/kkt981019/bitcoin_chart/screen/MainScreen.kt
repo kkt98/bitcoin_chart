@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.screen
 
+import android.graphics.Paint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -287,8 +288,24 @@ fun CoinListHeader(
 @Composable
 fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, selectedTabIndex: Int) {
 
-    // 전일대비(%)가 +면 빨간색, -면 파란색
-    val changeColor = if ((coin.changeRate ?: 0.0) >= 0) Color.Red else Color.Blue
+    // 전일대비(%)가 +면 빨간색, -면 파란색, 0이면 검정색
+    val changeColor = when {
+        (coin.changeRate ?: 0.0) > 0 -> Color.Red
+        (coin.changeRate ?: 0.0) < 0 -> Color.Blue
+        else -> Color.Black
+    }
+    // 현재가 색
+    val tradeColor = when {
+        (coin.tradePrice ?: 0.0) > 0 -> Color.Red
+        (coin.tradePrice ?: 0.0) < 0 -> Color.Blue
+        else -> Color.Black
+    }
+    // 거래대금 색
+    val volumeColor = when {
+        (coin.volume ?: 0.0) > 0 -> Color.Red
+        (coin.volume ?: 0.0) < 0 -> Color.Blue
+        else -> Color.Black
+    }
 
     //소수점 보여주기
     val df = when (selectedTabIndex) {
@@ -327,25 +344,34 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         Text(
             text = df.format(coin.tradePrice),
             modifier = Modifier.weight(1f),
-            color = changeColor,
+            color = tradeColor,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.End
         )
 
         // 전일대비
-        Text(
-            text = String.format("%.2f%%", coin.changeRate!! * 100),
-            modifier = Modifier.weight(1f),
-            color = changeColor,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.End
-        )
+        val si = DecimalFormat("#,##0.###")
+        Column(modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.End) {
+            Text(
+                text = String.format("%.2f%%", coin.changeRate!! * 100),
+                color = changeColor,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.End
+            )
+            when (selectedTabIndex) {
+                0 -> Text(text = si.format(coin.signed), style = MaterialTheme.typography.labelSmall, color = changeColor)
+                1 -> Text("")
+                2 -> Text("")
+            }
+        }
+
 
         // 거래대금
         Text(
             text = volumeString,
             modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onSurface,
+            color = volumeColor,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.End
         )

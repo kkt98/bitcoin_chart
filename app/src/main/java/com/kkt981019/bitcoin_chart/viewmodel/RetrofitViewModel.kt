@@ -22,7 +22,6 @@ class RetrofitViewModel @Inject constructor(
         try {
             val markets = repository.getAllMarket()
             emit(markets)
-            Log.d("asdasd1", markets.toString())
         } catch (e: Exception) {
             emit(emptyList())
         }
@@ -43,7 +42,6 @@ class RetrofitViewModel @Inject constructor(
                     val filteredMarkets = markets.filter { it.market.startsWith(prefix) }
                     val marketSymbols = filteredMarkets.map { it.market }
                     val tickerList = repository.getAllPrice(marketSymbols) ?: emptyList()
-                    Log.d("asdasd3", tickerList.toString())
                     val coins = filteredMarkets.map { market ->
                         // 해당 market에 맞는 티커 데이터 찾기
                         val ticker = tickerList.find { it.market == market.market }
@@ -51,10 +49,10 @@ class RetrofitViewModel @Inject constructor(
                             koreanName = market.koreanName,
                             englishName = market.englishName,
                             symbol = market.market,
-                            currentPrice = "",
                             tradePrice = ticker?.trade_price?.toDouble(),
                             changeRate = ticker?.signed_change_rate?.toDouble(),
-                            volume = ticker?.acc_trade_price_24h?.toDouble()
+                            volume = ticker?.acc_trade_price_24h?.toDouble(),
+                            signed = ticker?.signed_change_price?.toDouble()
                         )
                     }.sortedByDescending { it.volume ?: 0.0 } // 거래대금(volume)이 높은 순으로 정렬
                     emit(coins)
