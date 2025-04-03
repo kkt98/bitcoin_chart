@@ -52,7 +52,8 @@ class RetrofitViewModel @Inject constructor(
                             tradePrice = ticker?.trade_price?.toDouble(),
                             changeRate = ticker?.signed_change_rate?.toDouble(),
                             volume = ticker?.acc_trade_price_24h?.toDouble(),
-                            signed = ticker?.signed_change_price?.toDouble()
+                            signed = ticker?.signed_change_price?.toDouble(),
+                            change = ticker?.change ?: ""
                         )
                     }.sortedByDescending { it.volume ?: 0.0 } // 거래대금(volume)이 높은 순으로 정렬
                     emit(coins)

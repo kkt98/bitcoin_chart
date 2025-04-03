@@ -288,23 +288,10 @@ fun CoinListHeader(
 @Composable
 fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, selectedTabIndex: Int) {
 
-    // 전일대비(%)가 +면 빨간색, -면 파란색, 0이면 검정색
-    val changeColor = when {
-        (coin.changeRate ?: 0.0) > 0 -> Color.Red
-        (coin.changeRate ?: 0.0) < 0 -> Color.Blue
-        else -> Color.Black
-    }
-    // 현재가 색
-    val tradeColor = when {
-        (coin.tradePrice ?: 0.0) > 0 -> Color.Red
-        (coin.tradePrice ?: 0.0) < 0 -> Color.Blue
-        else -> Color.Black
-    }
-    // 거래대금 색
-    val volumeColor = when {
-        (coin.volume ?: 0.0) > 0 -> Color.Red
-        (coin.volume ?: 0.0) < 0 -> Color.Blue
-        else -> Color.Black
+    val color = when(coin.change) {
+        "EVEN" -> Color.Black
+        "RISE" -> Color.Red
+        else -> Color.Blue
     }
 
     //소수점 보여주기
@@ -341,13 +328,15 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         }
 
         // 현재가
-        Text(
-            text = df.format(coin.tradePrice),
-            modifier = Modifier.weight(1f),
-            color = tradeColor,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.End
-        )
+        Column(modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.End) {
+            Text(
+                text = df.format(coin.tradePrice),
+                color = color,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text("")
+        }
 
         // 전일대비
         val si = DecimalFormat("#,##0.###")
@@ -355,26 +344,27 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
                 horizontalAlignment = Alignment.End) {
             Text(
                 text = String.format("%.2f%%", coin.changeRate!! * 100),
-                color = changeColor,
+                color = color,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.End
             )
             when (selectedTabIndex) {
-                0 -> Text(text = si.format(coin.signed), style = MaterialTheme.typography.labelSmall, color = changeColor)
+                0 -> Text(text = si.format(coin.signed), style = MaterialTheme.typography.labelSmall, color = color)
                 1 -> Text("")
                 2 -> Text("")
             }
         }
 
-
         // 거래대금
-        Text(
-            text = volumeString,
-            modifier = Modifier.weight(1f),
-            color = volumeColor,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.End
-        )
+        Column(modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.End) {
+            Text(
+                text = volumeString,
+                color = Color.Black,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text("")
+        }
     }
     Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
 }

@@ -7,5 +7,6 @@ data class CoinData(
     val tradePrice: Double?,    // 현재가
     val changeRate: Double?,  // 전일대비(%, +면 상승, -면 하락)
     val volume: Double?,       // 거래대금
-    val signed: Double?         // 부호가 있는 변화액
+    val signed: Double?,         // 부호가 있는 변화액
+    val change: String,         // 전일대비 가격 상승 하락 동일
 )
