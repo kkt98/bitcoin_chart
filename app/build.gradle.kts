@@ -77,6 +77,8 @@ dependencies {
 
     implementation (libs.androidx.lifecycle.livedata.ktx.v261)
 
+    //웹소켓
+    implementation(libs.okhttp)
 
     // 레트로핏
     implementation(libs.retrofit)
