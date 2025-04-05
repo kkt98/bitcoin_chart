@@ -1,8 +1,8 @@
 package com.kkt981019.bitcoin_chart.repository
 
-import android.util.Log
 import com.kkt981019.bitcoin_chart.network.Data.MarketResponse
-import com.kkt981019.bitcoin_chart.network.Data.TickerResponse
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import com.kkt981019.bitcoin_chart.network.UpbitApi
 import javax.inject.Inject
 
@@ -20,8 +20,8 @@ class RetrofitRepository @Inject constructor(private val api: UpbitApi) {
         return emptyList()
     }
 
-    suspend fun getAllPrice(markets: List<String>): List<TickerResponse>? {
-        val marketParam = markets.joinToString(separator = ",")
+    suspend fun getAllPrice(markets: List<String>?): List<WebsocketResponse>? {
+        val marketParam = markets?.joinToString(separator = ",")
 
         val response = api.getTicker(marketParam)
         return if (response.isSuccessful) {

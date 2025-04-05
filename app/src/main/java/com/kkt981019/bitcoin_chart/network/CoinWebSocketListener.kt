@@ -1,15 +1,15 @@
 package com.kkt981019.bitcoin_chart.network
 
 import com.google.gson.Gson
-import com.kkt981019.bitcoin_chart.network.Data.TickerResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 
 class CoinWebSocketListener(
-    private val marketCodes: List<String>,
-    private val onTickerUpdate: (TickerResponse) -> Unit
+    private val marketCodes: List<String>?,
+    private val onTickerUpdate: (WebsocketResponse) -> Unit
 ) : WebSocketListener() {
 
     // 연결이 성공하면 구독 메시지를 전송합니다.
@@ -27,20 +27,26 @@ class CoinWebSocketListener(
 
     // 텍스트 메시지 수신 시 처리
     override fun onMessage(webSocket: WebSocket, text: String) {
-        super.onMessage(webSocket, text)
+        try {
+            // JSON 메시지를 TickerResponse 객체로 파싱
+            val ticker = Gson().fromJson(text, WebsocketResponse::class.java)
+            onTickerUpdate(ticker)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     //바이트 메시지 수신 시 처리
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-        super.onMessage(webSocket, bytes)
+        onMessage(webSocket, bytes.utf8())
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        super.onClosing(webSocket, code, reason)
+        webSocket.close(1000, null)
     }
 
     //실패시
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        super.onFailure(webSocket, t, response)
+        t.printStackTrace()
     }
 }

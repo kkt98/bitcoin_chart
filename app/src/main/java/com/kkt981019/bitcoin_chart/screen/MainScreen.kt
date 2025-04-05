@@ -304,7 +304,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
     // valume
     val volumeString = when (selectedTabIndex) {
         0 -> {
-            "${DecimalFormat("#,##0").format(coin.volume?.div(1_000_000))}백만"
+            "${DecimalFormat("#,##0").format(coin.volume?.div(1_000_000) ?: 0)}백만"
         }
         1 -> String.format("%.3f", coin.volume)
         else-> String.format("%,.3f", coin.volume)
@@ -331,7 +331,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         Column(modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.End) {
             Text(
-                text = df.format(coin.tradePrice),
+                text = df.format(coin.tradePrice ?: 0.0),
                 color = color,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -343,13 +343,13 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         Column(modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.End) {
             Text(
-                text = String.format("%.2f%%", coin.changeRate!! * 100),
+                text = String.format("%.2f%%", (coin.changeRate?.times(100)) ?: 0.0),
                 color = color,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.End
             )
             when (selectedTabIndex) {
-                0 -> Text(text = si.format(coin.signed), style = MaterialTheme.typography.labelSmall, color = color)
+                0 -> Text(text = si.format(coin.signed ?: 0.0), style = MaterialTheme.typography.labelSmall, color = color)
                 1 -> Text("")
                 2 -> Text("")
             }
