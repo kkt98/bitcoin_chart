@@ -2,6 +2,7 @@ package com.kkt981019.bitcoin_chart.screen
 
 import android.graphics.Paint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.network.Data.CoinData
 import com.kkt981019.bitcoin_chart.viewmodel.RetrofitViewModel
+import kotlinx.coroutines.delay
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -288,6 +290,35 @@ fun CoinListHeader(
 @Composable
 fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, selectedTabIndex: Int) {
 
+    // 이전 가격와 테두리 색상 상태를 기억합니다.
+    val previousPrice = remember(coin.symbol) { mutableStateOf(coin.tradePrice ?: 0.0) }
+    val borderColor = remember(coin.symbol) { mutableStateOf(Color.Transparent) }
+
+    // 가격이 바뀔 때마다 실행되는 효과 블록
+    LaunchedEffect(coin.tradePrice) {
+        val newPrice = coin.tradePrice ?: 0.0
+        if (newPrice > previousPrice.value) {
+            // 상승한 경우: 빨간색 테두리 깜빡임
+            repeat(3) {
+                borderColor.value = Color.Red
+                delay(100)
+                borderColor.value = Color.Transparent
+                delay(100)
+            }
+        } else if (newPrice < previousPrice.value) {
+            // 하락한 경우: 파란색 테두리 깜빡임
+            repeat(3) {
+                borderColor.value = Color.Blue
+                delay(100)
+                borderColor.value = Color.Transparent
+                delay(100)
+            }
+        }
+        // 변동이 없으면 아무 효과 없음
+        previousPrice.value = newPrice
+    }
+
+
     val color = when(coin.change) {
         "EVEN" -> Color.Black
         "RISE" -> Color.Red
@@ -317,6 +348,7 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         modifier = Modifier
             .fillMaxWidth()
             .background(backgroundColor)
+            .border(width = 2.dp, color = borderColor.value, shape = MaterialTheme.shapes.medium)
             .padding(vertical = 8.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
