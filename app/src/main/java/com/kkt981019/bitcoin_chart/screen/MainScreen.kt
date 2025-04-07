@@ -39,15 +39,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.network.Data.CoinData
+import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import com.kkt981019.bitcoin_chart.viewmodel.RetrofitViewModel
 import kotlinx.coroutines.delay
+import okhttp3.WebSocket
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    viewModel : RetrofitViewModel = hiltViewModel()
+    navController: NavController,
+    viewModel : RetrofitViewModel = hiltViewModel(),
 ) {
     // Material3 테마의 컬러
     val backgroundColor = MaterialTheme.colorScheme.background
@@ -188,13 +192,22 @@ fun MainScreen(
                     sortBy = "volume"
                 }
             )
+            var currentSocket: WebSocket? = null
 
             // 코인 리스트
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(finalFilterList) { coin ->
-                    CoinItemRow(coin, backgroundColor = backgroundColor, useLanguage, selectedTabIndex)
+                    CoinItemRow(
+                        coin,
+                        backgroundColor = backgroundColor,
+                        useLanguage, selectedTabIndex,
+                        onClick = {
+                            navController.navigate("coin_detail/${coin.symbol}/${coin.koreanName}")
+                            currentSocket?.close(1000, "change page")
+                        }
+                    )
                 }
             }
         }
@@ -288,7 +301,13 @@ fun CoinListHeader(
 
 /** 코인 리스트 아이템 **/
 @Composable
-fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, selectedTabIndex: Int) {
+fun CoinItemRow(
+    coin: CoinData,
+    backgroundColor: Color,
+    useEnglish: Boolean,
+    selectedTabIndex: Int,
+    onClick: () -> Unit)
+{
 
     // 이전 가격와 테두리 색상 상태를 기억합니다.
     val previousPrice = remember(coin.symbol) { mutableStateOf(coin.tradePrice ?: 0.0) }
@@ -341,12 +360,16 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         else-> String.format("%,.3f", coin.volume)
     }
 
+    //전일대비
+    val si = DecimalFormat("#,##0.###")
+
     // 코인이름 영여 or 한글 설정
     val coinName = if (useEnglish) coin.englishName else coin.koreanName
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .background(backgroundColor)
             .border(width = 2.dp, color = borderColor.value, shape = MaterialTheme.shapes.medium)
             .padding(vertical = 8.dp, horizontal = 16.dp),
@@ -371,7 +394,6 @@ fun CoinItemRow(coin: CoinData, backgroundColor: Color, useEnglish: Boolean, sel
         }
 
         // 전일대비
-        val si = DecimalFormat("#,##0.###")
         Column(modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.End) {
             Text(
