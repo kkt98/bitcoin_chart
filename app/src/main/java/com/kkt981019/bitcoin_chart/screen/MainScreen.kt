@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.screen
 
-import android.graphics.Paint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,8 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.network.Data.CoinData
-import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
-import com.kkt981019.bitcoin_chart.viewmodel.RetrofitViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.MainScreenVM
 import kotlinx.coroutines.delay
 import okhttp3.WebSocket
 import java.text.DecimalFormat
@@ -51,7 +49,7 @@ import java.text.DecimalFormat
 @Composable
 fun MainScreen(
     navController: NavController,
-    viewModel : RetrofitViewModel = hiltViewModel(),
+    viewModel : MainScreenVM = hiltViewModel(),
 ) {
     // Material3 테마의 컬러
     val backgroundColor = MaterialTheme.colorScheme.background
@@ -320,17 +318,17 @@ fun CoinItemRow(
             // 상승한 경우: 빨간색 테두리 깜빡임
             repeat(3) {
                 borderColor.value = Color.Red
-                delay(100)
+                delay(80)
                 borderColor.value = Color.Transparent
-                delay(100)
+                delay(80)
             }
         } else if (newPrice < previousPrice.value) {
             // 하락한 경우: 파란색 테두리 깜빡임
             repeat(3) {
                 borderColor.value = Color.Blue
-                delay(100)
+                delay(80)
                 borderColor.value = Color.Transparent
-                delay(100)
+                delay(80)
             }
         }
         // 변동이 없으면 아무 효과 없음

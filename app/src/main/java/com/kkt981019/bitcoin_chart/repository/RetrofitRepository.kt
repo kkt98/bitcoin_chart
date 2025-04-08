@@ -1,7 +1,6 @@
 package com.kkt981019.bitcoin_chart.repository
 
 import com.kkt981019.bitcoin_chart.network.Data.MarketResponse
-import com.kkt981019.bitcoin_chart.network.Data.RetrofitResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import com.kkt981019.bitcoin_chart.network.UpbitApi
 import javax.inject.Inject

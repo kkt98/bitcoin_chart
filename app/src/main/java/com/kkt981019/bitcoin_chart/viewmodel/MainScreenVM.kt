@@ -15,7 +15,7 @@ import okhttp3.WebSocket
 import javax.inject.Inject
 
 @HiltViewModel
-class RetrofitViewModel @Inject constructor(
+class MainScreenVM @Inject constructor(
     private val repository: RetrofitRepository,
     private val webSocketRepository: WebSocketRepository
 ) : ViewModel() {

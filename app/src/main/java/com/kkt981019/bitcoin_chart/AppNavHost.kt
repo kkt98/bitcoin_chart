@@ -25,7 +25,7 @@ fun AppNavHost() {
         ) { backStackEntry ->
             val symbol = backStackEntry.arguments?.getString("symbol") ?: ""
             val koreanName = backStackEntry.arguments?.getString("koreanName") ?: ""
-            CoinDetailScreen(symbol = symbol, koreanName = koreanName)
+            CoinDetailScreen(symbol = symbol, koreanName = koreanName, navController = navController)
         }
     }
 }
