@@ -342,7 +342,7 @@ fun CoinItemRow(
         else -> Color.Blue
     }
 
-    //소수점 보여주기
+    //소수점 보여주기 (현재가)
     val df = when (selectedTabIndex) {
         0 -> DecimalFormat("#,##0.##")
         1 -> DecimalFormat("0.00000000")

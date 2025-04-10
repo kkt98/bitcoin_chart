@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.network
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
@@ -20,18 +21,21 @@ class CoinDetailWebSocketListener(
         val subscribeMessage = """
             [
               {"ticket": "detail-ticket"},
-              {"type": "ticker", "codes": ["$marketCode"]},
-              {"type": "orderbook", "codes": ["$marketCode"]},
-              {"type": "candle", "codes": ["$marketCode"], "interval": "1m"} 
+              {"type": "ticker", "codes": ${Gson().toJson(listOf(marketCode))}},
+              {"type": "orderbook", "codes": ${Gson().toJson(listOf(marketCode))}},
             ]
         """.trimIndent()
         webSocket.send(subscribeMessage)
     }
 
+//    {"type": "candle", "codes": ["$marketCode"], "interval": "1m"}
+
+
     override fun onMessage(webSocket: WebSocket, text: String) {
         try {
             // 먼저 JSON 전체를 파싱해서 어떤 종류의 메시지인지 확인합니다.
             val jsonObject = JsonParser().parse(text).asJsonObject
+
 
             if (jsonObject.has("trade_price")) {
                 // 티커 데이터로 간주 (CoinDetailResponse)
