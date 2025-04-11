@@ -5,10 +5,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
+import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
 import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import okhttp3.WebSocket
 import javax.inject.Inject
 
@@ -17,9 +16,13 @@ class CoinDTScreenVM @Inject constructor(
     private val repository: WebSocketRepository
 ) : ViewModel() {
 
-    // Ticker 데이터를 저장할 StateFlow (Compose에서 관찰)
+    // Ticker 데이터를 저장할 StateFlow
     private val _tickerState = MutableLiveData<CoinDetailResponse?>(null)
     val tickerState: LiveData<CoinDetailResponse?> = _tickerState
+
+    // 주문호가 데이터 (예: OrderbookResponse)
+    private val _orderbookState = MutableLiveData<OrderbookResponse?>(null)
+    val orderbookState: LiveData<OrderbookResponse?> = _orderbookState
 
     // 웹소켓 객체 (나중에 종료할 때 사용)
     private var webSocket: WebSocket? = null
@@ -36,8 +39,8 @@ class CoinDTScreenVM @Inject constructor(
                 // 수신된 티커 데이터를 StateFlow에 저장
                 _tickerState.postValue(coinDetail)
             },
-            onOrderbookUpdate = {
-                // 주문호가 데이터가 필요하다면 처리
+            onOrderbookUpdate = { orderbook ->
+                _orderbookState.postValue(orderbook)
             }
         )
     }

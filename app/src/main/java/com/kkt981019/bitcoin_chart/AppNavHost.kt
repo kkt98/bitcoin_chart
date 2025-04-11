@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.kkt981019.bitcoin_chart.screen.CoinDetailScreen
+import com.kkt981019.bitcoin_chart.screen.coindetail.CoinDetailScreen
 import com.kkt981019.bitcoin_chart.screen.MainScreen
 
 @Composable
