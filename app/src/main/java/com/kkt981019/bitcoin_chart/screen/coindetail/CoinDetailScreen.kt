@@ -1,11 +1,12 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail
 
-import androidx.compose.foundation.layout.Arrangement
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,9 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.OrderBookSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.TickerSection
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
@@ -50,6 +54,8 @@ fun CoinDetailScreen(
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState()
+
+    Log.d("asdasdas", orderbook?.orderbook_units.toString())
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -77,37 +83,44 @@ fun CoinDetailScreen(
         ) {
                 // 데이터가 도착하면 Row로 세 숫자를 균등하게 표시
 
-                // 현재가 소수점 표시용 포맷터
-                val df = when {
-                    symbol.startsWith("KRW") -> DecimalFormat("#,##0.##")
-                    symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
-                    else -> DecimalFormat("#,##0.000#####")
-                }
+            // 현재가 소수점 표시용 포맷터
+            val df = when {
+                symbol.startsWith("KRW") -> DecimalFormat("#,##0.##")
+                symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
+                else -> DecimalFormat("#,##0.000#####")
+            }
 
-                // volume 문자열 포맷 처리 예시
-                val volumeString = when {
-                    symbol.startsWith("KRW") -> {
-                        val value = ticker?.signed_change_rate?.toDoubleOrNull() ?: 0.0
-                        // 예를 들어, 백분율 형태로 표시하려면
-                        String.format("%.2f%%", value * 100)
-                    }
-                    symbol.startsWith("BTC") -> {
-                        val value = ticker?.signed_change_rate?.toDoubleOrNull() ?: 0.0
-                        String.format("%.3f", value)
-                    }
-                    else -> {
-                        val value = ticker?.signed_change_rate?.toDoubleOrNull() ?: 0.0
-                        String.format("%,.3f", value)
-                    }
+            // volume 문자열 포맷 처리 예시
+            val volumeString = when {
+                symbol.startsWith("KRW") -> {
+                    val value = ticker?.signed_change_rate?.toDoubleOrNull() ?: 0.0
+                    // 예를 들어, 백분율 형태로 표시하려면
+                    String.format("%.2f%%", value * 100)
                 }
-
-                val si = DecimalFormat("#,##0.###")
-
-                val color = when(ticker?.change) {
-                    "EVEN" -> Color.Black
-                    "RISE" -> Color.Red
-                    else -> Color.Blue
+                symbol.startsWith("BTC") -> {
+                    val value = ticker?.signed_change_rate?.toDoubleOrNull() ?: 0.0
+                    String.format("%.3f", value)
                 }
+                else -> {
+                    val value = ticker?.signed_change_rate?.toDoubleOrNull() ?: 0.0
+                    String.format("%,.3f", value)
+                }
+            }
+
+            val si = DecimalFormat("#,##0.###")
+
+            val color = when(ticker?.change) {
+                "EVEN" -> Color.Black
+                "RISE" -> Color.Red
+                else -> Color.Blue
+            }
+
+            // 티커의 change 값에 따라 다른 아이콘을 표시
+            val changeIcon: Painter? = when (ticker?.change) {
+                "EVEN" -> null
+                "RISE" -> painterResource(id = R.drawable.triangle)
+                else -> painterResource(id = R.drawable.inverted_triangle)
+            }
 
             // trade_price와 Row를 감싸는 Column에 padding(16.dp) 적용
             Column(modifier = Modifier.padding(16.dp)) {
@@ -120,13 +133,25 @@ fun CoinDetailScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+//                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
                         text = volumeString,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = color
+                        color = color,
+                        modifier = Modifier.padding(end = 14.dp)
                     )
+
+                    if (changeIcon != null) {
+                        Icon(
+                            painter = changeIcon,
+                            contentDescription = "변동 아이콘",
+                            tint = color,
+                            modifier = Modifier.size(20.dp) // 아이콘 크기를 24.dp로 설정
+                                .padding(end = 6.dp)
+                        )
+                    }
+
                     Text(
                         text = si.format(ticker?.signed_change_price?.toDoubleOrNull() ?: 0.0),
                         style = MaterialTheme.typography.bodyMedium,
@@ -151,7 +176,7 @@ fun CoinDetailScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> OrderBookSection(orderbook)
+                0 -> OrderBookSection(orderbook, ticker)
 //                    1 -> ChartSection(chartData)
                 2 -> TickerSection(ticker)
             }

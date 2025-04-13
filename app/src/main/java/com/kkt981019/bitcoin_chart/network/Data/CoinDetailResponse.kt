@@ -14,8 +14,8 @@ data class OrderbookResponse(
 )
 
 data class OrderbookUnit(
-    val ask_price: Double,  // 매도 호가
-    val bid_price: Double,  // 매수 호가
-    val ask_size: Double,   // 매도 잔량
-    val bid_size: Double    // 매수 잔량
+    @SerializedName("ask_price") val askPrice: Double,
+    @SerializedName("bid_price") val bidPrice: Double,
+    @SerializedName("ask_size") val askSize: Double,
+    @SerializedName("bid_size") val bidSize: Double
 )
