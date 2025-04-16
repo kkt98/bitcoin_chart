@@ -158,7 +158,7 @@ fun CoinDetailScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> OrderBookSection(orderbook, ticker, changeRate)
+                0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
 //                    1 -> ChartSection(chartData)
                 2 -> TickerSection(ticker)
             }

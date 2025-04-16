@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -25,12 +24,17 @@ import java.text.DecimalFormat
 fun OrderBookSection(
     orderbook: OrderbookResponse?,   // 호가 데이터
     ticker: CoinDetailResponse?,      // 현재 시세 데이터 (ticker)
-    changeRate: String
+    changeRate: String,
+    symbol: String
 ) {
     val currentPrice = ticker?.trade_price?.toDoubleOrNull() ?: 0.0
     val units = orderbook?.orderbook_units ?: emptyList()
 
-    val dfPrice = DecimalFormat("#,##0.###")
+    val dfPrice =  when {
+        symbol.startsWith("KRW") -> DecimalFormat("#,##0.##")
+        symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
+        else -> DecimalFormat("#,##0.000#####")
+    }
     val dsPrice = DecimalFormat("#,##0.000")
 
     val baseRateValue = changeRate.replace("%", "").toDoubleOrNull() ?: 0.0
@@ -39,10 +43,9 @@ fun OrderBookSection(
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
     ) {
         // --------------------------------
-        // 1) 매도 섹션 (빨간색)
+        // 1) 매도 섹션
         // --------------------------------
         items(units.reversed()) { unit ->
             // 한 줄에 3개의 Column을 동일 비율로 배치 (Row + weight(1f))
@@ -70,7 +73,7 @@ fun OrderBookSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .background(color = Color.Blue.copy(alpha = 0.3f))
+                        .background(color = Color.Blue.copy(alpha = 0.1f))
                         .padding(6.dp),
                     horizontalAlignment = Alignment.End
                 ) {
@@ -84,11 +87,16 @@ fun OrderBookSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .background(color = Color.Blue.copy(alpha = 0.3f))
+                        .background(color = Color.Blue.copy(alpha = 0.1f))
+                        .then(if (currentPrice == unit.askPrice)
+                            Modifier.border(width = 1.dp, color = Color.Black)  // 경계선 색상은 원하는 대로 조절
+                        else Modifier
+                        )
                         .padding(6.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    Row {
+                    Row(modifier = Modifier
+                        ) {
 
                         Text(
                             text = dfPrice.format(unit.askPrice),
@@ -117,7 +125,7 @@ fun OrderBookSection(
             }
         }
         // --------------------------------
-        // 2) 매수 섹션 (파란색)
+        // 2) 매수 섹션
         // --------------------------------
         items(units) { unit ->
 
@@ -153,7 +161,7 @@ fun OrderBookSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .background(color = Color.Red.copy(alpha = 0.3f))
+                        .background(color = Color.Red.copy(alpha = 0.1f))
                         .padding(6.dp),
                     horizontalAlignment = Alignment.End
                 ) {
@@ -178,7 +186,7 @@ fun OrderBookSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .background(color = Color.Red.copy(alpha = 0.3f))
+                        .background(color = Color.Red.copy(alpha = 0.1f))
                         .padding(6.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
