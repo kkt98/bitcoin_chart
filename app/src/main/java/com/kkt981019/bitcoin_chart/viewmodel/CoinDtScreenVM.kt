@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
+import com.kkt981019.bitcoin_chart.network.Data.TradeResponse
 import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import okhttp3.WebSocket
@@ -24,6 +25,9 @@ class CoinDTScreenVM @Inject constructor(
     private val _orderbookState = MutableLiveData<OrderbookResponse?>(null)
     val orderbookState: LiveData<OrderbookResponse?> = _orderbookState
 
+    private val _tradeState = MutableLiveData<TradeResponse?>(null)
+    val tradeState: LiveData<TradeResponse?> = _tradeState
+
     // 웹소켓 객체 (나중에 종료할 때 사용)
     private var webSocket: WebSocket? = null
 
@@ -31,7 +35,7 @@ class CoinDTScreenVM @Inject constructor(
         // 기존 연결이 있으면 종료
         webSocket?.close(1000, "New detail screen request")
 
-        // 새 웹소켓 연결: Ticker + Orderbook을 동시에 받거나, Ticker만 받도록 설정
+        // 새 웹소켓 연결
         webSocket = repository.startDetailSocket(
             marketCode = marketCode,
             onCoinDetailUpdate = { coinDetail ->
@@ -41,6 +45,10 @@ class CoinDTScreenVM @Inject constructor(
             },
             onOrderbookUpdate = { orderbook ->
                 _orderbookState.postValue(orderbook)
+            },
+            onTradeUpdate = { trade ->
+                Log.d("asdasd1111", trade.toString())
+                _tradeState.postValue(trade)
             }
         )
     }

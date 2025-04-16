@@ -33,7 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.OrderBookSection
-import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.TickerSection
+import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.TradeSection
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
 import java.text.DecimalFormat
 
@@ -53,6 +53,7 @@ fun CoinDetailScreen(
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState()
+    val trade by viewModel.tradeState.observeAsState()
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -160,7 +161,7 @@ fun CoinDetailScreen(
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
 //                    1 -> ChartSection(chartData)
-                2 -> TickerSection(ticker)
+                2 -> TradeSection(trade)
             }
 
         }

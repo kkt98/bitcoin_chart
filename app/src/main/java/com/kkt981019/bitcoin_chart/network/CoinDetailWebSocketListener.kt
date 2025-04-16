@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
+import com.kkt981019.bitcoin_chart.network.Data.TradeResponse
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -13,7 +14,9 @@ import okio.ByteString
 class CoinDetailWebSocketListener(
     private val marketCode: String,
     private val onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
-    private val onOrderbookUpdate: (OrderbookResponse) -> Unit) : WebSocketListener()
+    private val onOrderbookUpdate: (OrderbookResponse) -> Unit,
+    private val onTradeUpdate: (TradeResponse) -> Unit
+) : WebSocketListener()
 {
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -23,6 +26,7 @@ class CoinDetailWebSocketListener(
               {"ticket": "detail-ticket"},
               {"type": "ticker", "codes": ${Gson().toJson(listOf(marketCode))}},
               {"type": "orderbook", "codes": ${Gson().toJson(listOf(marketCode))}},
+              {"type": "trade", "codes": ${Gson().toJson(listOf(marketCode))}}
             ]
         """.trimIndent()
         webSocket.send(subscribeMessage)
@@ -33,18 +37,26 @@ class CoinDetailWebSocketListener(
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         try {
-            // 먼저 JSON 전체를 파싱해서 어떤 종류의 메시지인지 확인합니다.
             val jsonObject = JsonParser().parse(text).asJsonObject
+            Log.d("asdasdasd33", jsonObject.toString())
 
-
-            if (jsonObject.has("trade_price")) {
-                // 티커 데이터로 간주 (CoinDetailResponse)
-                val coinDetail = Gson().fromJson(text, CoinDetailResponse::class.java)
-                onCoinDetailUpdate(coinDetail)
-            } else if (jsonObject.has("orderbook_units")) {
-                // 주문호가 데이터로 간주 (OrderbookResponse)
-                val orderbook = Gson().fromJson(text, OrderbookResponse::class.java)
-                onOrderbookUpdate(orderbook)
+            when {
+                // 1) trade 메시지 먼저
+                jsonObject.has("best_bid_price") -> {
+                    val trade = Gson().fromJson(text, TradeResponse::class.java)
+                    Log.d("asdasdasd22", trade.toString())
+                    onTradeUpdate(trade)
+                }
+                // 2) orderbook
+                jsonObject.has("orderbook_units") -> {
+                    val orderbook = Gson().fromJson(text, OrderbookResponse::class.java)
+                    onOrderbookUpdate(orderbook)
+                }
+                // 3) ticker
+                jsonObject.has("trade_price") -> {
+                    val coinDetail = Gson().fromJson(text, CoinDetailResponse::class.java)
+                    onCoinDetailUpdate(coinDetail)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
