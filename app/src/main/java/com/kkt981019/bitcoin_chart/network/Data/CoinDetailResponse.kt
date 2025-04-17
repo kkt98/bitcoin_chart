@@ -20,7 +20,7 @@ data class OrderbookUnit(
     @SerializedName("bid_size") val bidSize: Double
 )
 
-data class TradeResponse(
+data class WebSocketTradeResponse(
     /** 메시지 종류 (“trade”) */
     @SerializedName("type") val type: String,
     /** 마켓 코드 (ex. “KRW-BTC”) */
@@ -57,5 +57,28 @@ data class TradeResponse(
     @SerializedName("best_bid_size") val bestBidSize: Double,
     /** 스트림 타입 (“SNAPSHOT” 또는 “REALTIME”) */
     @SerializedName("stream_type") val streamType: String
+)
+
+data class RetrofitTradeResponse (
+    /** 종목 코드 */
+    @SerializedName("market") val market: String,
+    /** 체결 일자 */
+    @SerializedName("trade_date_utc") val tradeDateUtc: String,
+    /** 체결 시각 */
+    @SerializedName("trade_time_utc") val tradeTimeUtc: String,
+    /** 체결 타임스탬프 */
+    @SerializedName("timestamp") val timestamp: Long,
+    /** 체결 가격 */
+    @SerializedName("trade_price") val tradePrice: Double,
+    /** 체결량 */
+    @SerializedName("trade_volume") val tradeVolume: Double,
+    /** 전일 종가 */
+    @SerializedName("prev_closing_price") val prevClosingPrice: Double,
+    /** 변화량 */
+    @SerializedName("change_price") val changePrice: Double,
+    /** 매도/매수 */
+    @SerializedName("ask_bid") val askBid: String,
+    /** 체결 번호 */
+    @SerializedName("sequential_id") val sequentialId: Long,
 )
 

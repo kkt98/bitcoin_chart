@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,7 +54,8 @@ fun CoinDetailScreen(
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState()
-    val trade by viewModel.tradeState.observeAsState()
+    val trades by viewModel.tradeState.observeAsState(emptyList())    // <-- initial 꼭 지정
+    Log.d("asdasdd12355", trades.toString())
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -161,7 +163,7 @@ fun CoinDetailScreen(
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
 //                    1 -> ChartSection(chartData)
-                2 -> TradeSection(trade)
+                2 -> TradeSection(trades, color)
             }
 
         }

@@ -4,7 +4,7 @@ import com.kkt981019.bitcoin_chart.network.CoinDetailWebSocketListener
 import com.kkt981019.bitcoin_chart.network.CoinWebSocketListener
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
-import com.kkt981019.bitcoin_chart.network.Data.TradeResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -35,7 +35,7 @@ class WebSocketRepository @Inject constructor() {
         marketCode: String,
         onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
         onOrderbookUpdate: (OrderbookResponse) -> Unit,
-        onTradeUpdate: (TradeResponse) -> Unit,
+        onTradeUpdate: (WebSocketTradeResponse) -> Unit,
     ): WebSocket {
         val request = Request.Builder()
             .url("wss://api.upbit.com/websocket/v1")

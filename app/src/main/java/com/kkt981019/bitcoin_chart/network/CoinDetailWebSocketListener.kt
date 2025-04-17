@@ -5,7 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
-import com.kkt981019.bitcoin_chart.network.Data.TradeResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -15,7 +15,7 @@ class CoinDetailWebSocketListener(
     private val marketCode: String,
     private val onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
     private val onOrderbookUpdate: (OrderbookResponse) -> Unit,
-    private val onTradeUpdate: (TradeResponse) -> Unit
+    private val onTradeUpdate: (WebSocketTradeResponse) -> Unit
 ) : WebSocketListener()
 {
 
@@ -43,8 +43,7 @@ class CoinDetailWebSocketListener(
             when {
                 // 1) trade 메시지 먼저
                 jsonObject.has("best_bid_price") -> {
-                    val trade = Gson().fromJson(text, TradeResponse::class.java)
-                    Log.d("asdasdasd22", trade.toString())
+                    val trade = Gson().fromJson(text, WebSocketTradeResponse::class.java)
                     onTradeUpdate(trade)
                 }
                 // 2) orderbook

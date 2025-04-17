@@ -1,6 +1,8 @@
 package com.kkt981019.bitcoin_chart.network
 
 import com.kkt981019.bitcoin_chart.network.Data.MarketResponse
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitTradeResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -19,5 +21,12 @@ interface UpbitApi {
     suspend fun getTicker(
         @Query("markets") markets: String?
     ): Response<List<WebsocketResponse>>
+
+    // Trade 조회 (여러 마켓의 시세 정보)
+    @GET("v1/trades/ticks")
+    suspend fun getTrade(
+        @Query("market") market: String,
+        @Query("count") count: Int = 100
+    ): List<RetrofitTradeResponse>
 
 }
