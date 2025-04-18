@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,11 +33,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import java.text.DecimalFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 // 2) TradeSection 은 단일 TradeResponse 가 아닌 리스트를 받도록!
 @Composable
 fun TradeSection(trades: List<WebSocketTradeResponse>, color: Color) {
     var selectedTab by remember { mutableStateOf(0) }
+    var changeVolume by remember { mutableStateOf(false) }
+
     val tabs = listOf("체결", "일별")
     val corner = 4.dp
 
@@ -75,16 +81,49 @@ fun TradeSection(trades: List<WebSocketTradeResponse>, color: Color) {
     }
     Log.d("asdasdas1234", trades.toString())
     when (selectedTab) {
-        0 -> TradeList(trades, color)
+        0 -> TradeList(trades, color, changeVolume, onChangeVolume = {changeVolume = !changeVolume})
         1 -> DailyList()
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
+fun TradeList(
+    trades: List<WebSocketTradeResponse>,
+    color: Color,
+    changeVolume: Boolean,
+    onChangeVolume: () -> Unit
+) {
 
-    val code = trades[0].code.substringAfter('-')
+    val coinName = trades[0].code.substringAfter('-') //코인이름(영문) ex) BTC
+    val moneyName = trades[0].code.substringBefore('-') //KRW or BTC or USDT
+
+    // 체결시간이 UTC라 KST로 변경
+    val changeToKoreaTime = remember {
+        DateTimeFormatter.ofPattern("HH:mm:ss")
+            .withZone(ZoneId.of("Asia/Seoul"))
+    }
+
+    //체결가격
+    val dfPrice =  when(moneyName) {
+        "KRW" -> DecimalFormat("#,##0.0#")
+        "BTC" -> DecimalFormat("#,##0.00000000")
+        else -> DecimalFormat("#,##0.00######")
+    }
+
+    //체결량
+    val dfCode =  when(moneyName) {
+        "KRW" -> DecimalFormat("#,##0.00000000")
+        "BTC" -> DecimalFormat("#,##0.00000000")
+        else -> DecimalFormat("#,##0.00######")
+    }
+
+    //체결액
+    val dfAmount =  when(moneyName) {
+        "KRW" -> DecimalFormat("#,##0")
+        "BTC" -> DecimalFormat("#,##0.00000000")
+        else -> DecimalFormat("#,##0.000")
+    }
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         stickyHeader {
@@ -114,7 +153,7 @@ fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
                 )
                 // 2열
                 Text(
-                    "체결가격(KRW)",
+                    "체결가격($moneyName)",
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -129,11 +168,12 @@ fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
                 )
                 // 3열
                 Text(
-                    text = "체결량($code)",
+                    text = if (changeVolume) "체결량($coinName)" else "체결액($moneyName)",
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 4.dp)
+                        .clickable { (onChangeVolume()) },
                     textAlign = TextAlign.Center
                 )
             }
@@ -141,6 +181,12 @@ fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
         }
 
         items(trades) { t ->
+
+            //한국 시간으로 변경
+            val koreaTime = remember(t.tradeTimestamp) {
+                changeToKoreaTime.format(Instant.ofEpochMilli(t.tradeTimestamp))
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -150,7 +196,7 @@ fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
             ) {
                 // 체결시간
                 Text(
-                    text = t.tradeTime,
+                    text = koreaTime,
                     modifier = Modifier
                         .weight(0.5f)
                         .fillMaxHeight()
@@ -165,7 +211,7 @@ fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
                 )
                 // 체결가격
                 Text(
-                    text = DecimalFormat("#,##0.##").format(t.tradePrice),
+                    text = dfPrice.format(t.tradePrice),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -179,23 +225,23 @@ fun TradeList(trades: List<WebSocketTradeResponse>, color: Color) {
                         .width(1.dp),
                     color = Color.LightGray
                 )
-                // 체결액
-                Text(
-                    text = DecimalFormat("#,##0.00000000").format(t.tradeVolume),
+
+                val amount = t.tradePrice * t.tradeVolume
+                // 체결액, 체결량
+                Text(                        //체결량                            //체결액
+                    text = if (changeVolume) dfCode.format(t.tradeVolume) else dfAmount.format(amount),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .padding(8.dp),
                     textAlign = TextAlign.End,
-                    color = if (t.askBid == "ASK") Color.Red else Color.Blue
+                    color = if (t.askBid == "ASK") Color.Blue else Color.Red
                 )
             }
             Divider() // 각 row 아래 가로줄
         }
     }
 }
-
-
 
 @Composable
 fun DailyList() {

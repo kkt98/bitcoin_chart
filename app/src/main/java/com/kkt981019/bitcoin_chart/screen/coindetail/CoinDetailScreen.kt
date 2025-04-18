@@ -55,7 +55,6 @@ fun CoinDetailScreen(
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState()
     val trades by viewModel.tradeState.observeAsState(emptyList())    // <-- initial 꼭 지정
-    Log.d("asdasdd12355", trades.toString())
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -87,7 +86,7 @@ fun CoinDetailScreen(
             val df = when {
                 symbol.startsWith("KRW") -> DecimalFormat("#,##0.##")
                 symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
-                else -> DecimalFormat("#,##0.000#####")
+                else -> DecimalFormat("#,##0.00######")
             }
 
             val si = DecimalFormat("#,##0.###")
@@ -160,6 +159,7 @@ fun CoinDetailScreen(
                 }
             }
 
+            //호가, 차트, 시세 스크린
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
 //                    1 -> ChartSection(chartData)
