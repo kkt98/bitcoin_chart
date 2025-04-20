@@ -1,6 +1,7 @@
 package com.kkt981019.bitcoin_chart.repository
 
 import com.kkt981019.bitcoin_chart.network.Data.MarketResponse
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
 import com.kkt981019.bitcoin_chart.network.Data.RetrofitTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
@@ -33,8 +34,11 @@ class RetrofitRepository @Inject constructor(private val api: UpbitApi) {
     }
 
     suspend fun getTrade(market: String): List<RetrofitTradeResponse> {
-        // Response<> 없이 바로 List를 반환하므로 isSuccessful 체크 불필요
         return api.getTrade(market = market)
+    }
+
+    suspend fun getDayCandle(market: String): List<RetrofitDayCandle> {
+        return api.getDayCandles(market = market)
     }
 
 }

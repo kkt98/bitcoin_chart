@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,13 +47,15 @@ fun CoinDetailScreen(
 ) {
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {
-        viewModel.startDetailWebSocket(symbol)
+        viewModel.startDetailTrade(symbol)
+        viewModel.startDetailDay(symbol)
     }
 
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState()
-    val trades by viewModel.tradeState.observeAsState(emptyList())    // <-- initial 꼭 지정
+    val trades by viewModel.tradeState.observeAsState(emptyList())
+    val dayCandle by viewModel.dayCandleState.observeAsState(emptyList())
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -84,7 +85,7 @@ fun CoinDetailScreen(
 
             // 현재가 소수점 표시용 포맷터
             val df = when {
-                symbol.startsWith("KRW") -> DecimalFormat("#,##0.##")
+                symbol.startsWith("KRW") -> DecimalFormat("#,##0.#####")
                 symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
                 else -> DecimalFormat("#,##0.00######")
             }
@@ -163,7 +164,7 @@ fun CoinDetailScreen(
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
 //                    1 -> ChartSection(chartData)
-                2 -> TradeSection(trades, color)
+                2 -> TradeSection(trades, dayCandle, color)
             }
 
         }

@@ -82,3 +82,17 @@ data class RetrofitTradeResponse (
     @SerializedName("sequential_id") val sequentialId: Long,
 )
 
+// 일별 시세를 받아오기 위해 캔들 사용 - Retrofit
+data class RetrofitDayCandle (
+    @SerializedName("market")
+    val market: String,
+    @SerializedName("candle_date_time_kst")
+    val candleDateTimeKst: String,            // "2023-04-20T00:00:00+09:00"
+    @SerializedName("trade_price")
+    val tradePrice: Double,             // 종가
+    @SerializedName("candle_acc_trade_price")
+    val candleAccTradePrice: Double,                  // 거래대금 (KRW)
+    @SerializedName("candle_acc_trade_volume")
+    val candleAccTradeVolume: Double
+)
+

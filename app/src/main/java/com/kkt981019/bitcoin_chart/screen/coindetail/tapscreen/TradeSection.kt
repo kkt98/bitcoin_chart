@@ -6,6 +6,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -20,6 +21,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,16 +33,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import java.text.DecimalFormat
 import java.time.Instant
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 // 2) TradeSection 은 단일 TradeResponse 가 아닌 리스트를 받도록!
 @Composable
-fun TradeSection(trades: List<WebSocketTradeResponse>, color: Color) {
+fun TradeSection(
+    trades: List<WebSocketTradeResponse>,
+    dayCandle: List<RetrofitDayCandle>,
+    color: Color
+) {
     var selectedTab by remember { mutableStateOf(0) }
     var changeVolume by remember { mutableStateOf(false) }
 
@@ -82,7 +92,7 @@ fun TradeSection(trades: List<WebSocketTradeResponse>, color: Color) {
     Log.d("asdasdas1234", trades.toString())
     when (selectedTab) {
         0 -> TradeList(trades, color, changeVolume, onChangeVolume = {changeVolume = !changeVolume})
-        1 -> DailyList()
+        1 -> DailyList(dayCandle, color)
     }
 }
 
@@ -106,7 +116,7 @@ fun TradeList(
 
     //체결가격
     val dfPrice =  when(moneyName) {
-        "KRW" -> DecimalFormat("#,##0.0#")
+        "KRW" -> DecimalFormat("#,##0.#####")
         "BTC" -> DecimalFormat("#,##0.00000000")
         else -> DecimalFormat("#,##0.00######")
     }
@@ -134,7 +144,7 @@ fun TradeList(
                     .height(IntrinsicSize.Min)      // 자식 높이에 맞춰서
                     .background(Color.White)
                     .border(1.dp, color = Color.LightGray)
-                    .padding(vertical = 8.dp),
+//                    .padding(vertical = 8.dp),
             ) {
                 // 1열
                 Text(
@@ -142,7 +152,7 @@ fun TradeList(
                     Modifier
                         .weight(0.5f)
                         .fillMaxHeight()           // Divider가 헤더 높이에 꽉 차게
-                        .padding(horizontal = 4.dp),
+                        .padding(8.dp),
                     textAlign = TextAlign.Center
                 )
                 Divider(
@@ -157,7 +167,7 @@ fun TradeList(
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(horizontal = 4.dp),
+                        .padding( 8.dp),
                     textAlign = TextAlign.Center
                 )
                 Divider(
@@ -172,7 +182,7 @@ fun TradeList(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(horizontal = 4.dp)
+                        .padding(8.dp)
                         .clickable { (onChangeVolume()) },
                     textAlign = TextAlign.Center
                 )
@@ -182,25 +192,19 @@ fun TradeList(
 
         items(trades) { t ->
 
-            //한국 시간으로 변경
-            val koreaTime = remember(t.tradeTimestamp) {
-                changeToKoreaTime.format(Instant.ofEpochMilli(t.tradeTimestamp))
-            }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min)      // 개별 row 높이에도 적용
-                    .padding(vertical = 6.dp),
+                    .height(IntrinsicSize.Min),   // 개별 row 높이에도 적용
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 체결시간
                 Text(
-                    text = koreaTime,
+                    text = t.tradeTime,
                     modifier = Modifier
                         .weight(0.5f)
                         .fillMaxHeight()
-                        .padding(8.dp),
+                        .padding(10.dp),
                     textAlign = TextAlign.Center
                 )
                 Divider(
@@ -209,13 +213,15 @@ fun TradeList(
                         .width(1.dp),
                     color = Color.LightGray
                 )
+
+//
                 // 체결가격
                 Text(
-                    text = dfPrice.format(t.tradePrice),
+                    text = t.tradeTime.toString(),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(8.dp),
+                        .padding(10.dp),
                     textAlign = TextAlign.End,
                     color = color
                 )
@@ -233,7 +239,7 @@ fun TradeList(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(8.dp),
+                        .padding(10.dp),
                     textAlign = TextAlign.End,
                     color = if (t.askBid == "ASK") Color.Blue else Color.Red
                 )
@@ -243,8 +249,177 @@ fun TradeList(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DailyList() {
+fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
 
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+        stickyHeader {
+            // 헤더도 IntrinsicSize.Min 적용
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)      // 자식 높이에 맞춰서
+                    .background(Color.White)
+                    .border(1.dp, color = Color.LightGray)
+//                    .padding(vertical = 8.dp),
+            ) {
+                // 1열
+                Text(
+                    "일자",
+                    Modifier
+                        .weight(0.5f)
+                        .fillMaxHeight()           // Divider가 헤더 높이에 꽉 차게
+                        .padding(8.dp),
+                    textAlign = TextAlign.Center
+                )
+                Divider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp),
+                    color = Color.LightGray
+                )
+                // 2열
+                Text(
+                    "종가(${dayCandle[0].market.substringBefore("-")})",
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding( 8.dp),
+                    textAlign = TextAlign.Center
+                )
+                Divider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp),
+                    color = Color.LightGray
+                )
+                // 3열
+                Text(
+                    "전일대비",
+                    Modifier
+                        .weight(0.7f)
+                        .fillMaxHeight()
+                        .padding(8.dp),
+                    textAlign = TextAlign.Center
+                )
+                Divider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp),
+                    color = Color.LightGray
+                )
+                // 4열
+                Text(
+                    text ="거래량(${dayCandle[0].market.substringAfter("-")})",
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(8.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+            Divider() // 헤더 아래 가로줄
+        }
 
+        itemsIndexed(dayCandle) { index, candle ->
+
+            val prevClose = dayCandle.getOrNull(index + 1)?.tradePrice ?: candle.tradePrice
+            val diffAmount = candle.tradePrice - prevClose
+            val diffRate = if (prevClose != 0.0) (diffAmount / prevClose) * 100 else 0.0
+
+            val dfPrice =  when(candle.market.substringBefore("-")) {
+                "KRW" -> DecimalFormat("#,##0.#####")
+                "BTC" -> DecimalFormat("#,##0.00000000")
+                else -> DecimalFormat("#,##0.00######")
+            }
+
+//            val textColor = when {
+//                diffAmount > 0 -> Color.Red
+//                diffAmount < 0 -> Color.Blue
+//                else -> Color.Black
+//            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),   // 개별 row 높이에도 적용
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                // 일자
+                Text(
+                    text = candle.candleDateTimeKst.substring(5, 10),
+                    modifier = Modifier
+                        .weight(0.5f)
+                        .fillMaxHeight()
+                        .padding(10.dp),
+                    textAlign = TextAlign.Center
+                )
+                Divider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp),
+                    color = Color.LightGray
+                )
+
+                // 종가
+                Text(
+                    text = dfPrice.format(candle.tradePrice),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(10.dp),
+                    textAlign = TextAlign.End,
+                    color = color
+                )
+                Divider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp),
+                    color = Color.LightGray
+                )
+
+                // 전일대비
+                Column(
+                    modifier = Modifier.weight(0.7f).padding(10.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = String.format("%.2f%%", diffRate ?: 0.0),
+                        color = color
+                    )
+
+                    when(candle.market.substringBefore("-")) {
+                        "KRW" ->Text(
+                            text = DecimalFormat("#,###.#####").format(diffAmount),
+                            color = color,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        else -> null
+                    }
+                }
+
+                Divider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp),
+                    color = Color.LightGray
+                )
+
+                // 거래량
+                Text(
+                    text = DecimalFormat("#,###.########").format(candle.candleAccTradeVolume),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(10.dp),
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Divider() // 각 row 아래 가로줄
+        }
+    }
 }

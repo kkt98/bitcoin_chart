@@ -1,6 +1,7 @@
 package com.kkt981019.bitcoin_chart.network
 
 import com.kkt981019.bitcoin_chart.network.Data.MarketResponse
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
 import com.kkt981019.bitcoin_chart.network.Data.RetrofitTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
@@ -28,5 +29,12 @@ interface UpbitApi {
         @Query("market") market: String,
         @Query("count") count: Int = 100
     ): List<RetrofitTradeResponse>
+
+    // 일별 시세 조회
+    @GET("/v1/candles/days")
+    suspend fun getDayCandles(
+        @Query("market") market: String,    // ex: "KRW-AERGO"
+        @Query("count") count: Int = 20
+    ): List<RetrofitDayCandle>
 
 }

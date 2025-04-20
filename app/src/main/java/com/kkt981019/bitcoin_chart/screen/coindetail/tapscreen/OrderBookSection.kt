@@ -31,7 +31,7 @@ fun OrderBookSection(
     val units = orderbook?.orderbook_units ?: emptyList()
 
     val dfPrice =  when {
-        symbol.startsWith("KRW") -> DecimalFormat("#,##0.##")
+        symbol.startsWith("KRW") -> DecimalFormat("#,##0.0####")
         symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
         else -> DecimalFormat("#,##0.000#####")
     }

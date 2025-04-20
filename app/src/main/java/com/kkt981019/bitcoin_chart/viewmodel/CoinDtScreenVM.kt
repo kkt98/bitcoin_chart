@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
 import com.kkt981019.bitcoin_chart.network.Data.RetrofitTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.repository.RetrofitRepository
@@ -33,10 +34,13 @@ class CoinDTScreenVM @Inject constructor(
     private val _tradeState =  MutableLiveData<List<WebSocketTradeResponse>>(emptyList())
     val tradeState: LiveData<List<WebSocketTradeResponse>> = _tradeState
 
+    private val _dayCandleState = MutableLiveData<List<RetrofitDayCandle>>(emptyList())
+    val dayCandleState: LiveData<List<RetrofitDayCandle>> = _dayCandleState
+
     // 웹소켓 객체 (나중에 종료할 때 사용)
     private var webSocket: WebSocket? = null
 
-    fun startDetailWebSocket(marketCode: String) {
+    fun startDetailTrade(marketCode: String) {
         viewModelScope.launch {
             // 1) Retrofit으로 과거 100건 조회
             val history: List<RetrofitTradeResponse> = retrofitRepository.getTrade(marketCode)
@@ -51,11 +55,11 @@ class CoinDTScreenVM @Inject constructor(
                     tradeVolume = rt.tradeVolume,
                     askBid = rt.askBid,
                     tradeTime = rt.tradeTimeUtc,
-                    prevClosingPrice = 0.0,
+                    prevClosingPrice = rt.prevClosingPrice,
                     change = "",
                     changePrice = 0.0,
-                    tradeDate = "",
-                    tradeTimestamp = 0,
+                    tradeDate = rt.tradeDateUtc,
+                    tradeTimestamp = rt.timestamp,
                     timestamp = 0,
                     sequentialId = 0,
                     bestAskSize = 0.0,
@@ -88,6 +92,13 @@ class CoinDTScreenVM @Inject constructor(
             )
         }
 
+    }
+
+    fun startDetailDay(market: String) {
+        viewModelScope.launch {
+            val days = retrofitRepository.getDayCandle(market)
+            _dayCandleState.postValue(days)
+        }
     }
 
     override fun onCleared() {
