@@ -2,6 +2,7 @@ package com.kkt981019.bitcoin_chart.repository
 
 import com.kkt981019.bitcoin_chart.network.CoinDetailWebSocketListener
 import com.kkt981019.bitcoin_chart.network.CoinWebSocketListener
+import com.kkt981019.bitcoin_chart.network.Data.CandleWebSocketResponse
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
@@ -36,11 +37,12 @@ class WebSocketRepository @Inject constructor() {
         onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
         onOrderbookUpdate: (OrderbookResponse) -> Unit,
         onTradeUpdate: (WebSocketTradeResponse) -> Unit,
+        onCandleUpdate: (CandleWebSocketResponse)-> Unit
     ): WebSocket {
         val request = Request.Builder()
             .url("wss://api.upbit.com/websocket/v1")
             .build()
-        val listener = CoinDetailWebSocketListener(marketCode, onCoinDetailUpdate, onOrderbookUpdate, onTradeUpdate)
+        val listener = CoinDetailWebSocketListener(marketCode, onCoinDetailUpdate, onOrderbookUpdate, onTradeUpdate, onCandleUpdate)
         return client.newWebSocket(request, listener)
     }
 }

@@ -3,6 +3,7 @@ package com.kkt981019.bitcoin_chart.network
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
+import com.kkt981019.bitcoin_chart.network.Data.CandleWebSocketResponse
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
@@ -15,7 +16,8 @@ class CoinDetailWebSocketListener(
     private val marketCode: String,
     private val onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
     private val onOrderbookUpdate: (OrderbookResponse) -> Unit,
-    private val onTradeUpdate: (WebSocketTradeResponse) -> Unit
+    private val onTradeUpdate: (WebSocketTradeResponse) -> Unit,
+    private val onCandleUpdate: (CandleWebSocketResponse) -> Unit
 ) : WebSocketListener()
 {
 
@@ -26,11 +28,13 @@ class CoinDetailWebSocketListener(
               {"ticket": "detail-ticket"},
               {"type": "ticker", "codes": ${Gson().toJson(listOf(marketCode))}},
               {"type": "orderbook", "codes": ${Gson().toJson(listOf(marketCode))}},
-              {"type": "trade", "codes": ${Gson().toJson(listOf(marketCode))}}
+              {"type": "trade", "codes": ${Gson().toJson(listOf(marketCode))}},
+              {"type":"candle.1s", "codes":${Gson().toJson(listOf(marketCode))}},
             ]
         """.trimIndent()
         webSocket.send(subscribeMessage)
     }
+
 
 //    {"type": "candle", "codes": ["$marketCode"], "interval": "1m"}
 
@@ -41,20 +45,25 @@ class CoinDetailWebSocketListener(
             Log.d("asdasdasd33", jsonObject.toString())
 
             when {
-                // 1) trade 메시지 먼저
+                // 1) trade
                 jsonObject.has("best_bid_price") -> {
                     val trade = Gson().fromJson(text, WebSocketTradeResponse::class.java)
                     onTradeUpdate(trade)
                 }
                 // 2) orderbook
                 jsonObject.has("orderbook_units") -> {
-                    val orderbook = Gson().fromJson(text, OrderbookResponse::class.java)
-                    onOrderbookUpdate(orderbook)
+                    val book = Gson().fromJson(text, OrderbookResponse::class.java)
+                    onOrderbookUpdate(book)
                 }
-                // 3) ticker
-                jsonObject.has("trade_price") -> {
-                    val coinDetail = Gson().fromJson(text, CoinDetailResponse::class.java)
-                    onCoinDetailUpdate(coinDetail)
+                // 3) ticker (type 도 검증)
+                jsonObject.get("type")?.asString == "ticker" -> {
+                    val ticker = Gson().fromJson(text, CoinDetailResponse::class.java)
+                    onCoinDetailUpdate(ticker)
+                }
+                // 4) candle
+                jsonObject.get("type")?.asString == "candle.1s" -> {
+                    val candle = Gson().fromJson(text, CandleWebSocketResponse::class.java)
+                    onCandleUpdate(candle)
                 }
             }
         } catch (e: Exception) {

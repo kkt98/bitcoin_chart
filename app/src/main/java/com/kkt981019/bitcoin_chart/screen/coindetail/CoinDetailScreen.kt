@@ -47,8 +47,8 @@ fun CoinDetailScreen(
 ) {
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {
-        viewModel.startDetailTrade(symbol)
-        viewModel.startDetailDay(symbol)
+        viewModel.startDetailAll(symbol)
+//        viewModel.startDetailDay(symbol)
     }
 
     // ViewModel의 LiveData를 observeAsState로 관찰

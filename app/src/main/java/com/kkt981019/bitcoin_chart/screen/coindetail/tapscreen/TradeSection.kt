@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kkt981019.bitcoin_chart.network.Data.CandleWebSocketResponse
 import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import java.text.DecimalFormat
@@ -47,7 +48,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TradeSection(
     trades: List<WebSocketTradeResponse>,
-    dayCandle: List<RetrofitDayCandle>,
+    dayCandle: List<CandleWebSocketResponse>,
     color: Color
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -92,7 +93,7 @@ fun TradeSection(
     Log.d("asdasdas1234", trades.toString())
     when (selectedTab) {
         0 -> TradeList(trades, color, changeVolume, onChangeVolume = {changeVolume = !changeVolume})
-        1 -> DailyList(dayCandle, color)
+        1 -> DailyList(dayCandle)
     }
 }
 
@@ -217,7 +218,7 @@ fun TradeList(
 //
                 // 체결가격
                 Text(
-                    text = t.tradeTime.toString(),
+                    text = dfPrice.format(t.tradePrice),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -251,7 +252,7 @@ fun TradeList(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
+fun DailyList(dayCandle: List<CandleWebSocketResponse>) {
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         stickyHeader {
@@ -281,7 +282,7 @@ fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
                 )
                 // 2열
                 Text(
-                    "종가(${dayCandle[0].market.substringBefore("-")})",
+                    "종가(${dayCandle[0].code.substringBefore("-")})",
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -311,7 +312,7 @@ fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
                 )
                 // 4열
                 Text(
-                    text ="거래량(${dayCandle[0].market.substringAfter("-")})",
+                    text ="거래량(${dayCandle[0].code.substringAfter("-")})",
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -328,17 +329,17 @@ fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
             val diffAmount = candle.tradePrice - prevClose
             val diffRate = if (prevClose != 0.0) (diffAmount / prevClose) * 100 else 0.0
 
-            val dfPrice =  when(candle.market.substringBefore("-")) {
+            val dfPrice =  when(candle.code.substringBefore("-")) {
                 "KRW" -> DecimalFormat("#,##0.#####")
                 "BTC" -> DecimalFormat("#,##0.00000000")
                 else -> DecimalFormat("#,##0.00######")
             }
 
-//            val textColor = when {
-//                diffAmount > 0 -> Color.Red
-//                diffAmount < 0 -> Color.Blue
-//                else -> Color.Black
-//            }
+            val textColor = when {
+                diffRate > 0 -> Color.Red
+                diffRate < 0 -> Color.Blue
+                else -> Color.Black
+            }
 
             Row(
                 modifier = Modifier
@@ -349,7 +350,7 @@ fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
 
                 // 일자
                 Text(
-                    text = candle.candleDateTimeKst.substring(5, 10),
+                    text = candle.candleDateTimeUtc.substring(5, 10),
                     modifier = Modifier
                         .weight(0.5f)
                         .fillMaxHeight()
@@ -371,7 +372,7 @@ fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
                         .fillMaxHeight()
                         .padding(10.dp),
                     textAlign = TextAlign.End,
-                    color = color
+                    color = textColor
                 )
                 Divider(
                     modifier = Modifier
@@ -387,13 +388,13 @@ fun DailyList(dayCandle: List<RetrofitDayCandle>, color: Color) {
                 ) {
                     Text(
                         text = String.format("%.2f%%", diffRate ?: 0.0),
-                        color = color
+                        color = textColor
                     )
 
-                    when(candle.market.substringBefore("-")) {
+                    when(candle.code.substringBefore("-")) {
                         "KRW" ->Text(
                             text = DecimalFormat("#,###.#####").format(diffAmount),
-                            color = color,
+                            color = textColor,
                             style = MaterialTheme.typography.bodySmall
                         )
                         else -> null

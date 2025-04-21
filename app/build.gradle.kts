@@ -84,4 +84,7 @@ dependencies {
     implementation(libs.retrofit)
     // gson 변환기
     implementation(libs.converter.gson)
+    //차트
+//    implementation (libs.mpandroidchart)
+
 }
