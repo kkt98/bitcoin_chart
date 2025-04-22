@@ -32,8 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
-import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.OrderBookSection
-import com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen.TradeSection
+import com.kkt981019.bitcoin_chart.screen.coindetail.chart.ChartSection
+import com.kkt981019.bitcoin_chart.screen.coindetail.orderbook.OrderBookSection
+import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
 import java.text.DecimalFormat
 
@@ -163,7 +164,7 @@ fun CoinDetailScreen(
             //호가, 차트, 시세 스크린
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
-//                    1 -> ChartSection(chartData)
+                1 -> ChartSection()
                 2 -> TradeSection(trades, dayCandle, color)
             }
 

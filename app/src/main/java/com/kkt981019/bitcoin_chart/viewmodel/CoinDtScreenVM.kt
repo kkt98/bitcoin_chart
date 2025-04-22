@@ -1,14 +1,13 @@
 package com.kkt981019.bitcoin_chart.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kkt981019.bitcoin_chart.network.Data.CandleWebSocketResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
-import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitCandleResponse
 import com.kkt981019.bitcoin_chart.network.Data.RetrofitTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.repository.RetrofitRepository
@@ -37,8 +36,8 @@ class CoinDTScreenVM @Inject constructor(
     val tradeState: LiveData<List<WebSocketTradeResponse>> = _tradeState
 
     // 일봉리스트 저장용
-    private val _dayCandleState = MutableLiveData<List<CandleWebSocketResponse>>(emptyList())
-    val dayCandleState: LiveData<List<CandleWebSocketResponse>> = _dayCandleState
+    private val _dayCandleState = MutableLiveData<List<WebSocketCandleResponse>>(emptyList())
+    val dayCandleState: LiveData<List<WebSocketCandleResponse>> = _dayCandleState
 
     // WebSocket 인스턴스 보관
     private var webSocket: WebSocket? = null
@@ -50,12 +49,12 @@ class CoinDTScreenVM @Inject constructor(
     fun startDetailAll(marketCode: String) {
         viewModelScope.launch {
             // 1) Retrofit 초기 로드
-            // 과거 100건 체결
-            val restTrades  = retrofitRepository.getTrade(marketCode)
+            // trade retrofit
+            val restTrades = retrofitRepository.getTrade(marketCode)
             _tradeState.postValue(restTrades.map { it.toWS() })
 
-            // 과거 30일 일봉
-            val restDays    = retrofitRepository.getDayCandle(marketCode)
+            // DayCandle retrofit
+            val restDays = retrofitRepository.getDayCandle(marketCode)
             _dayCandleState.postValue(restDays.map { it.toWS() })
 
             // 2) 기존 소켓 연결이 있으면 닫기
@@ -84,6 +83,7 @@ class CoinDTScreenVM @Inject constructor(
                     // 누적된 캔들 생성 (기존이 없으면 새로 받은 candle 그대로)
                     val updatedCandle = existing?.copy(
                         candleAccTradeVolume = existing.candleAccTradeVolume + candle.candleAccTradeVolume,
+                        tradePrice = candle.tradePrice
                     ) ?: candle
 
                     // 기존 리스트에서 같은 날짜는 제외하고
@@ -127,7 +127,7 @@ private fun RetrofitTradeResponse.toWS(): WebSocketTradeResponse = WebSocketTrad
     streamType         = "SNAPSHOT"
 )
 
-private fun RetrofitDayCandle.toWS(): CandleWebSocketResponse = CandleWebSocketResponse(
+private fun RetrofitCandleResponse.toWS(): WebSocketCandleResponse = WebSocketCandleResponse(
     type                   = "candle",
     code                   = market,
     candleDateTimeUtc      = candleDateTimeUtc,

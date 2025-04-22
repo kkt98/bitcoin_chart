@@ -3,7 +3,7 @@ package com.kkt981019.bitcoin_chart.network
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import com.kkt981019.bitcoin_chart.network.Data.CandleWebSocketResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
@@ -17,7 +17,7 @@ class CoinDetailWebSocketListener(
     private val onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
     private val onOrderbookUpdate: (OrderbookResponse) -> Unit,
     private val onTradeUpdate: (WebSocketTradeResponse) -> Unit,
-    private val onCandleUpdate: (CandleWebSocketResponse) -> Unit
+    private val onCandleUpdate: (WebSocketCandleResponse) -> Unit
 ) : WebSocketListener()
 {
 
@@ -62,7 +62,7 @@ class CoinDetailWebSocketListener(
                 }
                 // 4) candle
                 jsonObject.get("type")?.asString == "candle.1s" -> {
-                    val candle = Gson().fromJson(text, CandleWebSocketResponse::class.java)
+                    val candle = Gson().fromJson(text, WebSocketCandleResponse::class.java)
                     onCandleUpdate(candle)
                 }
             }

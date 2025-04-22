@@ -1,4 +1,4 @@
-package com.kkt981019.bitcoin_chart.screen.coindetail.tapscreen
+package com.kkt981019.bitcoin_chart.screen.coindetail.orderbook
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

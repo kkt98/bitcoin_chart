@@ -1,9 +1,8 @@
 package com.kkt981019.bitcoin_chart.repository
 
 import com.kkt981019.bitcoin_chart.network.Data.MarketResponse
-import com.kkt981019.bitcoin_chart.network.Data.RetrofitDayCandle
+import com.kkt981019.bitcoin_chart.network.Data.RetrofitCandleResponse
 import com.kkt981019.bitcoin_chart.network.Data.RetrofitTradeResponse
-import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import com.kkt981019.bitcoin_chart.network.UpbitApi
 import javax.inject.Inject
@@ -37,7 +36,7 @@ class RetrofitRepository @Inject constructor(private val api: UpbitApi) {
         return api.getTrade(market = market)
     }
 
-    suspend fun getDayCandle(market: String): List<RetrofitDayCandle> {
+    suspend fun getDayCandle(market: String): List<RetrofitCandleResponse> {
         return api.getDayCandles(market = market)
     }
 
