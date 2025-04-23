@@ -31,14 +31,14 @@ interface UpbitApi {
     ): List<RetrofitTradeResponse>
 
     // 일별 캔들 조회
-    @GET("/v1/candles/days")
+    @GET("v1/candles/days")
     suspend fun getDayCandles(
-        @Query("market") market: String,    // ex: "KRW-AERGO"
+        @Query("market") market: String,    // ex: "KRW-BTC"
         @Query("count") count: Int = 200
     ): List<RetrofitCandleResponse>
 
     //분별 캔들 조회
-    @GET("/v1/candles/minutes/{unit}")
+    @GET("v1/candles/minutes/{unit}")
     suspend fun getMinuteCandles(
         @Path("unit") unit: Int,          // 1분 단위
         @Query("market") market: String,      // ex: "KRW-BTC"

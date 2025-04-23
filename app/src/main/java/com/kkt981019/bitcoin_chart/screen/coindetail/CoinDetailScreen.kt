@@ -164,7 +164,7 @@ fun CoinDetailScreen(
             //호가, 차트, 시세 스크린
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
-                1 -> ChartSection()
+                1 -> ChartSection(symbol)
                 2 -> TradeSection(trades, dayCandle, color)
             }
 

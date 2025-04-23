@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail.chart
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,22 +15,35 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.CoinDtChartViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChartSection(
-    onTabSelected: (Int) -> Unit = {}
+    symbol: String,
+    onTabSelected: (Int) -> Unit = {},
+    viewModel: CoinDtChartViewModel = hiltViewModel()
 ) {
+
+    val minuteCandles by viewModel.minuteCandleState.observeAsState(emptyList())
+    val dayCandles    by viewModel.dayCandleState.observeAsState(emptyList())
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchCandles(symbol, tabIndex = 0)
+    }
     // 1) 탭 리스트와 선택 상태
     val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h", "24h")
-    var selectedIndex by remember { mutableStateOf(3) } // 기본 “일” 선택
+    var selectedIndex by remember { mutableStateOf(0) } // 기본 “일” 선택
 
     // 2) 가로 스크롤 가능한 Row에 탭 표시
     Row(
@@ -52,6 +66,7 @@ fun ChartSection(
                     .clickable {
                         selectedIndex = index
                         onTabSelected(index)
+                        viewModel.fetchCandles(symbol, index)
                     }
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
