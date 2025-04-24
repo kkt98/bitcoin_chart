@@ -92,7 +92,8 @@ fun CombinedCandleVolumeChart(
                 description.isEnabled = false
                 setDrawGridBackground(false)
                 setPinchZoom(true)
-                axisRight.isEnabled = false
+                axisLeft.isEnabled         = false
+                axisRight.isEnabled        = true
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
                 legend.isEnabled = false
             }
@@ -103,43 +104,40 @@ fun CombinedCandleVolumeChart(
                 return@AndroidView
             }
 
-            // 1) X축 레이블 (예: "02:26")
-            val labels = data.map { it.candleDateTimeKst.substring(11, 16) }
+            // 1) 데이터 순서 뒤집기 (오래된 순 -> 최신 순)
+            val sortedData = data.asReversed()
+//            "0.9"
+            // 2) X축 라벨 준비
+            val labels = sortedData.map { c ->
+                when (c.unit) {
+                    1, 3, 5, 15, 30, 60, 240 ->
+                        c.candleDateTimeKst.substring(11, 16)  // 분봉
+                    else ->
+                        c.candleDateTimeKst.substring(0, 10)   // 일봉
+                }
+            }
             chart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
 
-            // 2) 캔들 엔트리
-            val candleEntries = data.mapIndexed { i, c ->
+            // 3) 캔들 엔트리 생성
+            val candleEntries = sortedData.mapIndexed { i, c ->
                 CandleEntry(
                     i.toFloat(),
                     c.highPrice.toFloat(),
                     c.lowPrice.toFloat(),
                     c.openingPrice.toFloat(),
-                    c.tradePrice.toFloat()   // tradePrice가 종가입니다
+                    c.tradePrice.toFloat()   // 종가
                 )
             }
             val candleSet = CandleDataSet(candleEntries, "OHLC").apply {
-                decreasingColor = android.graphics.Color.BLUE
-                increasingColor = android.graphics.Color.RED
-                shadowColorSameAsCandle = true
-                axisDependency = YAxis.AxisDependency.LEFT
+                decreasingColor          = android.graphics.Color.BLUE
+                increasingColor          = android.graphics.Color.RED
+                shadowColorSameAsCandle  = true
+                axisDependency           = YAxis.AxisDependency.RIGHT
                 setDrawValues(false)
             }
 
-            // 3) 볼륨 바 엔트리
-            val barEntries = data.mapIndexed { i, c ->
-                BarEntry(i.toFloat(), c.candleAccTradeVolume.toFloat())
-            }
-//            val barSet = BarDataSet(barEntries, "Volume").apply {
-//                color = android.graphics.Color.DKGRAY
-//                axisDependency = YAxis.AxisDependency.RIGHT
-//                setDrawValues(false)
-//            }
-
-            // 4) CombinedData에 합치기
+            // 4) 차트에 데이터 적용
             chart.data = CandleData(candleSet)
-            chart.invalidate()
-
-
             chart.invalidate()
         },
         modifier = modifier
