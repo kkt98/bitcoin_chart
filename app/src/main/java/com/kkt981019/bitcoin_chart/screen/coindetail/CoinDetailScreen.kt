@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail
 
+import ChartSection
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
-import com.kkt981019.bitcoin_chart.screen.coindetail.chart.ChartSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.orderbook.OrderBookSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
