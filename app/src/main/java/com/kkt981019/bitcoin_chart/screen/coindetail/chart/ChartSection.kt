@@ -96,6 +96,22 @@ fun CombinedCandleVolumeChart(
                 axisRight.isEnabled        = true
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
                 legend.isEnabled = false
+
+                // --- 확대/이동 가능하도록 설정 ---
+                isDragEnabled      = true    // 드래그로 이동 허용
+                setScaleEnabled(true)        // 전체 스케일링 허용
+                setScaleXEnabled(true)       // X축 스케일링 허용
+                setScaleYEnabled(false)      // Y축은 고정
+
+                // 최대/최소 확대 배율 지정 (optional)
+                viewPortHandler.setMaximumScaleX(3f)   // 최대 4배 확대
+                viewPortHandler.setMinimumScaleX(1f)   // 최소 1배(원래 크기)
+
+                // 한 화면에 최대로 보일 엔트리 개수 지정
+                // 예: MAX 50 캔들, MIN 10 캔들
+                // 한 화면에 보일 캔들 개수: 최대 30개, 최소 30개
+                setVisibleXRangeMaximum(50f)
+                setVisibleXRangeMinimum(10f)
             }
         },
         update = { chart ->
@@ -138,6 +154,17 @@ fun CombinedCandleVolumeChart(
 
             // 4) 차트에 데이터 적용
             chart.data = CandleData(candleSet)
+            chart.invalidate()
+
+            val scaleX = 5f
+            val scaleY = 1f
+// x축 기준점: 최신 데이터 인덱스 (sortedData.size.toFloat())
+// y축 기준점: 0f 로 설정
+            chart.zoom(scaleX, scaleY, sortedData.size.toFloat(), 0f)
+
+// 기준점으로 이동
+            chart.moveViewToX(sortedData.size.toFloat())
+
             chart.invalidate()
         },
         modifier = modifier
