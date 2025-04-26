@@ -16,8 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.mikephil.charting.charts.CandleStickChart
-import com.github.mikephil.charting.charts.CombinedChart
-import com.github.mikephil.charting.charts.CombinedChart.DrawOrder
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
@@ -145,24 +143,30 @@ fun CombinedCandleVolumeChart(
                 )
             }
             val candleSet = CandleDataSet(candleEntries, "OHLC").apply {
-                decreasingColor          = android.graphics.Color.BLUE
-                increasingColor          = android.graphics.Color.RED
-                shadowColorSameAsCandle  = true
-                axisDependency           = YAxis.AxisDependency.RIGHT
+                // ─── 색상 ───
+                decreasingColor         = android.graphics.Color.BLUE
+                increasingColor         = android.graphics.Color.RED
+
+                // ─── 페인트 스타일 ───
+                setIncreasingPaintStyle(android.graphics.Paint.Style.FILL)
+                setDecreasingPaintStyle(android.graphics.Paint.Style.FILL)
+                setShowCandleBar(true)
+                shadowColorSameAsCandle = true
+                axisDependency = YAxis.AxisDependency.RIGHT
                 setDrawValues(false)
             }
 
             // 4) 차트에 데이터 적용
             chart.data = CandleData(candleSet)
-            chart.invalidate()
+
+            // 이전 줌 리셋
+            chart.fitScreen()
 
             val scaleX = 5f
             val scaleY = 1f
-// x축 기준점: 최신 데이터 인덱스 (sortedData.size.toFloat())
-// y축 기준점: 0f 로 설정
             chart.zoom(scaleX, scaleY, sortedData.size.toFloat(), 0f)
 
-// 기준점으로 이동
+            // 뷰포트 이동
             chart.moveViewToX(sortedData.size.toFloat())
 
             chart.invalidate()

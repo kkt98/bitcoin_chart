@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -52,6 +55,8 @@ fun CoinDetailScreen(
 //        viewModel.startDetailDay(symbol)
     }
 
+    var isFavorite by remember { mutableStateOf(false) }
+
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState()
@@ -71,6 +76,19 @@ fun CoinDetailScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "뒤로가기 버튼"
+                        )
+                    }
+                },
+                actions = {
+                    IconToggleButton(
+                        checked = isFavorite,
+                        onCheckedChange = { isFavorite = it }
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                            contentDescription = if (isFavorite) "즐겨찾기 해제" else "즐겨찾기",
+                            tint = if (isFavorite) Color(0xFF2979FF) else Color.Gray,
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }

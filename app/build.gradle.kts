@@ -74,16 +74,15 @@ dependencies {
     implementation (libs.androidx.hilt.navigation.compose)
     kapt(libs.hilt.android.compiler)
     implementation (libs.androidx.runtime.livedata)
-
     implementation (libs.androidx.lifecycle.livedata.ktx.v261)
-
     //웹소켓
     implementation(libs.okhttp)
-
     // 레트로핏
     implementation(libs.retrofit)
     // gson 변환기
     implementation(libs.converter.gson)
     //차트
     implementation (libs.mpandroidchart)
+    //Room
+
 }
