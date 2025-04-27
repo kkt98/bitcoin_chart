@@ -46,8 +46,9 @@ import java.text.DecimalFormat
 fun CoinDetailScreen(
     symbol: String,
     koreanName: String,
+    englishName: String,
     navController: NavController,
-    viewModel: CoinDTScreenVM = hiltViewModel() // Hilt로 주입받음
+    viewModel: CoinDTScreenVM = hiltViewModel(), // Hilt로 주입받음
 ) {
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {

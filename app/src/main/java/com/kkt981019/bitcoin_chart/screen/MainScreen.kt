@@ -202,7 +202,7 @@ fun MainScreen(
                         backgroundColor = backgroundColor,
                         useLanguage, selectedTabIndex,
                         onClick = {
-                            navController.navigate("coin_detail/${coin.symbol}/${coin.koreanName}")
+                            navController.navigate("coin_detail/${coin.symbol}/${coin.koreanName}/${coin.englishName}")
                             currentSocket?.close(1000, "change page")
                         }
                     )

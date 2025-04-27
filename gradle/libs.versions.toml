@@ -24,6 +24,7 @@ navigationFragmentKtx = "2.8.9"
 navigationUiKtx = "2.8.9"
 okhttp = "4.9.1"
 retrofit = "2.9.0"
+roomRuntime = "2.7.1"
 runtimeLivedata = "<compose_version>"
 sqliteJdbc = "3.34.0"
 workRuntime = "2.10.0"
@@ -36,6 +37,8 @@ androidx-hilt-navigation-fragment = { module = "androidx.hilt:hilt-navigation-fr
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltNavigationFragment" }
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-livedata-ktx-v261 = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "runtimeLivedata" }
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntime" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }

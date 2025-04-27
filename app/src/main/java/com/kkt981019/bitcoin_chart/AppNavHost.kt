@@ -17,15 +17,22 @@ fun AppNavHost() {
             MainScreen(navController = navController)
         }
         composable(
-            route = "coin_detail/{symbol}/{koreanName}",
+            route = "coin_detail/{symbol}/{koreanName}/{englishName}",
             arguments = listOf(
                 navArgument("symbol") { type = NavType.StringType },
-                navArgument("koreanName") { type = NavType.StringType }
+                navArgument("koreanName") { type = NavType.StringType },
+                navArgument("englishName") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val symbol = backStackEntry.arguments?.getString("symbol") ?: ""
             val koreanName = backStackEntry.arguments?.getString("koreanName") ?: ""
-            CoinDetailScreen(symbol = symbol, koreanName = koreanName, navController = navController)
+            val englishName = backStackEntry.arguments?.getString("englishName") ?: ""
+            CoinDetailScreen(
+                symbol = symbol,
+                koreanName = koreanName,
+                navController = navController,
+                englishName = englishName
+            )
         }
     }
 }

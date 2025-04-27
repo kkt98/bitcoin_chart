@@ -84,5 +84,6 @@ dependencies {
     //차트
     implementation (libs.mpandroidchart)
     //Room
-
+    implementation(libs.androidx.room.runtime)
+    kapt (libs.androidx.room.compiler)
 }
