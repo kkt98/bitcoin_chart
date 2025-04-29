@@ -1,6 +1,7 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail
 
 import ChartSection
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +40,7 @@ import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.screen.coindetail.orderbook.OrderBookSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
+import com.kkt981019.bitcoin_chart.viewmodel.FavoriteViewModel
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +51,7 @@ fun CoinDetailScreen(
     englishName: String,
     navController: NavController,
     viewModel: CoinDTScreenVM = hiltViewModel(), // Hilt로 주입받음
+    favoriteViewModel: FavoriteViewModel = hiltViewModel()
 ) {
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {
@@ -56,13 +59,17 @@ fun CoinDetailScreen(
 //        viewModel.startDetailDay(symbol)
     }
 
-    var isFavorite by remember { mutableStateOf(false) }
+    val favList by favoriteViewModel.favorites.observeAsState(emptyList())
+    val isFavorite = remember(favList) {
+        favList.any { it.market == symbol }
+    }
+
 
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
-    val orderbook by viewModel.orderbookState.observeAsState()
-    val trades by viewModel.tradeState.observeAsState(emptyList())
-    val dayCandle by viewModel.dayCandleState.observeAsState(emptyList())
+    val orderbook by viewModel.orderbookState.observeAsState() //호가정보
+    val trades by viewModel.tradeState.observeAsState(emptyList()) //시세정보
+    val dayCandle by viewModel.dayCandleState.observeAsState(emptyList()) //시세정보
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -83,7 +90,13 @@ fun CoinDetailScreen(
                 actions = {
                     IconToggleButton(
                         checked = isFavorite,
-                        onCheckedChange = { isFavorite = it }
+                        onCheckedChange = {
+                            favoriteViewModel.toggleFavorite(
+                                market = symbol,
+                                kor    = koreanName,
+                                eng    = englishName
+                            )
+                        }
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
@@ -187,6 +200,7 @@ fun CoinDetailScreen(
                 2 -> TradeSection(trades, dayCandle, color)
             }
 
+            Log.d("asdasdasd1234", favList.toString())
         }
     }
 }
