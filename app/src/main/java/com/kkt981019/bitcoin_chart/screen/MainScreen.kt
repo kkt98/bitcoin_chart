@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.screen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -255,14 +256,15 @@ fun CoinItemRow(
         "EVEN" -> Color.Black
         else   -> Color.Blue
     }
-    val dfPrice = when (selectedTabIndex) {
-        0    -> DecimalFormat("#,##0.#####")
-        1    -> DecimalFormat("0.00000000")
+    val dfPrice = when {
+        coin.symbol.startsWith("KRW") -> DecimalFormat("#,##0.#####")
+        coin.symbol.startsWith("BTC")    -> DecimalFormat("0.00000000")
         else -> DecimalFormat("#,##0.000#####")
     }
-    val volumeText = when (selectedTabIndex) {
-        0 -> "${DecimalFormat("#,##0").format((coin.volume ?: 0.0) / 1_000_000)}백만"
-        1 -> String.format("%.3f", coin.volume)
+
+    val volumeText = when {
+        coin.symbol.startsWith("KRW") -> "${DecimalFormat("#,##0").format((coin.volume ?: 0.0) / 1_000_000)}백만"
+        coin.symbol.startsWith("BTC") -> String.format("%.3f", coin.volume)
         else -> String.format("%,.3f", coin.volume)
     }
     val name = if (useEnglish) coin.englishName else coin.koreanName
