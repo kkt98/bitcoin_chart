@@ -238,8 +238,8 @@ fun CoinListHeader(
                 Text("현재가", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.width(4.dp))
                 // price 컬럼 전용 tint
-                val priceUpTint   = if (sortBy=="price"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Black
-                val priceDownTint = if (sortBy=="price"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Black
+                val priceUpTint   = if (sortBy=="price"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
+                val priceDownTint = if (sortBy=="price"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Gray
                 Column(
                     verticalArrangement   = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -269,8 +269,8 @@ fun CoinListHeader(
                 Text("전일대비", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.width(4.dp))
                 // rate 컬럼 전용 tint
-                val rateUpTint   = if (sortBy=="rate"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Black
-                val rateDownTint = if (sortBy=="rate"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Black
+                val rateUpTint   = if (sortBy=="rate"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
+                val rateDownTint = if (sortBy=="rate"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Gray
                 Column(
                     verticalArrangement   = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -300,8 +300,8 @@ fun CoinListHeader(
                 Text("거래대금", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.width(4.dp))
                 // volume 컬럼 전용 tint
-                val volUpTint   = if (sortBy=="volume"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Black
-                val volDownTint = if (sortBy=="volume"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Black
+                val volUpTint   = if (sortBy=="volume"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
+                val volDownTint = if (sortBy=="volume"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Gray
                 Column(
                     verticalArrangement   = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
