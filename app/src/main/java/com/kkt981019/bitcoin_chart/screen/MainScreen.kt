@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.screen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,22 +8,24 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Black
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.network.Data.CoinData
+import com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters
 import com.kkt981019.bitcoin_chart.viewmodel.MainScreenVM
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
+import kotlin.text.substringBefore
 
 enum class PriceSort { NONE, DESC, ASC }
 
@@ -138,12 +139,12 @@ fun MainScreen(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-
             // 헤더 (0..2 탭만 보여줘)
             if (selectedTab in 0..2) {
                 CoinListHeader(
                     useEnglish = useEnglish,
+                    priceSort = priceSort,
+                    sortBy = sortBy,
                     onToggleLanguage = { useEnglish = !useEnglish },
                     onCurrentPriceClick = {
                         priceSort = when (priceSort) {
@@ -194,6 +195,8 @@ fun MainScreen(
 @Composable
 fun CoinListHeader(
     useEnglish: Boolean,
+    priceSort: PriceSort,
+    sortBy: String,              // ← 여기 추가
     onToggleLanguage: () -> Unit,
     onCurrentPriceClick: () -> Unit,
     onChangeRateClick: () -> Unit,
@@ -202,46 +205,131 @@ fun CoinListHeader(
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = if (useEnglish) "영문명" else "한글명",
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onToggleLanguage),
-            textAlign = TextAlign.Start,
-            style = MaterialTheme.typography.bodySmall
-        )
-        Text(
-            text = "현재가",
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onCurrentPriceClick),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall
-        )
-        Text(
-            text = "전일대비",
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onChangeRateClick),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall
-        )
-        Text(
-            text = "거래대금",
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onVolumeClick),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodySmall
-        )
+
+        // (1) 이름
+        Box(modifier = Modifier.weight(1f)
+            .clickable(onClick = onToggleLanguage),
+            contentAlignment = Alignment.CenterStart)
+        {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (useEnglish) "영문명" else "한글명",
+//                textAlign = TextAlign.Start,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    painter = painterResource(R.drawable.exchange),
+                    contentDescription = null,
+                    modifier = Modifier.size(8.dp),
+                )
+            }
+        }
+
+        // (2) 현재가
+        Box(
+            modifier = Modifier.weight(1f).clickable(onClick = onCurrentPriceClick),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("현재가", style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.width(4.dp))
+                // price 컬럼 전용 tint
+                val priceUpTint   = if (sortBy=="price"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Black
+                val priceDownTint = if (sortBy=="price"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Black
+                Column(
+                    verticalArrangement   = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        painter           = painterResource(R.drawable.triangle_up),
+                        contentDescription = null,
+                        modifier          = Modifier.size(8.dp),
+                        tint              = priceUpTint
+                    )
+                    Icon(
+                        painter           = painterResource(R.drawable.triangle_down),
+                        contentDescription = null,
+                        modifier          = Modifier.size(8.dp),
+                        tint              = priceDownTint
+                    )
+                }
+            }
+        }
+
+        // (3) 전일대비
+        Box(
+            modifier = Modifier.weight(1f).clickable(onClick = onChangeRateClick),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("전일대비", style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.width(4.dp))
+                // rate 컬럼 전용 tint
+                val rateUpTint   = if (sortBy=="rate"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Black
+                val rateDownTint = if (sortBy=="rate"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Black
+                Column(
+                    verticalArrangement   = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        painter           = painterResource(R.drawable.triangle_up),
+                        contentDescription = null,
+                        modifier          = Modifier.size(8.dp),
+                        tint              = rateUpTint
+                    )
+                    Icon(
+                        painter           = painterResource(R.drawable.triangle_down),
+                        contentDescription = null,
+                        modifier          = Modifier.size(8.dp),
+                        tint              = rateDownTint
+                    )
+                }
+            }
+        }
+
+        // (4) 거래대금
+        Box(
+            modifier = Modifier.weight(1f).clickable(onClick = onVolumeClick),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("거래대금", style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.width(4.dp))
+                // volume 컬럼 전용 tint
+                val volUpTint   = if (sortBy=="volume"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Black
+                val volDownTint = if (sortBy=="volume"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Black
+                Column(
+                    verticalArrangement   = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        painter           = painterResource(R.drawable.triangle_up),
+                        contentDescription = null,
+                        modifier          = Modifier.size(8.dp),
+                        tint              = volUpTint
+                    )
+                    Icon(
+                        painter           = painterResource(R.drawable.triangle_down),
+                        contentDescription = null,
+                        modifier          = Modifier.size(8.dp),
+                        tint              = volDownTint
+                    )
+                }
+            }
+        }
     }
+
     Divider(
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+        color     = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
         thickness = 0.5.dp
     )
 }
+
+
 
 @Composable
 fun CoinItemRow(
@@ -256,17 +344,15 @@ fun CoinItemRow(
         "EVEN" -> Color.Black
         else   -> Color.Blue
     }
-    val dfPrice = when {
-        coin.symbol.startsWith("KRW") -> DecimalFormat("#,##0.#####")
-        coin.symbol.startsWith("BTC")    -> DecimalFormat("0.00000000")
-        else -> DecimalFormat("#,##0.000#####")
-    }
+
+    val format= getTradeFormatters(coin.symbol.substringBefore('-'))
 
     val volumeText = when {
         coin.symbol.startsWith("KRW") -> "${DecimalFormat("#,##0").format((coin.volume ?: 0.0) / 1_000_000)}백만"
         coin.symbol.startsWith("BTC") -> String.format("%.3f", coin.volume)
         else -> String.format("%,.3f", coin.volume)
     }
+
     val name = if (useEnglish) coin.englishName else coin.koreanName
 
     // 이전 가격와 테두리 색상 상태를 기억합니다.
@@ -280,17 +366,17 @@ fun CoinItemRow(
             // 상승한 경우: 빨간색 테두리 깜빡임
             repeat(3) {
                 borderColor.value = Color.Red
-                delay(80)
+                delay(50)
                 borderColor.value = Color.Transparent
-                delay(80)
+                delay(50)
             }
         } else if (newPrice < previousPrice.value) {
             // 하락한 경우: 파란색 테두리 깜빡임
             repeat(3) {
                 borderColor.value = Color.Blue
-                delay(80)
+                delay(50)
                 borderColor.value = Color.Transparent
-                delay(80)
+                delay(50)
             }
         }
         // 변동이 없으면 아무 효과 없음
@@ -308,15 +394,24 @@ fun CoinItemRow(
 
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         Column(Modifier.weight(1f)) {
             Text(name, style = MaterialTheme.typography.bodyMedium)
             Text(coin.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
+
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-            Text(dfPrice.format(coin.tradePrice ?: 0.0), color = color)
+            Text(format.priceDf.format(coin.tradePrice ?: 0.0), color = color)
         }
+
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(String.format("%.2f%%", (coin.changeRate ?: 0.0) * 100), color = color)
+            when (selectedTabIndex) {
+                0 -> Text(text = DecimalFormat("#,##0.###").format(coin.signed ?: 0.0),
+                    style = MaterialTheme.typography.labelSmall, color = color)
+                1 -> null
+                2 -> null
+            }
         }
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(volumeText, color = Color.Black)

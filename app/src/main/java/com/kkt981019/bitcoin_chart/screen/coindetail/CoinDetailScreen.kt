@@ -39,6 +39,7 @@ import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.screen.coindetail.orderbook.OrderBookSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
+import com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
 import com.kkt981019.bitcoin_chart.viewmodel.FavoriteViewModel
 import java.text.DecimalFormat
@@ -56,7 +57,6 @@ fun CoinDetailScreen(
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {
         viewModel.startDetailAll(symbol)
-//        viewModel.startDetailDay(symbol)
     }
 
     val favList by favoriteViewModel.favorites.observeAsState(emptyList())
@@ -109,19 +109,13 @@ fun CoinDetailScreen(
             )
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-                // 데이터가 도착하면 Row로 세 숫자를 균등하게 표시
-
-            // 현재가 소수점 표시용 포맷터
-            val df = when {
-                symbol.startsWith("KRW") -> DecimalFormat("#,##0.#####")
-                symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
-                else -> DecimalFormat("#,##0.00######")
-            }
+            val format= getTradeFormatters(symbol.substringBefore('-'))
 
             val si = DecimalFormat("#,##0.###")
 
@@ -144,7 +138,7 @@ fun CoinDetailScreen(
             Column(modifier = Modifier.padding(16.dp)) {
                 // trade_price는 숫자로 변환 후 포맷팅
                 Text(
-                    text = df.format(ticker?.trade_price?.toDoubleOrNull() ?: 0.0),
+                    text = format.priceDf.format(ticker?.trade_price?.toDoubleOrNull() ?: 0.0),
                     style = MaterialTheme.typography.headlineSmall,
                     color = color
                 )
@@ -199,8 +193,6 @@ fun CoinDetailScreen(
                 1 -> ChartSection(symbol)
                 2 -> TradeSection(trades, dayCandle, color)
             }
-
-            Log.d("asdasdasd1234", favList.toString())
         }
     }
 }

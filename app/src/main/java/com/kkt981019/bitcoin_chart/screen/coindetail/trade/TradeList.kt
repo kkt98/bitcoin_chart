@@ -41,32 +41,7 @@ fun TradeList(
     val coinName = trades[0].code.substringAfter('-') //코인이름(영문) ex) BTC
     val moneyName = trades[0].code.substringBefore('-') //KRW or BTC or USDT
 
-    // 체결시간이 UTC라 KST로 변경
-    val changeToKoreaTime = remember {
-        DateTimeFormatter.ofPattern("HH:mm:ss")
-            .withZone(ZoneId.of("Asia/Seoul"))
-    }
-
-    //체결가격
-    val dfPrice =  when(moneyName) {
-        "KRW" -> DecimalFormat("#,##0.#####")
-        "BTC" -> DecimalFormat("#,##0.00000000")
-        else -> DecimalFormat("#,##0.00######")
-    }
-
-    //체결량
-    val dfCode =  when(moneyName) {
-        "KRW" -> DecimalFormat("#,##0.00000000")
-        "BTC" -> DecimalFormat("#,##0.00000000")
-        else -> DecimalFormat("#,##0.00######")
-    }
-
-    //체결액
-    val dfAmount =  when(moneyName) {
-        "KRW" -> DecimalFormat("#,##0")
-        "BTC" -> DecimalFormat("#,##0.00000000")
-        else -> DecimalFormat("#,##0.000")
-    }
+    val format = com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters(moneyName)
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         stickyHeader {
@@ -150,7 +125,7 @@ fun TradeList(
 //
                 // 체결가격
                 Text(
-                    text = dfPrice.format(t.tradePrice),
+                    text = format.priceDf.format(t.tradePrice),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -168,7 +143,7 @@ fun TradeList(
                 val amount = t.tradePrice * t.tradeVolume
                 // 체결액, 체결량
                 Text(                        //체결량                            //체결액
-                    text = if (changeVolume) dfCode.format(t.tradeVolume) else dfAmount.format(amount),
+                    text = if (changeVolume) format.volumeDf.format(t.tradeVolume) else format.amountDf.format(amount),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()

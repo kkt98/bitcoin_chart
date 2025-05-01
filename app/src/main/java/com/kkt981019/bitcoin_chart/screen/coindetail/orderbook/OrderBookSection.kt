@@ -31,11 +31,13 @@ fun OrderBookSection(
     val units = orderbook?.orderbook_units ?: emptyList()
 
     val dfPrice =  when {
-        symbol.startsWith("KRW") -> DecimalFormat("#,##0.0####")
+        symbol.startsWith("KRW") -> DecimalFormat("#,##0.#####")
         symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
         else -> DecimalFormat("#,##0.000#####")
     }
     val dsPrice = DecimalFormat("#,##0.000")
+
+    val format = com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters(symbol.substringBefore("-"))
 
     val baseRateValue = changeRate.replace("%", "").toDoubleOrNull() ?: 0.0
 
@@ -99,7 +101,7 @@ fun OrderBookSection(
                         ) {
 
                         Text(
-                            text = dfPrice.format(unit.askPrice),
+                            text = format.priceDf.format(unit.askPrice),
                             style = MaterialTheme.typography.bodyMedium,
                             color = diffColor
                         )
@@ -167,7 +169,7 @@ fun OrderBookSection(
                 ) {
                     Row {
                         Text(
-                        text = dfPrice.format(unit.bidPrice),
+                        text = format.priceDf.format(unit.bidPrice),
                         style = MaterialTheme.typography.bodyMedium,
                         color = diffColor
                         )

@@ -107,11 +107,7 @@ fun DailyList(dayCandle: List<WebSocketCandleResponse>) {
             val diffAmount = candle.tradePrice - prevClose
             val diffRate = if (prevClose != 0.0) (diffAmount / prevClose) * 100 else 0.0
 
-            val dfPrice =  when(candle.code.substringBefore("-")) {
-                "KRW" -> DecimalFormat("#,##0.#####")
-                "BTC" -> DecimalFormat("#,##0.00000000")
-                else -> DecimalFormat("#,##0.00######")
-            }
+            val format =  com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters(candle.code.substringBefore("-"))
 
             val textColor = when {
                 diffRate > 0 -> Color.Red
@@ -144,7 +140,7 @@ fun DailyList(dayCandle: List<WebSocketCandleResponse>) {
 
                 // 종가
                 Text(
-                    text = dfPrice.format(candle.tradePrice),
+                    text = format.priceDf.format(candle.tradePrice),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
