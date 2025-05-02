@@ -42,7 +42,6 @@ class CoinDetailWebSocketListener(
     override fun onMessage(webSocket: WebSocket, text: String) {
         try {
             val jsonObject = JsonParser().parse(text).asJsonObject
-            Log.d("asdasdasd33", jsonObject.toString())
 
             when {
                 // 1) trade
