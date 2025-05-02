@@ -1,6 +1,5 @@
-package com.kkt981019.bitcoin_chart.network
+package com.kkt981019.bitcoin_chart.network.websoketlistener
 
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
@@ -34,10 +33,6 @@ class CoinDetailWebSocketListener(
         """.trimIndent()
         webSocket.send(subscribeMessage)
     }
-
-
-//    {"type": "candle", "codes": ["$marketCode"], "interval": "1m"}
-
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         try {

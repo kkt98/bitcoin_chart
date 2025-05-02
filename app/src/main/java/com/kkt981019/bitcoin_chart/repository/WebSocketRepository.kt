@@ -1,7 +1,7 @@
 package com.kkt981019.bitcoin_chart.repository
 
-import com.kkt981019.bitcoin_chart.network.CoinDetailWebSocketListener
-import com.kkt981019.bitcoin_chart.network.CoinWebSocketListener
+import com.kkt981019.bitcoin_chart.network.websoketlistener.CoinDetailWebSocketListener
+import com.kkt981019.bitcoin_chart.network.websoketlistener.CoinWebSocketListener
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse

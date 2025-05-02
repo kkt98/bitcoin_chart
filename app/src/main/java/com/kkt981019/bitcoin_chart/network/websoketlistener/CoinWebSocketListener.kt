@@ -1,4 +1,4 @@
-package com.kkt981019.bitcoin_chart.network
+package com.kkt981019.bitcoin_chart.network.websoketlistener
 
 import com.google.gson.Gson
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
