@@ -24,7 +24,7 @@ class CoinDTScreenVM @Inject constructor(
 ) : ViewModel() {
 
     // Ticker 데이터를 저장할 LiveData
-    private val _tickerState    = MutableLiveData<CoinDetailResponse?>(null)
+    private val _tickerState = MutableLiveData<CoinDetailResponse?>(null)
     val tickerState: LiveData<CoinDetailResponse?> = _tickerState
 
     // 주문호가 데이터 저장용
@@ -32,7 +32,7 @@ class CoinDTScreenVM @Inject constructor(
     val orderbookState: LiveData<OrderbookResponse?> = _orderbookState
 
     // 체결리스트 저장용
-    private val _tradeState     = MutableLiveData<List<WebSocketTradeResponse>>(emptyList())
+    private val _tradeState = MutableLiveData<List<WebSocketTradeResponse>>(emptyList())
     val tradeState: LiveData<List<WebSocketTradeResponse>> = _tradeState
 
     // 일봉리스트 저장용
@@ -53,7 +53,7 @@ class CoinDTScreenVM @Inject constructor(
             val restTrades = retrofitRepository.getTrade(marketCode)
             _tradeState.postValue(restTrades.map { it.toWS() })
 
-            // DayCandle retrofit
+            // DayCandle retrofit (trade)
             val restDays = retrofitRepository.getDayCandle(marketCode)
             _dayCandleState.postValue(restDays.map { it.toWS() })
 

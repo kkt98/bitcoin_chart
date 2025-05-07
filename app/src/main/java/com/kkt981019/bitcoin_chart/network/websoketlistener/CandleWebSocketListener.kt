@@ -8,7 +8,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 
-class ChartWebSocketListener(
+class CandleWebSocketListener(
     private val marketCode: String,
     private val interval: String = "1s",  // ex: "1s", "1m", "1h", "1d"
     private val onCandleUpdate: (WebSocketCandleResponse) -> Unit
