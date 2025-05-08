@@ -19,7 +19,6 @@ class CoinDetailWebSocketListener(
     private val onCandleUpdate: (WebSocketCandleResponse) -> Unit
 ) : WebSocketListener()
 {
-
     override fun onOpen(webSocket: WebSocket, response: Response) {
         // 티커, 호가, 캔들 등 필요한 구독 메시지를 보내기
         val subscribeMessage = """

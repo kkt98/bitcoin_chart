@@ -30,17 +30,11 @@ fun OrderBookSection(
     val currentPrice = ticker?.trade_price?.toDoubleOrNull() ?: 0.0
     val units = orderbook?.orderbook_units ?: emptyList()
 
-    val dfPrice =  when {
-        symbol.startsWith("KRW") -> DecimalFormat("#,##0.#####")
-        symbol.startsWith("BTC") -> DecimalFormat("0.00000000")
-        else -> DecimalFormat("#,##0.000#####")
-    }
     val dsPrice = DecimalFormat("#,##0.000")
 
     val format = com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters(symbol.substringBefore("-"))
 
     val baseRateValue = changeRate.replace("%", "").toDoubleOrNull() ?: 0.0
-
 
     LazyColumn(
         modifier = Modifier
@@ -126,6 +120,8 @@ fun OrderBookSection(
                 }
             }
         }
+
+
         // --------------------------------
         // 2) 매수 섹션
         // --------------------------------

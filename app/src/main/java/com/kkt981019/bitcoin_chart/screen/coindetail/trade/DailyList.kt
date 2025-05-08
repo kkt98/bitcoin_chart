@@ -17,20 +17,38 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
+import com.kkt981019.bitcoin_chart.viewmodel.CoinDtTradeViewModel
 import java.text.DecimalFormat
 import kotlin.text.substringAfter
 import kotlin.text.substringBefore
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DailyList(dayCandle: List<WebSocketCandleResponse>) {
+fun DailyList(
+    symbol: String,
+    viewModel: CoinDtTradeViewModel = hiltViewModel()
+) {
+
+    LaunchedEffect(symbol) {
+        viewModel.startCandle(symbol)
+    }
+
+    val dayCandle by viewModel.dayCandleState.observeAsState(emptyList())
+
+    if (dayCandle.isEmpty()) {
+        return
+    }
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         stickyHeader {
@@ -41,7 +59,6 @@ fun DailyList(dayCandle: List<WebSocketCandleResponse>) {
                     .height(IntrinsicSize.Min)      // 자식 높이에 맞춰서
                     .background(Color.White)
                     .border(1.dp, color = Color.LightGray)
-//                    .padding(vertical = 8.dp),
             ) {
                 // 1열
                 Text(

@@ -10,14 +10,13 @@ import okio.ByteString
 
 class CandleWebSocketListener(
     private val marketCode: String,
-    private val interval: String = "1s",  // ex: "1s", "1m", "1h", "1d"
     private val onCandleUpdate: (WebSocketCandleResponse) -> Unit
 ) : WebSocketListener() {
     override fun onOpen(ws: WebSocket, resp: Response) {
         val msg = """
         [
           {"ticket":"candle-ticket"},
-          {"type":"candle.$interval","codes":[${Gson().toJson(marketCode)}]}
+          {"type":"candle.1s","codes":[${Gson().toJson(marketCode)}]}
         ]
         """.trimIndent()
         ws.send(msg)
@@ -25,7 +24,7 @@ class CandleWebSocketListener(
     override fun onMessage(ws: WebSocket, text: String) {
         try {
             val json = JsonParser().parse(text).asJsonObject
-            if (json.get("type")?.asString == "candle.$interval") {
+            if (json.get("type")?.asString == "candle.1s") {
                 val candle = Gson().fromJson(text, WebSocketCandleResponse::class.java)
                 onCandleUpdate(candle)
             }

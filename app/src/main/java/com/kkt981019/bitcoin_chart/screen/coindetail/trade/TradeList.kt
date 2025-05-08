@@ -16,43 +16,53 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
-import java.text.DecimalFormat
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.util.DecimalFormat
+import com.kkt981019.bitcoin_chart.viewmodel.CoinDtTradeViewModel
 import kotlin.text.substringAfter
 import kotlin.text.substringBefore
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TradeList(
-    trades: List<WebSocketTradeResponse>,
+    symbol: String,
     color: Color,
     changeVolume: Boolean,
-    onChangeVolume: () -> Unit
+    onChangeVolume: () -> Unit,
+    viewModel: CoinDtTradeViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(symbol) {
+        viewModel.startTrade(symbol)
+    }
 
-    val coinName = trades[0].code.substringAfter('-') //코인이름(영문) ex) BTC
-    val moneyName = trades[0].code.substringBefore('-') //KRW or BTC or USDT
+    val trades by viewModel.tradeState.observeAsState(emptyList())
 
-    val format = com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters(moneyName)
+    if (trades.isEmpty()) {
+        return
+    }
+
+    // 2) 안전하게 첫 요소에 접근
+    val code = trades.first().code
+    val coinName = code.substringAfter('-') // ex: "BTC"
+    val moneyName = code.substringBefore('-') // ex: "KRW"
+    val format = DecimalFormat.getTradeFormatters(moneyName)
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         stickyHeader {
-            // 헤더도 IntrinsicSize.Min 적용
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min)      // 자식 높이에 맞춰서
+                    .height(IntrinsicSize.Min)
                     .background(Color.White)
                     .border(1.dp, color = Color.LightGray)
-//                    .padding(vertical = 8.dp),
             ) {
                 // 1열
                 Text(

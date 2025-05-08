@@ -88,14 +88,13 @@ class MainScreenVM @Inject constructor(
             // 2) 초기 데이터 방출
             _coins.postValue(list)
 
-            // 3) WebSocket 업데이트 시작 (관심 탭에도 동작하나, 원치 않으면 단순 return)
+            // 3) WebSocket 업데이트 시작
             startWebSocketUpdates(list)
         }
     }
 
     private fun startWebSocketUpdates(initial: List<CoinData>?) {
         currentSocket = webSocketRepository.startSocket(initial?.map { it.symbol }) { ws ->
-            // WebSocket 콜백은 백그라운드 스레드!
             val updated = _coins.value.orEmpty().map { coin ->
                 if (coin.symbol == ws.code) coin.copy(
                     tradePrice = ws.trade_price.toDoubleOrNull() ?: coin.tradePrice,

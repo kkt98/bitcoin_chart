@@ -16,7 +16,7 @@ class OrderBookWebSocketListener(
         val msg = """
         [
           {"ticket":"orderbook-ticket"},
-          {"type":"orderbook","codes":[${Gson().toJson(listOf(marketCode))}]}
+          {"type": "orderbook", "codes": ${Gson().toJson(listOf(marketCode))}}
         ]
         """.trimIndent()
         ws.send(msg)
@@ -33,5 +33,6 @@ class OrderBookWebSocketListener(
     override fun onMessage(ws: WebSocket, bytes: ByteString) = onMessage(ws, bytes.utf8())
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         webSocket.close(1000, null)
-    }    override fun onFailure(ws: WebSocket, t: Throwable, resp: Response?) = t.printStackTrace()
+    }
+    override fun onFailure(ws: WebSocket, t: Throwable, resp: Response?) = t.printStackTrace()
 }
