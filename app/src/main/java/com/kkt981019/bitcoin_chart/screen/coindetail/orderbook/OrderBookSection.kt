@@ -18,12 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
+import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import java.text.DecimalFormat
 
 @Composable
 fun OrderBookSection(
     orderbook: OrderbookResponse?,   // 호가 데이터
-    ticker: CoinDetailResponse?,      // 현재 시세 데이터 (ticker)
+    ticker: WebsocketResponse?,      // 현재 시세 데이터 (ticker)
     changeRate: String,
     symbol: String
 ) {

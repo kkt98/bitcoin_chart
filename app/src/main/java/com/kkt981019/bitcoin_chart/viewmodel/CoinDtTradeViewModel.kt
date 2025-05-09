@@ -21,27 +21,27 @@ class CoinDtTradeViewModel @Inject constructor(
     private val retrofitRepository: RetrofitRepository
 ) : ViewModel() {
 
-    // 체결리스트 저장용
+    // 체결용 소켓과 일봉용 소켓을 각각 보관
+    private var tradeSocket: WebSocket? = null
+    private var candleSocket: WebSocket? = null
+
+    // 체결 리스트
     private val _tradeState = MutableLiveData<List<WebSocketTradeResponse>>(emptyList())
     val tradeState: LiveData<List<WebSocketTradeResponse>> = _tradeState
 
-    // 일봉리스트 저장용
+    // 일봉 리스트
     private val _dayCandleState = MutableLiveData<List<WebSocketCandleResponse>>(emptyList())
     val dayCandleState: LiveData<List<WebSocketCandleResponse>> = _dayCandleState
 
-
-    // WebSocket 인스턴스 보관
-    private var webSocket: WebSocket? = null
-
     fun startTrade(marketCode: String) {
-        // 2) 기존 소켓 연결이 있으면 닫기
-        webSocket?.close(1000, "re-subscribing")
+        // 이전 trade 전용 소켓만 닫는다
+        tradeSocket?.close(1000, "re-subscribing-trade")
 
         viewModelScope.launch {
             val restTrades = retrofitRepository.getTrade(marketCode)
             _tradeState.postValue(restTrades.map { it.toWS() })
 
-            webSocket = webSocketRepository.startTradeSocket(
+            tradeSocket = webSocketRepository.startTradeSocket(
                 marketCode = marketCode,
                 onTradeUpdate = { trade ->
                     val current = _tradeState.value.orEmpty()
@@ -52,34 +52,24 @@ class CoinDtTradeViewModel @Inject constructor(
     }
 
     fun startCandle(marketCode: String) {
-        // 기존 소켓 연결이 있으면 닫기
-        webSocket?.close(1000, "re-subscribing")
+        // 이전 candle 전용 소켓만 닫는다
+        candleSocket?.close(1000, "re-subscribing-candle")
 
         viewModelScope.launch {
             val restDays = retrofitRepository.getDayCandle(marketCode)
             _dayCandleState.postValue(restDays.map { it.toWS() })
 
-            webSocket = webSocketRepository.starCandleSocket(
+            candleSocket = webSocketRepository.starCandleSocket(
                 marketCode = marketCode,
                 onCandleUpdate = { candle ->
                     val current = _dayCandleState.value.orEmpty()
                     val newDate = candle.candleDateTimeUtc.take(10)
-
-                    // 같은 날짜의 기존 캔들이 있으면 꺼내고, 없으면 null
                     val existing = current.firstOrNull { it.candleDateTimeUtc.take(10) == newDate }
-
-                    // 누적된 캔들 생성 (기존이 없으면 새로 받은 candle 그대로)
-                    val updatedCandle = existing?.copy(
+                    val updated = existing?.copy(
                         candleAccTradeVolume = existing.candleAccTradeVolume + candle.candleAccTradeVolume,
                         tradePrice = candle.tradePrice
                     ) ?: candle
-
-                    // 기존 리스트에서 같은 날짜는 제외하고
-                    val others = current.filter { it.candleDateTimeUtc.take(10) != newDate }
-
-                    // 새로운 데이터를 앞으로, 뒤에 이전 데이터
-                    val merged = (listOf(updatedCandle) + others)
-
+                    val merged = listOf(updated) + current.filter { it.candleDateTimeUtc.take(10) != newDate }
                     _dayCandleState.postValue(merged)
                 }
             )
@@ -87,10 +77,12 @@ class CoinDtTradeViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        webSocket?.close(1000, "ViewModel cleared")
+        tradeSocket?.close(1000, "ViewModel cleared")
+        candleSocket?.close(1000, "ViewModel cleared")
         super.onCleared()
     }
 }
+
 
 // Retrofit → WebSocket DTO 변환 확장함수
 private fun RetrofitTradeResponse.toWS(): WebSocketTradeResponse = WebSocketTradeResponse(

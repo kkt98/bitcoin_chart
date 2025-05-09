@@ -24,7 +24,6 @@ import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 @Composable
 fun TradeSection(
     symbol: String,
-    dayCandle: List<WebSocketCandleResponse>,
     color: Color
 ) {
     var selectedTab by remember { mutableStateOf(0) }

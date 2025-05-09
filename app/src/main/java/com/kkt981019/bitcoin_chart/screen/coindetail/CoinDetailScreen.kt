@@ -39,7 +39,7 @@ import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.screen.coindetail.orderbook.OrderBookSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
 import com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters
-import com.kkt981019.bitcoin_chart.viewmodel.CoinDTScreenVM
+import com.kkt981019.bitcoin_chart.viewmodel.CoinDtOrderBookViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.FavoriteViewModel
 import java.text.DecimalFormat
 
@@ -50,12 +50,13 @@ fun CoinDetailScreen(
     koreanName: String,
     englishName: String,
     navController: NavController,
-    viewModel: CoinDTScreenVM = hiltViewModel(), // Hilt로 주입받음
+    viewModel: CoinDtOrderBookViewModel = hiltViewModel(), // Hilt로 주입받음
     favoriteViewModel: FavoriteViewModel = hiltViewModel()
 ) {
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {
-        viewModel.startDetailAll(symbol)
+        viewModel.startOrderBook(symbol)
+        viewModel.startTicker(symbol)
     }
 
     val favList by favoriteViewModel.favorites.observeAsState(emptyList())
@@ -63,11 +64,9 @@ fun CoinDetailScreen(
         favList.any { it.market == symbol }
     }
 
-
     // ViewModel의 LiveData를 observeAsState로 관찰
     val ticker by viewModel.tickerState.observeAsState()
     val orderbook by viewModel.orderbookState.observeAsState() //호가정보
-    val dayCandle by viewModel.dayCandleState.observeAsState(emptyList()) //시세정보
 
     // 탭 UI 구성
     val tabTitles = listOf("호가", "차트", "시세")
@@ -189,7 +188,7 @@ fun CoinDetailScreen(
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
                 1 -> ChartSection(symbol)
-                2 -> TradeSection(symbol, dayCandle, color)
+                2 -> TradeSection(symbol, color)
             }
         }
     }

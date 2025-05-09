@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.viewmodel
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -94,7 +93,7 @@ class MainScreenVM @Inject constructor(
     }
 
     private fun startWebSocketUpdates(initial: List<CoinData>?) {
-        currentSocket = webSocketRepository.startSocket(initial?.map { it.symbol }) { ws ->
+        currentSocket = webSocketRepository.startTickerSocket(initial?.map { it.symbol }) { ws ->
             val updated = _coins.value.orEmpty().map { coin ->
                 if (coin.symbol == ws.code) coin.copy(
                     tradePrice = ws.trade_price.toDoubleOrNull() ?: coin.tradePrice,

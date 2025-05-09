@@ -1,7 +1,6 @@
 package com.kkt981019.bitcoin_chart.repository
 
-import com.kkt981019.bitcoin_chart.network.websoketlistener.CoinDetailWebSocketListener
-import com.kkt981019.bitcoin_chart.network.websoketlistener.CoinWebSocketListener
+import com.kkt981019.bitcoin_chart.network.websoketlistener.TickerWebSocketListener
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
@@ -22,7 +21,7 @@ class WebSocketRepository @Inject constructor() {
     private val client = OkHttpClient()
 
     // 기존 MainScreen 전용
-    fun startSocket(
+    fun startTickerSocket(
         marketCodes: List<String>?,
         onTickerUpdate: (WebsocketResponse) -> Unit
     ): WebSocket {
@@ -30,22 +29,7 @@ class WebSocketRepository @Inject constructor() {
             .url("wss://api.upbit.com/websocket/v1")
             .build()
 
-        val listener = CoinWebSocketListener(marketCodes, onTickerUpdate)
-        return client.newWebSocket(request, listener)
-    }
-
-    // DetailScreen 전용 WebSocket: 티커와 주문호가를 동시에 받아옴
-    fun startDetailSocket(
-        marketCode: String,
-        onCoinDetailUpdate: (CoinDetailResponse) -> Unit,
-        onOrderbookUpdate: (OrderbookResponse) -> Unit,
-        onTradeUpdate: (WebSocketTradeResponse) -> Unit,
-        onCandleUpdate: (WebSocketCandleResponse)-> Unit
-    ): WebSocket {
-        val request = Request.Builder()
-            .url("wss://api.upbit.com/websocket/v1")
-            .build()
-        val listener = CoinDetailWebSocketListener(marketCode, onCoinDetailUpdate, onOrderbookUpdate, onTradeUpdate, onCandleUpdate)
+        val listener = TickerWebSocketListener(marketCodes, onTickerUpdate)
         return client.newWebSocket(request, listener)
     }
 

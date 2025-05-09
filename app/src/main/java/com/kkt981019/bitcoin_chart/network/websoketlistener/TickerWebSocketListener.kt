@@ -7,7 +7,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 
-class CoinWebSocketListener(
+class TickerWebSocketListener(
     private val marketCodes: List<String>?,
     private val onTickerUpdate: (WebsocketResponse) -> Unit
 ) : WebSocketListener() {
