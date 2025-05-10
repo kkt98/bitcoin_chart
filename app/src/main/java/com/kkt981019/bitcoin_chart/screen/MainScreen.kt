@@ -129,12 +129,14 @@ fun MainScreen(
             }
 
             // 탭
-            TabRow(selectedTabIndex = selectedTab) {
+            TabRow(selectedTabIndex = selectedTab,) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        text = { Text(title) }
+                        text = { Text(title) },
+                        selectedContentColor = Color.Black,
+                        unselectedContentColor = Color.Black
                     )
                 }
             }
