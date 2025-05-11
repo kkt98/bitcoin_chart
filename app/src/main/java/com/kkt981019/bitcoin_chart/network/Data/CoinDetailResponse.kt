@@ -98,17 +98,16 @@ data class RetrofitCandleResponse (
     )
 
 data class WebSocketCandleResponse(
-    @SerializedName("type")                val type: String,      // 항상 "candle"
-    @SerializedName("code")                val code: String,      // ex "KRW-BTC"
-    @SerializedName("candle_date_time_utc")val candleDateTimeUtc: String,    // "2025-04-20T00:00:00"
-    @SerializedName("candle_date_time_kst")val candleDateTimeKst: String,    // "2025-04-20T09:00:00"
-    @SerializedName("opening_price")       val openPrice: Double,
-    @SerializedName("high_price")          val highPrice: Double,
-    @SerializedName("low_price")           val lowPrice: Double,
-    @SerializedName("trade_price")         val tradePrice: Double,
-    @SerializedName("candle_acc_trade_price")  val candleAccTradePrice: Double,
-    @SerializedName("candle_acc_trade_volume") val candleAccTradeVolume: Double,
-    @SerializedName("unit")                val unit: String,      // "1d" or "1m" 등
-    @SerializedName("timestamp")           val timestamp: Long,
+    @SerializedName("type")                  val type: String,
+    @SerializedName("code")                  val code: String,
+    @SerializedName("candle_date_time_utc")  val candleDateTimeUtc: String,
+    @SerializedName("candle_date_time_kst")  var candleDateTimeKst: String,
+    @SerializedName("opening_price")         var openPrice: Double,
+    @SerializedName("high_price")            var highPrice: Double,
+    @SerializedName("low_price")             var lowPrice: Double,
+    @SerializedName("trade_price")           var tradePrice: Double,
+    @SerializedName("candle_acc_trade_price")    var candleAccTradePrice: Double,
+    @SerializedName("candle_acc_trade_volume")   var candleAccTradeVolume: Double,
+    @SerializedName("unit")                  var unit: String,
+    @SerializedName("timestamp")             var timestamp: Long,
 )
-

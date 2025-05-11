@@ -140,8 +140,8 @@ fun MainScreen(
             TabRow(
                 selectedTabIndex = selectedTab,
                 // 탭 배경색(선택사항)
-                containerColor = Color.White,
-                // 인디케이터(밑줄) 커스터마이즈
+                containerColor = Color.Transparent,
+                // 인디케이터
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
                         modifier = Modifier

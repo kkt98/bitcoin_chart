@@ -1,4 +1,3 @@
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,11 +70,15 @@ fun ChartSection(
 
         Spacer(Modifier.height(8.dp))
 
-        // ─── 차트
-        val data = if (selectedIndex in 0..6) minuteCandles else dayCandles
-        CombinedCandleVolumeChart(data = data, modifier = Modifier
-            .fillMaxSize()
-        )
+        // ── 차트
+        if (selectedIndex in 0..6) {
+            CombinedCandleChart(entries = minuteCandles, modifier = Modifier.fillMaxSize())
+        } else {
+            CombinedCandleVolumeChart(
+                data = dayCandles,  // 기존 일봉 렌더러
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -174,3 +177,74 @@ fun CombinedCandleVolumeChart(
         modifier = modifier
     )
 }
+
+@Composable
+fun CombinedCandleChart(
+    entries: List<CandleEntry>,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = { ctx ->
+            CandleStickChart(ctx).apply {
+                description.isEnabled = false
+                setDrawGridBackground(false)
+                setPinchZoom(true)
+                axisLeft.isEnabled         = false
+                axisRight.isEnabled        = true
+                xAxis.position = XAxis.XAxisPosition.BOTTOM
+                legend.isEnabled = false
+
+                // --- 확대/이동 가능하도록 설정 ---
+                isDragEnabled      = true    // 드래그로 이동 허용
+                setScaleEnabled(true)        // 전체 스케일링 허용
+                setScaleXEnabled(true)       // X축 스케일링 허용
+                setScaleYEnabled(false)      // Y축은 고정
+
+                // 최대/최소 확대 배율 지정 (optional)
+                viewPortHandler.setMaximumScaleX(3f)   // 최대 4배 확대
+                viewPortHandler.setMinimumScaleX(1f)   // 최소 1배(원래 크기)
+
+                // 한 화면에 최대로 보일 엔트리 개수 지정
+                // 예: MAX 50 캔들, MIN 10 캔들
+                // 한 화면에 보일 캔들 개수: 최대 30개, 최소 30개
+                setVisibleXRangeMaximum(50f)
+                setVisibleXRangeMinimum(10f)
+            }
+        },
+        update = { chart ->
+            if (entries.isEmpty()) { chart.clear(); return@AndroidView }
+
+            val candleSet = CandleDataSet(entries, "OHLC").apply {
+                // ─── 색상 ───
+                decreasingColor         = android.graphics.Color.BLUE
+                increasingColor         = android.graphics.Color.RED
+
+                // ─── 페인트 스타일 ───
+                setIncreasingPaintStyle(android.graphics.Paint.Style.FILL)
+                setDecreasingPaintStyle(android.graphics.Paint.Style.FILL)
+                setShowCandleBar(true)
+                shadowColorSameAsCandle = true
+                axisDependency = YAxis.AxisDependency.RIGHT
+                setDrawValues(false)
+            }
+
+            // (2) 차트 바인딩 & 리프레시
+            chart.data = CandleData(candleSet)
+            // 이전 줌 리셋
+            chart.fitScreen()
+
+            val scaleX = 5f
+            val scaleY = 1f
+            chart.zoom(scaleX, scaleY, entries.size.toFloat(), 0f)
+
+            // 뷰포트 이동
+            chart.moveViewToX(entries.size.toFloat())
+
+            chart.invalidate()
+            chart.moveViewToX(entries.last().x)
+        },
+        modifier = modifier
+    )
+}
+
+

@@ -185,7 +185,7 @@ fun CoinDetailScreen(
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 // 탭 배경색(선택사항)
-                containerColor = Color.White,
+                containerColor = Color.Transparent,
                 // 인디케이터(밑줄) 커스터마이즈
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
