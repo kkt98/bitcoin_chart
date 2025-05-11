@@ -107,15 +107,16 @@ private fun RetrofitTradeResponse.toWS(): WebSocketTradeResponse = WebSocketTrad
 )
 
 private fun RetrofitCandleResponse.toWS(): WebSocketCandleResponse = WebSocketCandleResponse(
-    type                   = "candle",
-    code                   = market,
-    candleDateTimeUtc      = candleDateTimeUtc,
-    candleDateTimeKst      = candleDateTimeKst,
-    openPrice              = 0.0,
-    highPrice              = 0.0,
-    lowPrice               = 0.0,
-    tradePrice             = tradePrice,
-    candleAccTradePrice    = candleAccTradePrice,
-    candleAccTradeVolume   = candleAccTradeVolume,
-    unit                   = "1d"
+    type = "candle",
+    code = market,
+    candleDateTimeUtc = candleDateTimeUtc,
+    candleDateTimeKst = candleDateTimeKst,
+    openPrice = 0.0,
+    highPrice = 0.0,
+    lowPrice = 0.0,
+    tradePrice = tradePrice,
+    candleAccTradePrice = candleAccTradePrice,
+    candleAccTradeVolume = candleAccTradeVolume,
+    unit = "1d",
+    timestamp = timestamp
 )

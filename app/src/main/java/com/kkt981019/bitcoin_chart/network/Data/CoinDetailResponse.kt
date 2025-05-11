@@ -93,7 +93,8 @@ data class RetrofitCandleResponse (
     @SerializedName("opening_price") val openingPrice: Double,
     @SerializedName("high_price") val highPrice: Double,
     @SerializedName("low_price") val lowPrice: Double,
-    @SerializedName("unit") val unit: Integer,
+    @SerializedName("unit") val unit: Int,
+    @SerializedName("timestamp") val timestamp: Long,
     )
 
 data class WebSocketCandleResponse(
@@ -107,6 +108,7 @@ data class WebSocketCandleResponse(
     @SerializedName("trade_price")         val tradePrice: Double,
     @SerializedName("candle_acc_trade_price")  val candleAccTradePrice: Double,
     @SerializedName("candle_acc_trade_volume") val candleAccTradeVolume: Double,
-    @SerializedName("unit")                val unit: String       // "1d" or "1m" 등
+    @SerializedName("unit")                val unit: String,      // "1d" or "1m" 등
+    @SerializedName("timestamp")           val timestamp: Long,
 )
 

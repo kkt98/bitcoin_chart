@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -93,10 +95,16 @@ fun MainScreen(
             )
         }
     ) { inner ->
+        val topInset = (inner.calculateTopPadding() - 16.dp).coerceAtLeast(0.dp)
         Column(
             Modifier
-                .padding(inner)
                 .fillMaxSize()
+                .padding(
+                    top    = topInset,
+                    start  = inner.calculateStartPadding(LayoutDirection.Ltr),
+                    end    = inner.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = inner.calculateBottomPadding()
+                )
         ) {
             // 검색 바
             Row(
@@ -129,7 +137,20 @@ fun MainScreen(
             }
 
             // 탭
-            TabRow(selectedTabIndex = selectedTab,) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                // 탭 배경색(선택사항)
+                containerColor = Color.White,
+                // 인디케이터(밑줄) 커스터마이즈
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        modifier = Modifier
+                            .tabIndicatorOffset(tabPositions[selectedTab])
+                            .height(3.dp),        // 인디케이터 높이 조절
+                        color = Color(0xFF2979FF)       // 원하는 색으로 변경
+                    )
+                }
+            ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
@@ -142,7 +163,7 @@ fun MainScreen(
             }
 
             // 헤더 (0..2 탭만 보여줘)
-            if (selectedTab in 0..2) {
+            if (selectedTab in 0..3) {
                 CoinListHeader(
                     useEnglish = useEnglish,
                     priceSort = priceSort,

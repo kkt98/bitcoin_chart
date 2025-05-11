@@ -30,11 +30,11 @@ class CoinDtChartViewModel @Inject constructor(
                     val unit = listOf(1,3,5,15,30,60,240)[tabIndex]
                     val allMinutes = repo.getMinuteCandle(market, unit)
                     // 오래된 → 최신 순으로 뒤집어서 방출
-                    _minuteCandleState.postValue(allMinutes.asReversed())
+                    _minuteCandleState.postValue(allMinutes)
                 }
                 7 -> {
                     val allDays = repo.getDayCandle(market)
-                    _dayCandleState.postValue(allDays.asReversed())
+                    _dayCandleState.postValue(allDays)
                 }
             }
         }

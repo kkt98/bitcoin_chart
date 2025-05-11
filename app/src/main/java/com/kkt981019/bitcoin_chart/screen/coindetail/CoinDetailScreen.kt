@@ -3,8 +3,11 @@ package com.kkt981019.bitcoin_chart.screen.coindetail
 import ChartSection
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -19,6 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -32,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -105,11 +111,17 @@ fun CoinDetailScreen(
                 }
             )
         }
-    ) { innerPadding ->
+    ) { inner ->
+        val topInset = (inner.calculateTopPadding() - 16.dp).coerceAtLeast(0.dp)
 
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(
+                    top    = topInset,
+                    start  = inner.calculateStartPadding(LayoutDirection.Ltr),
+                    end    = inner.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = inner.calculateBottomPadding()
+                )
                 .fillMaxSize()
         ) {
             val format= getTradeFormatters(symbol.substringBefore('-'))
@@ -125,8 +137,8 @@ fun CoinDetailScreen(
             // 티커의 change 값에 따라 다른 아이콘을 표시
             val changeIcon: Painter? = when (ticker?.change) {
                 "EVEN" -> null
-                "RISE" -> painterResource(id = R.drawable.triangle)
-                else -> painterResource(id = R.drawable.inverted_triangle)
+                "RISE" -> painterResource(id = R.drawable.triangle_up)
+                else -> painterResource(id = R.drawable.triangle_down)
             }
 
             val changeRate = String.format("%.2f%%", (ticker?.signed_change_rate?.toDoubleOrNull()?.times(100)) ?: 0.0)
@@ -172,7 +184,17 @@ fun CoinDetailScreen(
             //탭
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+                // 탭 배경색(선택사항)
+                containerColor = Color.White,
+                // 인디케이터(밑줄) 커스터마이즈
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        modifier = Modifier
+                            .tabIndicatorOffset(tabPositions[selectedTabIndex])
+                            .height(3.dp),        // 인디케이터 높이 조절
+                        color = Color(0xFF2979FF)       // 원하는 색으로 변경
+                    )
+                }
             ) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
