@@ -51,7 +51,7 @@ class CoinDtTradeViewModel @Inject constructor(
         }
     }
 
-    fun startCandle(marketCode: String) {
+    fun startCandle(marketCode: String, interval: String) {
         // 이전 candle 전용 소켓만 닫는다
         candleSocket?.close(1000, "re-subscribing-candle")
 
@@ -61,6 +61,7 @@ class CoinDtTradeViewModel @Inject constructor(
 
             candleSocket = webSocketRepository.starCandleSocket(
                 marketCode = marketCode,
+                interval = interval,
                 onCandleUpdate = { candle ->
                     val current = _dayCandleState.value.orEmpty()
                     val newDate = candle.candleDateTimeUtc.take(10)

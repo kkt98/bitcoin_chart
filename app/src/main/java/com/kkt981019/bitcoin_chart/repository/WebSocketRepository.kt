@@ -57,12 +57,13 @@ class WebSocketRepository @Inject constructor() {
 
     fun starCandleSocket(
         marketCode: String,
+        interval: String,
         onCandleUpdate: (WebSocketCandleResponse)-> Unit
     ): WebSocket {
         val request = Request.Builder()
             .url("wss://api.upbit.com/websocket/v1")
             .build()
-        val listener = CandleWebSocketListener(marketCode, onCandleUpdate)
+        val listener = CandleWebSocketListener(marketCode, interval, onCandleUpdate)
         return client.newWebSocket(request, listener)
     }
 }

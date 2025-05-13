@@ -41,7 +41,7 @@ fun DailyList(
 ) {
 
     LaunchedEffect(symbol) {
-        viewModel.startCandle(symbol)
+        viewModel.startCandle(symbol, "1s")
     }
 
     val dayCandle by viewModel.dayCandleState.observeAsState(emptyList())
