@@ -88,24 +88,34 @@ fun IncrementalCandleChart(
     modifier: Modifier = Modifier,
     xLabels: List<String>
 ) {
+    var open = 0.0F
+    var close = 0.0F
+
+    entries.forEach { candle ->
+        Log.d("Candle", "open=${candle.open}, close=${candle.close}")
+        open = candle.open
+        close = candle.close
+    }
 
     // 1) CandleDataSet 한 번만 생성
     val candleDataSet = remember {
         CandleDataSet(mutableListOf(), "OHLC").apply {
+            // 음봄
             decreasingColor         = android.graphics.Color.BLUE
+            setDecreasingPaintStyle(Paint.Style.FILL)
+            // 양봉
             increasingColor         = android.graphics.Color.RED
+            setIncreasingPaintStyle(Paint.Style.FILL)
+
             setDrawValues(false)
             shadowColorSameAsCandle = true
-//            neutralColor = android.graphics.Color.GRAY
-            setIncreasingPaintStyle(Paint.Style.FILL)
-            setDecreasingPaintStyle(Paint.Style.FILL)
-            axisDependency          = YAxis.AxisDependency.RIGHT
+            neutralColor = android.graphics.Color.GRAY
+            axisDependency = YAxis.AxisDependency.RIGHT
         }
     }
     // 2) CandleData 한 번만 생성
     val candleData = remember { CandleData(candleDataSet) }
     val firstZoom = remember { mutableStateOf(true) }
-
 
     AndroidView(
         factory = { ctx ->
