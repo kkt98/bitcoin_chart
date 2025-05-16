@@ -32,8 +32,8 @@ fun ChartSection(
     viewModel: CoinDtChartViewModel = hiltViewModel()
 ) {
     val minuteCandles by viewModel.minuteCandleState.observeAsState(emptyList())
+    val minuteLabels  by viewModel.minuteTimeLabels.observeAsState(emptyList())
     val dayCandles    by viewModel.dayCandleState.observeAsState(emptyList())
-    val xLabels       by viewModel.minuteTimeLabels.observeAsState(emptyList())
 
     var selectedIndex by remember { mutableStateOf(0) }
     val tabs = listOf("1m","3m","5m","15m","30m","1h","4h","24h")
@@ -42,7 +42,8 @@ fun ChartSection(
         viewModel.fetchCandles(symbol, selectedIndex)
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier.fillMaxWidth()) {
+        // ── 탭 바 ──
         Row(
             modifier = Modifier
                 .horizontalScroll(rememberScrollState())
@@ -54,16 +55,17 @@ fun ChartSection(
                 Box(
                     modifier = Modifier
                         .border(
-                            width = 1.dp,
-                            color = if (isSel) MaterialTheme.colorScheme.primary else Color.LightGray,
-                            shape = RoundedCornerShape(4.dp)
+                            1.dp,
+                            if (isSel) MaterialTheme.colorScheme.primary else Color.LightGray,
+                            RoundedCornerShape(4.dp)
                         )
                         .clickable { selectedIndex = idx }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = title,
-                        color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        color = if (isSel) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -72,12 +74,22 @@ fun ChartSection(
         Spacer(Modifier.height(8.dp))
 
         if (selectedIndex in 0..6) {
-            IncrementalCandleChart(entries = minuteCandles, modifier = Modifier.fillMaxSize(), xLabels = xLabels,)
+            // 분봉 차트: 탭 인덱스가 바뀌면 완전히 재마운트되어 firstZoom 초기화
+            key(selectedIndex) {
+                IncrementalCandleChart(
+                    entries = minuteCandles,
+                    xLabels = minuteLabels,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         } else {
-            CombinedCandleVolumeChart(
-                data = dayCandles,
-                modifier = Modifier.fillMaxSize()
-            )
+            // 일봉 차트도 동일하게
+            key(selectedIndex) {
+                CombinedCandleVolumeChart(
+                    data = dayCandles,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -201,6 +213,9 @@ fun CombinedCandleVolumeChart(
     data: List<RetrofitCandleResponse>,
     modifier: Modifier = Modifier
 ) {
+    val firstZoom = remember { mutableStateOf(true) }
+
+
     AndroidView(
         factory = { ctx ->
             CandleStickChart(ctx).apply {
@@ -257,6 +272,13 @@ fun CombinedCandleVolumeChart(
             }
             val candleData = CandleData(set)  // 기본 barWidth 사용
             chart.data = candleData
+
+            if (firstZoom.value) {
+                // 2배 확대하고, 마지막 봉이 보이도록 이동
+                chart.zoom(4f, 1f, entries.last().x, 0f)
+                chart.moveViewToX(entries.last().x)
+                firstZoom.value = false
+            }
 
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
