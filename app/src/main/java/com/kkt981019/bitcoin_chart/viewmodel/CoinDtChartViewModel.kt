@@ -31,10 +31,6 @@ class CoinDtChartViewModel @Inject constructor(
     private val _minuteTimeLabels = MutableLiveData<List<String>>(emptyList())
     val minuteTimeLabels: LiveData<List<String>> = _minuteTimeLabels
 
-    // 일봉 상태
-    private val _dayCandleState = MutableLiveData<List<RetrofitCandleResponse>>(emptyList())
-    val dayCandleState: LiveData<List<RetrofitCandleResponse>> = _dayCandleState
-
     private var socket: WebSocket? = null
     private val candleMap = mutableMapOf<Long, AggregatedCandle>()
 
@@ -70,32 +66,6 @@ class CoinDtChartViewModel @Inject constructor(
                 startAggregation(symbol, interval, windowMs)
             }
 
-        } else {
-            // ── 일봉 탭(24h) ──
-            viewModelScope.launch {
-                // 1) REST 과거 일봉
-                val pastDays = repo.getDayCandle(symbol)
-                val windowMs = 24 * 60 * 60 * 1000L
-                pastDays.forEach { r ->
-                    // "yyyy-MM-ddTHH:mm:ss" 형태 문자열에서 timestamp 뽑기
-                    val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
-                        .parse(r.candleDateTimeKst)!!
-                    val key = (date.time / windowMs) * windowMs
-                    candleMap[key] = AggregatedCandle(
-                        time  = key.toFloat(),
-                        open  = r.openingPrice,
-                        high  = r.highPrice,
-                        low   = r.lowPrice,
-                        close = r.tradePrice,
-                        label = r.candleDateTimeKst.substring(0, 10)
-                    )
-                }
-                // 초기 그리기
-                postDayData()
-
-                // 2) WebSocket 체결 스트림 구독
-                startDailyAggregation(symbol)
-            }
         }
     }
 
@@ -120,27 +90,6 @@ class CoinDtChartViewModel @Inject constructor(
         }
     }
 
-    // 일봉용: Upbit의 체결(trade) 스트림을 받아 하루(24h) 단위로 집계
-    private fun startDailyAggregation(symbol: String) {
-        val windowMs = 24 * 60 * 60 * 1000L
-
-        socket = webSocketRepository.startTradeSocket(symbol) { tick: WebSocketTradeResponse ->
-            // timestamp 필드(밀리초)를 기준으로 키 계산
-            val key = (tick.timestamp / windowMs) * windowMs
-            // 라벨은 "yyyy-MM-dd"
-            val dateLabel = tick.tradeDate
-
-            val agg = candleMap.getOrPut(key) {
-                AggregatedCandle(key.toFloat(), tick.tradePrice, tick.tradePrice, tick.tradePrice, tick.tradePrice, dateLabel)
-            }.apply {
-                high  = maxOf(high,  tick.tradePrice)
-                low   = minOf(low,   tick.tradePrice)
-                close = tick.tradePrice
-            }
-            postDayData()
-        }
-    }
-
     // 분봉 LiveData 발행
     private fun postMinuteData() {
         val sorted = candleMap.entries
@@ -159,30 +108,6 @@ class CoinDtChartViewModel @Inject constructor(
             }
         )
         _minuteTimeLabels.postValue(sorted.map { it.label })
-    }
-
-    // 일봉 LiveData 발행
-    private fun postDayData() {
-        val sorted = candleMap.entries
-            .sortedBy { it.key }
-            .map { it.value }
-
-        val list = sorted.map { c ->
-            RetrofitCandleResponse(
-                candleDateTimeKst = "${c.label}T00:00:00",
-                openingPrice = c.open,
-                highPrice = c.high,
-                lowPrice = c.low,
-                tradePrice = c.close,
-                unit = 1440,
-                market = "",
-                candleDateTimeUtc = "",
-                candleAccTradePrice = 0.0,
-                candleAccTradeVolume = 0.0,
-                timestamp = 0
-            )
-        }
-        _dayCandleState.postValue(list)
     }
 
     data class AggregatedCandle(

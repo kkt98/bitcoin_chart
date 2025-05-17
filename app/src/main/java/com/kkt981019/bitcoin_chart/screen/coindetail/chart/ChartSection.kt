@@ -33,10 +33,9 @@ fun ChartSection(
 ) {
     val minuteCandles by viewModel.minuteCandleState.observeAsState(emptyList())
     val minuteLabels  by viewModel.minuteTimeLabels.observeAsState(emptyList())
-    val dayCandles    by viewModel.dayCandleState.observeAsState(emptyList())
 
     var selectedIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("1m","3m","5m","15m","30m","1h","4h","24h")
+    val tabs = listOf("1m","3m","5m","15m","30m","1h","4h")
 
     LaunchedEffect(symbol, selectedIndex) {
         viewModel.fetchCandles(symbol, selectedIndex)
@@ -79,14 +78,6 @@ fun ChartSection(
                 IncrementalCandleChart(
                     entries = minuteCandles,
                     xLabels = minuteLabels,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        } else {
-            // 일봉 차트도 동일하게
-            key(selectedIndex) {
-                CombinedCandleVolumeChart(
-                    data = dayCandles,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -199,87 +190,6 @@ fun IncrementalCandleChart(
             }
 
             // ⑤ 변경 알림 & 리렌더링
-            chart.data.notifyDataChanged()
-            chart.notifyDataSetChanged()
-            chart.invalidate()
-        },
-        modifier = modifier
-    )
-}
-
-
-@Composable
-fun CombinedCandleVolumeChart(
-    data: List<RetrofitCandleResponse>,
-    modifier: Modifier = Modifier
-) {
-    val firstZoom = remember { mutableStateOf(true) }
-
-
-    AndroidView(
-        factory = { ctx ->
-            CandleStickChart(ctx).apply {
-                description.isEnabled        = false
-                setDrawGridBackground(false)
-                setPinchZoom(true)
-                isDragEnabled      = true
-                setScaleEnabled(true)
-                setScaleXEnabled(true)
-                setScaleYEnabled(false)
-                viewPortHandler.setMaximumScaleX(3f)
-                viewPortHandler.setMinimumScaleX(1f)
-
-                xAxis.position     = XAxis.XAxisPosition.BOTTOM
-                axisLeft.isEnabled  = false
-                axisRight.isEnabled = true
-                legend.isEnabled    = false
-                setVisibleXRangeMaximum(50f)
-                setVisibleXRangeMinimum(10f)
-            }
-        },
-        update = { chart ->
-            if (data.isEmpty()) {
-                chart.clear()
-                return@AndroidView
-            }
-
-            val sorted = data.asReversed()
-            val labels = sorted.map { c ->
-                when (c.unit) {
-                    1,3,5,15,30,60,240 -> c.candleDateTimeKst.substring(11,16)
-                    else               -> c.candleDateTimeKst.substring(0,10)
-                }
-            }
-            chart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
-
-            val entries = sorted.mapIndexed { i, c ->
-                CandleEntry(
-                    i.toFloat(),
-                    c.highPrice.toFloat(),
-                    c.lowPrice.toFloat(),
-                    c.openingPrice.toFloat(),
-                    c.tradePrice.toFloat()
-                )
-            }
-            val set = CandleDataSet(entries, "OHLC").apply {
-                decreasingColor         = android.graphics.Color.BLUE
-                increasingColor         = android.graphics.Color.RED
-                setDrawValues(false)
-                shadowColorSameAsCandle = true
-                setIncreasingPaintStyle(Paint.Style.FILL)
-                setDecreasingPaintStyle(Paint.Style.FILL)
-                axisDependency          = YAxis.AxisDependency.RIGHT
-            }
-            val candleData = CandleData(set)  // 기본 barWidth 사용
-            chart.data = candleData
-
-            if (firstZoom.value) {
-                // 2배 확대하고, 마지막 봉이 보이도록 이동
-                chart.zoom(4f, 1f, entries.last().x, 0f)
-                chart.moveViewToX(entries.last().x)
-                firstZoom.value = false
-            }
-
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
             chart.invalidate()

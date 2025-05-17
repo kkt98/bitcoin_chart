@@ -37,12 +37,13 @@ interface UpbitApi {
         @Query("count") count: Int = 200
     ): List<RetrofitCandleResponse>
 
-    //분별 캔들 조회
+    // 분·시간 단위 캔들 (unit 분봉)
     @GET("v1/candles/minutes/{unit}")
     suspend fun getMinuteCandles(
-        @Path("unit") unit: Int,          // 1분 단위
-        @Query("market") market: String,      // ex: "KRW-BTC"
-        @Query("count") count: Int = 200        // 몇 개 데이터를 가져올 건지
+        @Path("unit") unit: Int,         // 1,3,5,15,30,60,240
+        @Query("market") market: String,  // ex: "KRW-BTC"
+        @Query("count") count: Int = 200, // 최대 200개
+        @Query("to") to: String? = null   // 이 ISO 8601 시각 이전 데이터
     ): List<RetrofitCandleResponse>
 
 }
