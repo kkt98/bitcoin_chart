@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,8 +46,7 @@ fun MainScreen(
     var priceSort   by remember { mutableStateOf(PriceSort.NONE) }
     var sortBy      by remember { mutableStateOf("none") }
     val tabs        = listOf("KRW","BTC","USDT","관심")
-    var selectedTab by remember { mutableStateOf(0) }
-
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
     // 화면 진입 & 탭 변경 시 데이터 로드
     LaunchedEffect(selectedTab) {
         viewModel.fetchCoins(selectedTab)
@@ -240,7 +240,6 @@ fun CoinListHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = if (useEnglish) "영문명" else "한글명",
-//                textAlign = TextAlign.Start,
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(Modifier.width(4.dp))

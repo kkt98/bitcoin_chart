@@ -21,7 +21,6 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
-import com.kkt981019.bitcoin_chart.network.Data.RetrofitCandleResponse
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtChartViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
