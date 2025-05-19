@@ -87,13 +87,7 @@ fun MainScreen(
     } else displayed
 
     Scaffold(
-        modifier = Modifier.background(bg),
-        topBar = {
-            TopAppBar(
-                title = { Text("거래소") },
-                modifier = Modifier.background(surface)
-            )
-        }
+        modifier = Modifier.background(bg)
     ) { inner ->
         val topInset = (inner.calculateTopPadding() - 16.dp).coerceAtLeast(0.dp)
         Column(
@@ -411,7 +405,7 @@ fun CoinItemRow(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(backgroundColor)
-            .border(width = 2.dp, color = borderColor.value, shape = MaterialTheme.shapes.medium)
+//            .border(width = 2.dp, color = borderColor.value, shape = MaterialTheme.shapes.medium)
             .padding(vertical = 8.dp, horizontal = 16.dp),
 
         verticalAlignment = Alignment.CenterVertically
@@ -423,7 +417,9 @@ fun CoinItemRow(
         }
 
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-            Text(format.priceDf.format(coin.tradePrice ?: 0.0), color = color)
+            Box(Modifier.border(1.dp, borderColor.value).padding(2.dp)) {
+                Text(format.priceDf.format(coin.tradePrice ?: 0.0), color = color)
+            }
         }
 
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
