@@ -80,7 +80,7 @@ fun ChartSection(
                 IncrementalCandleChartWithPriceBox(
                     entries = minuteCandles,
                     xLabels = minuteLabels,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
@@ -93,38 +93,45 @@ fun IncrementalCandleChartWithPriceBox(
     modifier: Modifier = Modifier,
     xLabels: List<String>
 ) {
-    val lastClose = entries.lastOrNull()?.close ?: 0f
-    // 박스의 y좌표 상태
+    val lastCandle = entries.lastOrNull()
+    val lastClose = lastCandle?.close ?: 0f
+    val lastOpen  = lastCandle?.open  ?: 0f
     var priceBoxOffsetY by remember { mutableStateOf<Float?>(null) }
+    var axisRightTextSizePx by remember { mutableStateOf<Float?>(null) }
+
+    // 봉 색 결정
+    val priceBoxColor = when {
+        lastClose > lastOpen -> Color.Red   // 양봉
+        lastClose < lastOpen -> Color.Blue  // 음봉
+        else                 -> Color.Gray  // 도지
+    }
 
     Box(modifier = modifier) {
-        // 1. Candle Chart (차트 위에 y좌표 계산 및 전달)
         IncrementalCandleChart(
             entries = entries,
             xLabels = xLabels,
             modifier = Modifier.fillMaxSize(),
-            onCurrentPriceYPx = { yPx -> priceBoxOffsetY = yPx }
+            onCurrentPriceYPx = { yPx -> priceBoxOffsetY = yPx },
+            onAxisRightTextSizePx = { px -> axisRightTextSizePx = px }
         )
 
-        // 2. 현재가 박스 (해당 y 위치에 표시)
-        if (entries.isNotEmpty() && priceBoxOffsetY != null) {
-            // Compose의 dp 변환
+        if (entries.isNotEmpty() && priceBoxOffsetY != null && axisRightTextSizePx != null) {
             val density = LocalDensity.current
             val yDp = with(density) { priceBoxOffsetY!!.toDp() }
+            val fontSizeSp = pxToSp(axisRightTextSizePx!!)
 
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(y = yDp - 14.dp) // 미세조정(중앙정렬)
+                    .offset(y = yDp - 14.dp)
                     .background(
-                        color = Color.Blue,
-                        shape = RoundedCornerShape(8.dp)
+                        color = priceBoxColor,
                     )
             ) {
                 Text(
                     text = "  ${String.format("%,.0f", lastClose)}  ",
                     color = Color.White,
-                    fontSize = 13.sp,
+                    fontSize = fontSizeSp.sp,
                     modifier = Modifier.padding(vertical = 2.dp)
                 )
             }
@@ -137,7 +144,8 @@ fun IncrementalCandleChart(
     entries: List<CandleEntry>,
     modifier: Modifier = Modifier,
     xLabels: List<String>,
-    onCurrentPriceYPx: ((Float) -> Unit)? = null // y픽셀값 콜백
+    onCurrentPriceYPx: ((Float) -> Unit)? = null, // y픽셀값 콜백
+    onAxisRightTextSizePx: ((Float) -> Unit)? = null,
 ) {
     // 1) CandleDataSet 한 번만 생성
     val candleDataSet = remember {
@@ -174,7 +182,7 @@ fun IncrementalCandleChart(
                 axisLeft.isEnabled  = false
                 axisRight.isEnabled = true
                 legend.isEnabled    = false
-                setVisibleXRangeMaximum(50f)
+                setVisibleXRangeMaximum(30f)
                 setVisibleXRangeMinimum(10f)
                 data = candleData
                 invalidate()
@@ -212,8 +220,19 @@ fun IncrementalCandleChart(
             chart.xAxis.axisMaximum = newSize.toFloat()
 
             if (firstZoom.value) {
-                chart.zoom(4f, 1f, entries.last().x, 0f)
+                chart.zoom(4f, 1.5f, entries.last().x, 0f)
                 chart.moveViewToX(entries.last().x)
+
+                // 화면에 보이는 index 구하기
+                val minX = chart.lowestVisibleX.toInt().coerceAtLeast(0)
+                val maxX = chart.highestVisibleX.toInt().coerceAtMost(entries.lastIndex)
+
+//                if (entries.isNotEmpty() && minX <= maxX) {
+//                    val visibleEntries = entries.subList(minX, maxX + 1)
+//                    val maxVisibleHigh = visibleEntries.maxOf { it.high }
+//                    chart.axisRight.axisMaximum = maxVisibleHigh      // 최고가로 맞춤 (트레이딩뷰와 동일)
+//                }
+
                 firstZoom.value = false
             }
 
@@ -223,7 +242,8 @@ fun IncrementalCandleChart(
                     String.format("%,.0f", value)
             }
 
-            // 🟦 LimitLine 완전히 제거, 현재가 박스만 Compose에서!
+            onAxisRightTextSizePx?.invoke(chart.axisRight.textSize)
+
             // 현재가 y픽셀값을 Compose로 전달
             if (entries.isNotEmpty() && onCurrentPriceYPx != null) {
                 chart.post {
@@ -240,4 +260,10 @@ fun IncrementalCandleChart(
         },
         modifier = modifier
     )
+}
+
+@Composable
+fun pxToSp(px: Float): Float {
+    val density = LocalDensity.current
+    return with(density) { px / density.density }
 }
