@@ -35,13 +35,10 @@ fun ChartSection(
     viewModel: CoinDtChartViewModel = hiltViewModel()
 ) {
     val minuteCandles by viewModel.minuteCandleState.observeAsState(emptyList())
-    val minuteLabels by viewModel.minuteTimeLabels.observeAsState(emptyList())
+    val minuteLabels  by viewModel.minuteTimeLabels.observeAsState(emptyList())
 
     var selectedIndex by remember { mutableStateOf(0) }
     val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h")
-
-    var isLoading by remember { mutableStateOf(false) }
-    var prependCount by remember { mutableStateOf(0) }
 
     LaunchedEffect(symbol, selectedIndex) {
         viewModel.fetchCandles(symbol, selectedIndex)
@@ -77,42 +74,12 @@ fun ChartSection(
 
         Spacer(Modifier.height(8.dp))
 
-        Box(Modifier.fillMaxSize()) {
-            if (selectedIndex in 0..6) {
-                key(selectedIndex) {
-                    IncrementalCandleChartWithPriceBox(
-                        entries = minuteCandles,
-                        xLabels = minuteLabels,
-                        modifier = Modifier.fillMaxSize(),
-                        isLoading = isLoading,
-                        prependCount = prependCount,
-                        onReachLeftEnd = {
-                            if (!isLoading) {
-                                isLoading = true
-                                viewModel.fetchPreviousCandles(
-                                    symbol,
-                                    selectedIndex
-                                ) { added ->
-                                    prependCount = added
-                                    isLoading = false
-                                }
-                            }
-                        },
-                        onPrependHandled = {
-                            prependCount = 0
-                        }
-                    )
-                }
-            }
-            if (isLoading) {
-                // 투명 오버레이로 터치 막기
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Transparent)
-                        .pointerInput(Unit) {}
-                )
-            }
+        key(selectedIndex) {
+            IncrementalCandleChartWithPriceBox(
+                entries = minuteCandles,
+                xLabels = minuteLabels,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
@@ -121,21 +88,17 @@ fun ChartSection(
 fun IncrementalCandleChartWithPriceBox(
     entries: List<CandleEntry>,
     modifier: Modifier = Modifier,
-    xLabels: List<String>,
-    isLoading: Boolean = false,
-    prependCount: Int = 0,
-    onReachLeftEnd: () -> Unit = {},
-    onPrependHandled: () -> Unit = {}
+    xLabels: List<String>
 ) {
-    var lastVisibleClose by remember { mutableStateOf(0f) }
-    var lastVisibleOpen by remember { mutableStateOf(0f) }
-    var priceBoxOffsetY by remember { mutableStateOf<Float?>(null) }
+    var lastVisibleClose    by remember { mutableStateOf(0f) }
+    var lastVisibleOpen     by remember { mutableStateOf(0f) }
+    var priceBoxOffsetY     by remember { mutableStateOf<Float?>(null) }
     var axisRightTextSizePx by remember { mutableStateOf<Float?>(null) }
 
     val priceBoxColor = when {
-        lastVisibleClose > lastVisibleOpen -> Color.Red   // 양봉
-        lastVisibleClose < lastVisibleOpen -> Color.Blue  // 음봉
-        else                              -> Color.Gray  // 도지
+        lastVisibleClose > lastVisibleOpen -> Color.Red
+        lastVisibleClose < lastVisibleOpen -> Color.Blue
+        else                                -> Color.Gray
     }
 
     Box(modifier = modifier) {
@@ -145,32 +108,25 @@ fun IncrementalCandleChartWithPriceBox(
             modifier = Modifier.fillMaxSize(),
             onLastVisibleClose = { close, yPx, open ->
                 lastVisibleClose = close
-                lastVisibleOpen = open
-                priceBoxOffsetY = yPx
+                lastVisibleOpen  = open
+                priceBoxOffsetY  = yPx
             },
-            onAxisRightTextSizePx = { px -> axisRightTextSizePx = px },
-            isLoading = isLoading,
-            prependCount = prependCount,
-            onReachLeftEnd = onReachLeftEnd,
-            onPrependHandled = onPrependHandled
+            onAxisRightTextSizePx = { px -> axisRightTextSizePx = px }
         )
 
         if (entries.isNotEmpty() && priceBoxOffsetY != null && axisRightTextSizePx != null) {
             val density = LocalDensity.current
-            val yDp = with(density) { priceBoxOffsetY!!.toDp() }
-            val fontSizeSp = pxToSp(axisRightTextSizePx!!)
+            val yDp       = with(density) { priceBoxOffsetY!!.toDp() }
+            val fontSizeSp= pxToSp(axisRightTextSizePx!!)
 
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(y = yDp - 14.dp)
-                    .background(
-                        color = priceBoxColor,
-                        shape = RoundedCornerShape(6.dp)
-                    )
+                    .background(priceBoxColor, RoundedCornerShape(6.dp))
             ) {
                 Text(
-                    text = "  ${String.format("%,.0f", lastVisibleClose)}  ",
+                    text = "  ${"%,.0f".format(lastVisibleClose)}  ",
                     color = Color.White,
                     fontSize = fontSizeSp.sp,
                     modifier = Modifier.padding(vertical = 2.dp)
@@ -186,116 +142,82 @@ fun IncrementalCandleChart(
     modifier: Modifier = Modifier,
     xLabels: List<String>,
     onAxisRightTextSizePx: ((Float) -> Unit)? = null,
-    onLastVisibleClose: ((Float, Float, Float) -> Unit)? = null,
-    isLoading: Boolean = false,
-    prependCount: Int = 0,
-    onReachLeftEnd: () -> Unit = {},
-    onPrependHandled: () -> Unit = {}
+    onLastVisibleClose: ((Float, Float, Float) -> Unit)? = null
 ) {
     val candleDataSet = remember {
         CandleDataSet(mutableListOf(), "OHLC").apply {
-            decreasingColor = android.graphics.Color.BLUE
+            decreasingColor         = android.graphics.Color.BLUE
             setDecreasingPaintStyle(Paint.Style.FILL)
-            increasingColor = android.graphics.Color.RED
+            increasingColor         = android.graphics.Color.RED
             setIncreasingPaintStyle(Paint.Style.FILL)
             setDrawValues(false)
             shadowColorSameAsCandle = true
-            neutralColor = android.graphics.Color.GRAY
-            axisDependency = YAxis.AxisDependency.RIGHT
+            neutralColor            = android.graphics.Color.GRAY
+            axisDependency          = YAxis.AxisDependency.RIGHT
         }
     }
     val candleData = remember { CandleData(candleDataSet) }
-    val firstZoom = remember { mutableStateOf(true) }
-    var canLoadMore by remember { mutableStateOf(true) }
+    val firstZoom  = remember { mutableStateOf(true) }
 
     AndroidView(
         factory = { ctx ->
             CandleStickChart(ctx).apply {
-                description.isEnabled = false
+                // 기본 차트 설정만
+                description.isEnabled       = false
                 setDrawGridBackground(false)
                 setPinchZoom(true)
                 isDragEnabled = true
-                setScaleEnabled(true)
                 setScaleXEnabled(true)
                 setScaleYEnabled(false)
+                setScaleEnabled(true)
                 viewPortHandler.setMaximumScaleX(3f)
                 viewPortHandler.setMinimumScaleX(1f)
-                xAxis.position = XAxis.XAxisPosition.BOTTOM
-                axisLeft.isEnabled = false
+                xAxis.position     = XAxis.XAxisPosition.BOTTOM
+                axisLeft.isEnabled  = false
                 axisRight.isEnabled = true
-                legend.isEnabled = false
+                legend.isEnabled    = false
                 setVisibleXRangeMaximum(30f)
                 setVisibleXRangeMinimum(10f)
                 data = candleData
-
-                setOnChartGestureListener(object : com.github.mikephil.charting.listener.OnChartGestureListener {
-                    override fun onChartGestureStart(
-                        me: MotionEvent?, lastPerformedGesture: com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture?
-                    ) {}
-
-                    override fun onChartGestureEnd(
-                        me: MotionEvent?, lastPerformedGesture: com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture?
-                    ) {
-                        // 손 뗐을 때만 왼쪽 끝 감지
-                        detectLeftEnd()
-                    }
-
-                    override fun onChartLongPressed(me: MotionEvent?) {}
-                    override fun onChartDoubleTapped(me: MotionEvent?) {}
-                    override fun onChartSingleTapped(me: MotionEvent?) {}
-                    override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}
-
-                    override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float) {
-                        postLastVisibleClose()
-                    }
-                    override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) {
-                        postLastVisibleClose()
-                    }
-
-                    fun postLastVisibleClose() {
-                        if (entries.isNotEmpty() && onLastVisibleClose != null) {
-                            post {
-                                val lastVisibleX = highestVisibleX.toInt().coerceAtMost(entries.lastIndex)
-                                val lastVisibleEntry = entries[lastVisibleX]
-                                val lastVisibleClose = lastVisibleEntry.close
-                                val lastVisibleOpen = lastVisibleEntry.open
-                                val mpPoint = getTransformer(YAxis.AxisDependency.RIGHT)
-                                    .getPixelForValues(lastVisibleX.toFloat(), lastVisibleClose) // ← x=0f → lastVisibleX
-                                onLastVisibleClose(lastVisibleClose, mpPoint.y.toFloat(), lastVisibleOpen)
-                            }
-                        }
-                    }
-
-                    fun detectLeftEnd() {
-                        if (!isLoading && canLoadMore && lowestVisibleX < 2f) {
-                            canLoadMore = false
-                            onReachLeftEnd()
-                        }
-                    }
-                })
             }
         },
         update = { chart ->
-            if (chart.data == null) {
-                chart.data = candleData
-            }
+            // 1) 제스처 리스너를 update 블록에서 매번 재설정
+            chart.setOnChartGestureListener(object : com.github.mikephil.charting.listener.OnChartGestureListener {
+                override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float)   = postUpdate()
+                override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float)        = postUpdate()
+                override fun onChartGestureStart(me: MotionEvent?, lastPerformedGesture: com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture?) {}
+                override fun onChartGestureEnd(me: MotionEvent?, lastPerformedGesture: com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture?) {}
+                override fun onChartLongPressed(me: MotionEvent?) {}
+                override fun onChartDoubleTapped(me: MotionEvent?) {}
+                override fun onChartSingleTapped(me: MotionEvent?) {}
+                override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}
+
+                private fun postUpdate() {
+                    chart.post {
+                        chart.data?.let { data ->
+                            val set = data.getDataSetByIndex(0) as CandleDataSet
+                            val idx = chart.highestVisibleX.toInt().coerceAtMost(set.entryCount - 1)
+                            val e   = set.getEntryForIndex(idx)
+                            val pt  = chart.getTransformer(YAxis.AxisDependency.RIGHT)
+                                .getPixelForValues(0f, e.close)
+                            onLastVisibleClose?.invoke(e.close, pt.y.toFloat(), e.open)
+                        }
+                    }
+                }
+            })
+
+            // 2) 데이터 추가/갱신 로직
+            if (chart.data == null) chart.data = candleData
             if (entries.isEmpty()) {
                 chart.clear()
                 return@AndroidView
             }
-
-            val set = chart.data.getDataSetByIndex(0) as CandleDataSet
-            set.clear()
-            entries.forEach { set.addEntry(it) }
-
+            val set     = chart.data.getDataSetByIndex(0) as CandleDataSet
             val oldSize = set.entryCount
             val newSize = entries.size
             when {
-                newSize > oldSize -> {
-                    for (i in oldSize until newSize) {
-                        set.addEntry(entries[i])
-                    }
-                }
+                newSize > oldSize  -> for (i in oldSize until newSize) set.addEntry(entries[i])
                 newSize == oldSize -> {
                     set.removeLast()
                     set.addEntry(entries.last())
@@ -303,41 +225,35 @@ fun IncrementalCandleChart(
             }
             chart.xAxis.apply {
                 valueFormatter = IndexAxisValueFormatter(xLabels)
+                axisMinimum    = 0f
+                axisMaximum    = newSize.toFloat()
             }
-            chart.xAxis.axisMinimum = 0f
-            chart.xAxis.axisMaximum = newSize.toFloat()
 
+            // 3) 첫 진입 시 줌/이동
             if (firstZoom.value) {
                 chart.zoom(4f, 1f, entries.last().x, 0f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom.value = false
             }
 
-            // prepend 발생 시 위치 보정
-            if (prependCount > 0) {
-                chart.moveViewToX(chart.lowestVisibleX + prependCount)
-                onPrependHandled()
-            }
-
+            // 4) 우측 축 포맷/텍스트 크기 콜백
             chart.axisRight.valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
                 override fun getFormattedValue(value: Float): String =
                     String.format("%,.0f", value)
             }
-
             onAxisRightTextSizePx?.invoke(chart.axisRight.textSize)
 
-            // 최초 진입/데이터 변경시에도 콜백
-            if (entries.isNotEmpty() && onLastVisibleClose != null) {
-                chart.post {
-                    val lastVisibleX = chart.highestVisibleX.toInt().coerceAtMost(entries.lastIndex)
-                    val lastVisibleEntry = entries[lastVisibleX]
-                    val lastVisibleClose = lastVisibleEntry.close
-                    val lastVisibleOpen = lastVisibleEntry.open
-                    val mpPoint = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                        .getPixelForValues(lastVisibleX.toFloat(), lastVisibleClose) // ← x=0f → lastVisibleX
-                    onLastVisibleClose(lastVisibleClose, mpPoint.y.toFloat(), lastVisibleOpen)
-                }
+            // 5) 초기 표시 후에도 박스 위치 콜백 실행
+            chart.post {
+                val set2 = chart.data.getDataSetByIndex(0) as CandleDataSet
+                val idx  = chart.highestVisibleX.toInt().coerceAtMost(set2.entryCount - 1)
+                val e    = set2.getEntryForIndex(idx)
+                val pt   = chart.getTransformer(YAxis.AxisDependency.RIGHT)
+                    .getPixelForValues(0f, e.close)
+                onLastVisibleClose?.invoke(e.close, pt.y.toFloat(), e.open)
             }
+
+            // 6) 리프레시
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
             chart.invalidate()
@@ -349,5 +265,5 @@ fun IncrementalCandleChart(
 @Composable
 fun pxToSp(px: Float): Float {
     val density = LocalDensity.current
-    return with(density) { px / density.density }
+    return px / density.density
 }
