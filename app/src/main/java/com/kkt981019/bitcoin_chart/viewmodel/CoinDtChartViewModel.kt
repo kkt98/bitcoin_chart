@@ -24,7 +24,6 @@ class CoinDtChartViewModel @Inject constructor(
     private val webSocketRepository: WebSocketRepository
 ) : ViewModel() {
 
-    // 분봉 상태
     private val _minuteCandleState = MutableLiveData<List<CandleEntry>>(emptyList())
     val minuteCandleState: LiveData<List<CandleEntry>> = _minuteCandleState
 
@@ -48,8 +47,10 @@ class CoinDtChartViewModel @Inject constructor(
             viewModelScope.launch {
                 // 1) REST 과거 분봉
                 val past = repo.getMinuteCandle(symbol, unitMin)
+                Log.d("dateCheck", "[처음로드] ${past.size}개")
                 past.forEach { r ->
                     val key = (r.timestamp / windowMs) * windowMs
+                    Log.d("dateCheck", r.candleDateTimeKst)
                     val hhmm = r.candleDateTimeKst.substring(11, 16)
                     candleMap[key] = AggregatedCandle(
                         time  = key.toFloat(),
@@ -90,6 +91,44 @@ class CoinDtChartViewModel @Inject constructor(
         }
     }
 
+    fun fetchPreviousCandles(
+        symbol: String,
+        tabIndex: Int,
+        onComplete: (Int) -> Unit // 추가된 데이터 개수 콜백
+    ) {
+        val unitList = listOf(1, 3, 5, 15, 30, 60, 240)
+        val unitMin = unitList[tabIndex]
+        val windowMs = unitMin * 60_000L
+
+        val oldestKey = candleMap.keys.minOrNull() ?: return
+        val oldestDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
+            .format(java.util.Date(oldestKey - windowMs))
+
+        viewModelScope.launch {
+            val past = repo.getMinuteCandle(symbol, unitMin, to = oldestDate)
+            val before = past.filter {
+                val key = (it.timestamp / windowMs) * windowMs
+                !candleMap.containsKey(key)
+            }
+            Log.d("dateCheck2", "[이후로드] ${past.size}개")
+            before.forEach { r ->
+                val key = (r.timestamp / windowMs) * windowMs
+                Log.d("dateCheck2", r.candleDateTimeKst)
+                val hhmm = r.candleDateTimeKst.substring(11, 16)
+                candleMap[key] = AggregatedCandle(
+                    time = key.toFloat(),
+                    open = r.openingPrice,
+                    high = r.highPrice,
+                    low = r.lowPrice,
+                    close = r.tradePrice,
+                    label = hhmm
+                )
+            }
+            postMinuteData()
+            onComplete(before.size) // 몇 개 추가됐는지 콜백
+        }
+    }
+
     // 분봉 LiveData 발행
     private fun postMinuteData() {
         val sorted = candleMap.entries
@@ -99,7 +138,7 @@ class CoinDtChartViewModel @Inject constructor(
         _minuteCandleState.postValue(
             sorted.mapIndexed { idx, c ->
                 CandleEntry(
-                    idx.toFloat(),
+                    idx.toFloat(), // x: 연속 인덱스
                     c.high.toFloat(),
                     c.low.toFloat(),
                     c.open.toFloat(),
