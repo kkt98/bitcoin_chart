@@ -43,7 +43,7 @@ class RetrofitRepository @Inject constructor(private val api: UpbitApi) {
     suspend fun getMinuteCandle(
         market: String,
         minute: Int,
-        count: Int = 200,
+        count: Int = 100,
         to: String? = null
     ): List<RetrofitCandleResponse> {
         return api.getMinuteCandles(
