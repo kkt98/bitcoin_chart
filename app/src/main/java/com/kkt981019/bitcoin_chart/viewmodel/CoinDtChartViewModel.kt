@@ -15,6 +15,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
 import java.text.SimpleDateFormat
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
@@ -44,9 +47,11 @@ class CoinDtChartViewModel @Inject constructor(
             val windowMs = unitMin * 60_000L
 
             viewModelScope.launch {
+                //현재 시간 받아오기
+                val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).withSecond(0).withNano(0)      // 나노초 제거
+                val toIso = nowSeoul.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 // 1) 과거 REST 호출
-                val past = repo.getMinuteCandle(symbol, unitMin)
-                Log.d("dateCheck", "[처음로드] ${past.size}개")
+                val past = repo.getMinuteCandle(symbol, unitMin, to = toIso)
                 past.forEach { r ->
                     val key = (r.timestamp / windowMs) * windowMs
                     Log.d("dateCheck", r.candleDateTimeKst)
@@ -82,7 +87,7 @@ class CoinDtChartViewModel @Inject constructor(
             .format(java.util.Date(oldestKey - windowMs))
 
         viewModelScope.launch {
-            val past = repo.getMinuteCandle(symbol, unitMin, to = oldestDate)
+            val past = repo.getMinuteCandle(symbol, unitMin, to = "$oldestDate+09:00")
             Log.d("dateCheck2", "[이후로드] ${past.size}개")
             val before = past.filter {
                 val key = (it.timestamp / windowMs) * windowMs
@@ -141,7 +146,6 @@ class CoinDtChartViewModel @Inject constructor(
         )
         _minuteTimeLabels.postValue(sorted.map { it.label })
     }
-
     data class AggregatedCandle(
         val time: Float,
         var open: Double,
