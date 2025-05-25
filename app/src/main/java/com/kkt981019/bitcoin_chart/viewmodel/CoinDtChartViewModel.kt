@@ -50,8 +50,9 @@ class CoinDtChartViewModel @Inject constructor(
                 //현재 시간 받아오기
                 val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).withSecond(0).withNano(0)      // 나노초 제거
                 val toIso = nowSeoul.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                Log.d("asdasd", toIso)
                 // 1) 과거 REST 호출
-                val past = repo.getMinuteCandle(symbol, unitMin, to = toIso)
+                val past = repo.getMinuteCandle(symbol, unitMin, to = "$toIso")
                 past.forEach { r ->
                     val key = (r.timestamp / windowMs) * windowMs
                     Log.d("dateCheck", r.candleDateTimeKst)

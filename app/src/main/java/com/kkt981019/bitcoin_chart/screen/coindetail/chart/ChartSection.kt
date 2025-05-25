@@ -15,6 +15,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import android.graphics.Matrix
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +25,9 @@ import com.github.mikephil.charting.charts.CandleStickChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.*
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.listener.ChartTouchListener
+import com.github.mikephil.charting.listener.OnChartGestureListener
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtChartViewModel
 
 @Composable
@@ -33,16 +36,11 @@ fun ChartSection(
     modifier: Modifier = Modifier,
     viewModel: CoinDtChartViewModel = hiltViewModel()
 ) {
-    // <--- 초기값을 null로!
     val minuteCandles: List<CandleEntry>? by viewModel.minuteCandleState.observeAsState(null)
     val minuteLabels: List<String> by viewModel.minuteTimeLabels.observeAsState(emptyList())
 
-
     var selectedIndex by remember { mutableStateOf(0) }
     val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h")
-
-    Log.d("candleDebug", "${ minuteCandles.toString()}")
-
 
     LaunchedEffect(symbol, selectedIndex) {
         viewModel.fetchCandles(symbol, selectedIndex)
@@ -79,7 +77,6 @@ fun ChartSection(
         Spacer(Modifier.height(8.dp))
 
         key(selectedIndex) {
-            // --- 데이터 로딩/없음/정상 3단계 분기 ---
             when {
                 minuteCandles == null -> Box(
                     Modifier.fillMaxSize(),
@@ -116,10 +113,17 @@ fun IncrementalCandleChartWithPriceBox(
     val chartRef = remember { mutableStateOf<CandleStickChart?>(null) }
     var addedCount by remember { mutableStateOf(0) }
 
-    // 데이터 추가 후 차트 위치 보정
+    // 과거 데이터 추가 전/후 화면 상태 저장용
+    var lastLowestVisibleX by remember { mutableStateOf(0f) }
+    var lastVisibleRange by remember { mutableStateOf(0f) }
+
+    // 추가된 봉 수만큼 이동 및 줌 레인지 유지
     LaunchedEffect(addedCount) {
         if (addedCount > 0) {
-            chartRef.value?.moveViewToX(addedCount.toFloat())
+            chartRef.value?.apply {
+                moveViewToX(lastLowestVisibleX + addedCount)
+                setVisibleXRange(lastVisibleRange, lastVisibleRange)
+            }
             addedCount = 0
         }
     }
@@ -135,7 +139,6 @@ fun IncrementalCandleChartWithPriceBox(
         else -> Color.Gray
     }
 
-
     Box(modifier = modifier) {
         IncrementalCandleChart(
             entries = entries,
@@ -148,18 +151,23 @@ fun IncrementalCandleChartWithPriceBox(
             },
             onAxisRightTextSizePx = { px -> rightTextPx = px },
             onReachedStart = {
-                viewModel.fetchPreviousCandles(symbol, tabIndex) { added ->
-                    addedCount = added
+                chartRef.value?.let { chart ->
+                    // 과거 fetch 전 현재 보이는 구간 저장
+                    lastLowestVisibleX = chart.lowestVisibleX
+                    lastVisibleRange = chart.visibleXRange
+                    viewModel.fetchPreviousCandles(symbol, tabIndex) { added ->
+                        addedCount = added
+                    }
                 }
             },
             chartRef = chartRef
         )
 
+        // 종가 표시 박스
         if (entries.isNotEmpty() && boxOffsetY != null && rightTextPx != null) {
             val density = LocalDensity.current
             val yDp = with(density) { boxOffsetY!!.toDp() }
             val fontSp = pxToSp(rightTextPx!!)
-
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
@@ -193,14 +201,14 @@ fun IncrementalCandleChart(
             setDecreasingPaintStyle(Paint.Style.FILL)
             increasingColor = android.graphics.Color.RED
             setIncreasingPaintStyle(Paint.Style.FILL)
-            setDrawValues(false)
-            shadowColorSameAsCandle = true
             neutralColor = android.graphics.Color.GRAY
+            shadowColorSameAsCandle = true
+            setDrawValues(false)
             axisDependency = YAxis.AxisDependency.RIGHT
         }
     }
     val candleData = remember { CandleData(dataSet) }
-    val firstZoom = remember { mutableStateOf(true) }
+    var firstZoom by remember { mutableStateOf(true) }
 
     AndroidView(
         factory = { ctx ->
@@ -212,42 +220,56 @@ fun IncrementalCandleChart(
                 setScaleEnabled(true)
                 setScaleXEnabled(true)
                 setScaleYEnabled(false)
-//                viewPortHandler.setMaximumScaleX(3f)
-//                viewPortHandler.setMinimumScaleX(1f)
+                setDragOffsetX(20f)
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
                 axisLeft.isEnabled = false
                 axisRight.isEnabled = true
                 legend.isEnabled = false
-//                setVisibleXRangeMaximum(30f)  // 한 화면에 30봉 고정
-//                setVisibleXRangeMinimum(10f)
-                this.data = candleData
-
+                isAutoScaleMinMaxEnabled = true
+                data = candleData
                 chartRef.value = this
             }
         },
         update = { chart ->
-            chartRef.value = chart
-            val OVERSCROLL_BUFFER = 5
-            if (entries.isNotEmpty()) {
-                chart.xAxis.axisMinimum = -OVERSCROLL_BUFFER.toFloat()
-                dataSet.setValues(entries)
+            // ① 데이터 교체
+            dataSet.values = entries
+            chart.data.notifyDataChanged()
+            chart.notifyDataSetChanged()
+
+            // 최초 로드 시 줌 초기화
+            if (firstZoom && entries.isNotEmpty()) {
+                chart.setVisibleXRange(30f, 30f)
+                chart.moveViewToX(entries.last().x)
+                firstZoom = false
             }
 
-            chart.setOnChartGestureListener(object : com.github.mikephil.charting.listener.OnChartGestureListener {
-                override fun onChartScale(me: MotionEvent?, sx: Float, sy: Float) = postUpdate()
-                override fun onChartTranslate(me: MotionEvent?, dx: Float, dy: Float) = postUpdate()
+            chart.xAxis.apply {
+                // 1) IndexAxisValueFormatter 사용
+                valueFormatter = IndexAxisValueFormatter(xLabels)
+                // 2) 인덱스 단위로 라벨 찍기
+                granularity = 1f
+                // 3) 최대 라벨 갯수 (원하는 값으로)
+                setLabelCount(minOf(xLabels.size, 6), true)
+            }
+
+            // 최소/최대 줌 범위 설정
+            chart.setVisibleXRangeMinimum(30f)
+            chart.setVisibleXRangeMaximum(200f)
+
+            // 오버스크롤 및 제스처 리스너
+//            chart.xAxis.axisMinimum = -5f
+            chart.setOnChartGestureListener(object : OnChartGestureListener {
+                override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float) = postUpdate()
+                override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) = postUpdate()
                 override fun onChartGestureEnd(me: MotionEvent?, last: ChartTouchListener.ChartGesture?) {
-                    val isOverScroll = chart.lowestVisibleX <= 2f
-                    if (isOverScroll) {
-                        onReachedStart?.invoke()
-                    }
+                    if (chart.lowestVisibleX <= 2f) onReachedStart?.invoke()
                     postUpdate()
                 }
                 override fun onChartGestureStart(me: MotionEvent?, last: ChartTouchListener.ChartGesture?) {}
                 override fun onChartLongPressed(me: MotionEvent?) {}
                 override fun onChartDoubleTapped(me: MotionEvent?) {}
                 override fun onChartSingleTapped(me: MotionEvent?) {}
-                override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, vx: Float, vy: Float) {}
+                override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}
 
                 private fun postUpdate() {
                     chart.post {
@@ -261,45 +283,17 @@ fun IncrementalCandleChart(
                         }
                     }
                 }
-                private fun postCheckStart() {
-                    chart.post {
-                        if (chart.lowestVisibleX <= 0f) {
-                            onReachedStart?.invoke()
-                        }
-                    }
-                }
             })
 
-            if (entries.isEmpty()) {
-                chart.clear()
-            } else {
-                dataSet.setValues(entries)
-            }
-
-            if (firstZoom.value && entries.isNotEmpty()) {
-                chart.zoom(2f, 1f, entries.last().x, 0f)
-                chart.moveViewToX(entries.last().x)
-                firstZoom.value = false
-            }
-
-            chart.axisRight.valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
-                override fun getFormattedValue(v: Float) = String.format("%,.0f", v)
-            }
-            onAxisRightTextSizePx?.invoke(chart.axisRight.textSize)
-
-            chart.post {
-                chart.data?.let { cd2 ->
-                    val set2 = cd2.getDataSetByIndex(0) as CandleDataSet
-                    val idx = chart.highestVisibleX.toInt().coerceAtMost(set2.entryCount - 1)
-                    val e = set2.getEntryForIndex(idx)
-                    val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                        .getPixelForValues(0f, e.close)
-                    onLastVisibleClose?.invoke(e.close, pt.y.toFloat(), e.open)
+            // 오른쪽 Y축 포맷 및 텍스트 크기 콜백
+            chart.axisRight.apply {
+                valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
+                    override fun getFormattedValue(value: Float) = String.format("%,.0f", value)
                 }
+                onAxisRightTextSizePx?.invoke(textSize)
             }
 
-            candleData.notifyDataChanged()
-            chart.notifyDataSetChanged()
+            // 차트 갱신
             chart.invalidate()
         },
         modifier = modifier
