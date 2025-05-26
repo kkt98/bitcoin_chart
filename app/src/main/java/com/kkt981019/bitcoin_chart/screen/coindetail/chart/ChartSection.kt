@@ -1,5 +1,4 @@
 import android.graphics.Paint
-import android.util.Log
 import android.view.MotionEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,7 +14,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import android.graphics.Matrix
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +24,7 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.listener.ChartTouchListener
 import com.github.mikephil.charting.listener.OnChartGestureListener
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtChartViewModel
@@ -36,8 +35,8 @@ fun ChartSection(
     modifier: Modifier = Modifier,
     viewModel: CoinDtChartViewModel = hiltViewModel()
 ) {
-    val minuteCandles: List<CandleEntry>? by viewModel.minuteCandleState.observeAsState(null)
-    val minuteLabels: List<String> by viewModel.minuteTimeLabels.observeAsState(emptyList())
+    val minuteCandles by viewModel.minuteCandleState.observeAsState()
+    val minuteLabels by viewModel.minuteTimeLabels.observeAsState(emptyList())
 
     var selectedIndex by remember { mutableStateOf(0) }
     val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h")
@@ -76,27 +75,25 @@ fun ChartSection(
 
         Spacer(Modifier.height(8.dp))
 
-        key(selectedIndex) {
-            when {
-                minuteCandles == null -> Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { Text("차트 데이터를 불러오는 중...") }
+        when {
+            minuteCandles == null -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { Text("차트 데이터를 불러오는 중...") }
 
-                minuteCandles!!.isEmpty() -> Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { Text("차트 데이터 없음") }
+            minuteCandles!!.isEmpty() -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { Text("차트 데이터 없음") }
 
-                else -> IncrementalCandleChartWithPriceBox(
-                    symbol = symbol,
-                    tabIndex = selectedIndex,
-                    entries = minuteCandles!!,
-                    xLabels = minuteLabels,
-                    modifier = Modifier.fillMaxSize(),
-                    viewModel = viewModel
-                )
-            }
+            else -> IncrementalCandleChartWithPriceBox(
+                symbol = symbol,
+                tabIndex = selectedIndex,
+                entries = minuteCandles!!,
+                xLabels = minuteLabels,
+                modifier = Modifier.fillMaxSize(),
+                viewModel = viewModel
+            )
         }
     }
 }
@@ -112,12 +109,9 @@ fun IncrementalCandleChartWithPriceBox(
 ) {
     val chartRef = remember { mutableStateOf<CandleStickChart?>(null) }
     var addedCount by remember { mutableStateOf(0) }
-
-    // 과거 데이터 추가 전/후 화면 상태 저장용
     var lastLowestVisibleX by remember { mutableStateOf(0f) }
     var lastVisibleRange by remember { mutableStateOf(0f) }
 
-    // 추가된 봉 수만큼 이동 및 줌 레인지 유지
     LaunchedEffect(addedCount) {
         if (addedCount > 0) {
             chartRef.value?.apply {
@@ -152,7 +146,6 @@ fun IncrementalCandleChartWithPriceBox(
             onAxisRightTextSizePx = { px -> rightTextPx = px },
             onReachedStart = {
                 chartRef.value?.let { chart ->
-                    // 과거 fetch 전 현재 보이는 구간 저장
                     lastLowestVisibleX = chart.lowestVisibleX
                     lastVisibleRange = chart.visibleXRange
                     viewModel.fetchPreviousCandles(symbol, tabIndex) { added ->
@@ -163,7 +156,6 @@ fun IncrementalCandleChartWithPriceBox(
             chartRef = chartRef
         )
 
-        // 종가 표시 박스
         if (entries.isNotEmpty() && boxOffsetY != null && rightTextPx != null) {
             val density = LocalDensity.current
             val yDp = with(density) { boxOffsetY!!.toDp() }
@@ -213,87 +205,85 @@ fun IncrementalCandleChart(
     AndroidView(
         factory = { ctx ->
             CandleStickChart(ctx).apply {
+                // 초기 공통 설정
                 description.isEnabled = false
                 setDrawGridBackground(false)
                 setPinchZoom(true)
-                isDragEnabled = true
                 setScaleEnabled(true)
                 setScaleXEnabled(true)
                 setScaleYEnabled(false)
+                setDoubleTapToZoomEnabled(true)
+                isDragEnabled = true
                 setDragOffsetX(20f)
-                xAxis.position = XAxis.XAxisPosition.BOTTOM
-                axisLeft.isEnabled = false
-                axisRight.isEnabled = true
-                legend.isEnabled = false
                 isAutoScaleMinMaxEnabled = true
+
+                // X축 기본 설정
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
+                    granularity = 1f
+                    setGranularityEnabled(true)
+                    setAvoidFirstLastClipping(true)
+                }
+
+                axisLeft.isEnabled = false
+                axisRight.apply {
+                    isEnabled = true
+                    valueFormatter = object : ValueFormatter() {
+                        override fun getFormattedValue(value: Float) = String.format("%,.0f", value)
+                    }
+                    textSize.let { onAxisRightTextSizePx?.invoke(it) }
+                }
+
+                setOnChartGestureListener(object : OnChartGestureListener {
+                    override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float) = postUpdate()
+                    override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) = postUpdate()
+                    override fun onChartGestureEnd(me: MotionEvent?, last: ChartTouchListener.ChartGesture?) {
+                        if (lowestVisibleX <= 2f) onReachedStart?.invoke()
+                        postUpdate()
+                    }
+                    override fun onChartGestureStart(me: MotionEvent?, last: ChartTouchListener.ChartGesture?) {}
+                    override fun onChartLongPressed(me: MotionEvent?) {}
+                    override fun onChartDoubleTapped(me: MotionEvent?) {}
+                    override fun onChartSingleTapped(me: MotionEvent?) {}
+                    override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}
+
+                    private fun postUpdate() {
+                        post {
+                            data?.let { cd ->
+                                val set = cd.getDataSetByIndex(0) as CandleDataSet
+                                val idx = highestVisibleX.toInt().coerceAtMost(set.entryCount - 1)
+                                val e = set.getEntryForIndex(idx)
+                                val pt = getTransformer(YAxis.AxisDependency.RIGHT)
+                                    .getPixelForValues(0f, e.close)
+                                onLastVisibleClose?.invoke(e.close, pt.y.toFloat(), e.open)
+                            }
+                        }
+                    }
+                })
+
                 data = candleData
                 chartRef.value = this
             }
         },
         update = { chart ->
-            // ① 데이터 교체
+            // 데이터 갱신
             dataSet.values = entries
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
 
-            // 최초 로드 시 줌 초기화
+            // 최신 xLabels 로 Formatter + LabelCount 설정
+            chart.xAxis.apply {
+                valueFormatter = IndexAxisValueFormatter(xLabels)
+                setLabelCount(minOf(xLabels.size, 6), false)
+            }
+
+            // 최초 줌
             if (firstZoom && entries.isNotEmpty()) {
                 chart.setVisibleXRange(30f, 30f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
 
-            chart.xAxis.apply {
-                // 1) IndexAxisValueFormatter 사용
-                valueFormatter = IndexAxisValueFormatter(xLabels)
-                // 2) 인덱스 단위로 라벨 찍기
-                granularity = 1f
-                // 3) 최대 라벨 갯수 (원하는 값으로)
-                setLabelCount(minOf(xLabels.size, 6), true)
-            }
-
-            // 최소/최대 줌 범위 설정
-            chart.setVisibleXRangeMinimum(30f)
-            chart.setVisibleXRangeMaximum(200f)
-
-            // 오버스크롤 및 제스처 리스너
-//            chart.xAxis.axisMinimum = -5f
-            chart.setOnChartGestureListener(object : OnChartGestureListener {
-                override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float) = postUpdate()
-                override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) = postUpdate()
-                override fun onChartGestureEnd(me: MotionEvent?, last: ChartTouchListener.ChartGesture?) {
-                    if (chart.lowestVisibleX <= 2f) onReachedStart?.invoke()
-                    postUpdate()
-                }
-                override fun onChartGestureStart(me: MotionEvent?, last: ChartTouchListener.ChartGesture?) {}
-                override fun onChartLongPressed(me: MotionEvent?) {}
-                override fun onChartDoubleTapped(me: MotionEvent?) {}
-                override fun onChartSingleTapped(me: MotionEvent?) {}
-                override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}
-
-                private fun postUpdate() {
-                    chart.post {
-                        chart.data?.let { cd ->
-                            val set = cd.getDataSetByIndex(0) as CandleDataSet
-                            val idx = chart.highestVisibleX.toInt().coerceAtMost(set.entryCount - 1)
-                            val e = set.getEntryForIndex(idx)
-                            val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                                .getPixelForValues(0f, e.close)
-                            onLastVisibleClose?.invoke(e.close, pt.y.toFloat(), e.open)
-                        }
-                    }
-                }
-            })
-
-            // 오른쪽 Y축 포맷 및 텍스트 크기 콜백
-            chart.axisRight.apply {
-                valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
-                    override fun getFormattedValue(value: Float) = String.format("%,.0f", value)
-                }
-                onAxisRightTextSizePx?.invoke(textSize)
-            }
-
-            // 차트 갱신
             chart.invalidate()
         },
         modifier = modifier
