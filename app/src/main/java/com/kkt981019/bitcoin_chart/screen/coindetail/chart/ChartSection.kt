@@ -279,10 +279,13 @@ fun IncrementalCandleChart(
 
             // 최초 줌
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRange(30f, 30f)
+                chart.setVisibleXRangeMinimum(30f)  // 최소 30개까지만 줌 인
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
+
+            chart.setVisibleXRangeMinimum(10f)    // 최소 10개까지만 줌 인 허용
+            chart.setVisibleXRangeMaximum(100f)   // 최대 100개까지만 줌 아웃 허용
 
             chart.invalidate()
         },
