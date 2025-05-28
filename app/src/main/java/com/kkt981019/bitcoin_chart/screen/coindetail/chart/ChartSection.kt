@@ -1,5 +1,6 @@
 import android.graphics.Paint
 import android.view.MotionEvent
+import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -22,7 +24,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.mikephil.charting.charts.CandleStickChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
-import com.github.mikephil.charting.data.*
+import com.github.mikephil.charting.data.CandleData
+import com.github.mikephil.charting.data.CandleDataSet
+import com.github.mikephil.charting.data.CandleEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.listener.ChartTouchListener
@@ -111,6 +115,7 @@ fun IncrementalCandleChartWithPriceBox(
     var addedCount by remember { mutableStateOf(0) }
     var lastLowestVisibleX by remember { mutableStateOf(0f) }
     var lastVisibleRange by remember { mutableStateOf(0f) }
+    var isLoadingPrev by remember { mutableStateOf(false) }
 
     LaunchedEffect(addedCount) {
         if (addedCount > 0) {
@@ -146,16 +151,19 @@ fun IncrementalCandleChartWithPriceBox(
             onAxisRightTextSizePx = { px -> rightTextPx = px },
             onReachedStart = {
                 chartRef.value?.let { chart ->
+                    isLoadingPrev = true
                     lastLowestVisibleX = chart.lowestVisibleX
                     lastVisibleRange = chart.visibleXRange
                     viewModel.fetchPreviousCandles(symbol, tabIndex) { added ->
                         addedCount = added
+                        isLoadingPrev = false
                     }
                 }
             },
             chartRef = chartRef
         )
 
+        // 가격 박스
         if (entries.isNotEmpty() && boxOffsetY != null && rightTextPx != null) {
             val density = LocalDensity.current
             val yDp = with(density) { boxOffsetY!!.toDp() }
@@ -171,6 +179,19 @@ fun IncrementalCandleChartWithPriceBox(
                     color = Color.White,
                     fontSize = fontSp.sp,
                     modifier = Modifier.padding(vertical = 1.dp)
+                )
+            }
+        }
+
+        // 이전 데이터 로딩 스피너
+        if (isLoadingPrev) {
+            Box(
+                Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(start = 16.dp)
                 )
             }
         }
@@ -205,7 +226,7 @@ fun IncrementalCandleChart(
     AndroidView(
         factory = { ctx ->
             CandleStickChart(ctx).apply {
-                // 초기 공통 설정
+                overScrollMode = View.OVER_SCROLL_NEVER
                 description.isEnabled = false
                 setDrawGridBackground(false)
                 setPinchZoom(true)
@@ -217,7 +238,6 @@ fun IncrementalCandleChart(
                 setDragOffsetX(20f)
                 isAutoScaleMinMaxEnabled = true
 
-                // X축 기본 설정
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     granularity = 1f
@@ -266,27 +286,23 @@ fun IncrementalCandleChart(
             }
         },
         update = { chart ->
-            // 데이터 갱신
             dataSet.values = entries
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
 
-            // 최신 xLabels 로 Formatter + LabelCount 설정
             chart.xAxis.apply {
                 valueFormatter = IndexAxisValueFormatter(xLabels)
                 setLabelCount(minOf(xLabels.size, 6), false)
             }
 
-            // 최초 줌
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRangeMinimum(30f)  // 최소 30개까지만 줌 인
+                chart.setVisibleXRangeMinimum(30f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
 
-            chart.setVisibleXRangeMinimum(10f)    // 최소 10개까지만 줌 인 허용
-            chart.setVisibleXRangeMaximum(100f)   // 최대 100개까지만 줌 아웃 허용
-
+            chart.setVisibleXRangeMinimum(10f)
+            chart.setVisibleXRangeMaximum(100f)
             chart.invalidate()
         },
         modifier = modifier
