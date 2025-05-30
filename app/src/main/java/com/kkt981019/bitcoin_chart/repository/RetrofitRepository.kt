@@ -36,14 +36,22 @@ class RetrofitRepository @Inject constructor(private val api: UpbitApi) {
         return api.getTrade(market = market)
     }
 
-    suspend fun getDayCandle(market: String): List<RetrofitCandleResponse> {
-        return api.getDayCandles(market = market)
+    suspend fun getDayCandle(
+        market: String,
+        count: Int = 200,
+        to: String? = null
+    ): List<RetrofitCandleResponse> {
+        return api.getDayCandles(
+            market = market,
+            count = count,
+            to    = to
+        )
     }
 
     suspend fun getMinuteCandle(
         market: String,
         minute: Int,
-        count: Int = 100,
+        count: Int = 200,
         to: String? = null
     ): List<RetrofitCandleResponse> {
         return api.getMinuteCandles(

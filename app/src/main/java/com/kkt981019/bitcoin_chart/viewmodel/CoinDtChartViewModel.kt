@@ -40,35 +40,46 @@ class CoinDtChartViewModel @Inject constructor(
         socket?.cancel()
         candleMap.clear()
 
-        if (tabIndex in 0..6) {
-            val unitList = listOf(1, 3, 5, 15, 30, 60, 240)
+        if (tabIndex in 0..7) {
+            val unitList = listOf(1, 3, 5, 15, 30, 60, 240, 1440)
             val unitMin = unitList[tabIndex]
-            val interval = "${unitMin}m"
-            val windowMs = unitMin * 60_000L
+            val interval = if (unitMin == 1440) "1d" else "${unitMin}m"
+            val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
 
             viewModelScope.launch {
-                //현재 시간 받아오기
-                val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).withSecond(0).withNano(0)      // 나노초 제거
+                // 현재 시각 ISO 포맷 (KST)
+                val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul"))
+                    .withSecond(0).withNano(0)
                 val toIso = nowSeoul.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                Log.d("asdasd", toIso)
-                // 1) 과거 REST 호출
-                val past = repo.getMinuteCandle(symbol, unitMin, to = "$toIso")
+
+                // 1) 과거 REST 호출: 분 단위 / 일 단위 분기
+                val past = if (unitMin == 1440) {
+                    repo.getDayCandle(symbol, to = toIso)     // 일봉 전용 엔드포인트
+                } else {
+                    repo.getMinuteCandle(symbol, unitMin, to = toIso)
+                }
+
                 past.forEach { r ->
                     val key = (r.timestamp / windowMs) * windowMs
-                    Log.d("dateCheck", r.candleDateTimeKst)
-                    val hhmm = r.candleDateTimeKst.substring(11, 16)
+                    // 레이블: 분 단위는 “HH:mm”, 일 단위는 “MM-dd”
+                    val label = if (unitMin == 1440) {
+                        r.candleDateTimeKst.substring(5, 10)   // ex: "05-31"
+                    } else {
+                        r.candleDateTimeKst.substring(11, 16)  // ex: "14:05"
+                    }
+
                     candleMap[key] = AggregatedCandle(
                         time  = key.toFloat(),
                         open  = r.openingPrice,
                         high  = r.highPrice,
                         low   = r.lowPrice,
                         close = r.tradePrice,
-                        label = hhmm
+                        label = label
                     )
                 }
                 postMinuteData()
 
-                // 2) WebSocket 스트림
+                // 2) WebSocket 구독: interval("1d" 혹은 "{n}m") 그대로 전달
                 startAggregation(symbol, interval, windowMs)
             }
         }
@@ -79,16 +90,21 @@ class CoinDtChartViewModel @Inject constructor(
         tabIndex: Int,
         onComplete: (Int) -> Unit
     ) {
-        val unitList = listOf(1, 3, 5, 15, 30, 60, 240)
+        val unitList = listOf(1, 3, 5, 15, 30, 60, 240, 1440)
         val unitMin = unitList[tabIndex]
-        val windowMs = unitMin * 60_000L
+        val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
 
         val oldestKey = candleMap.keys.minOrNull() ?: return
         val oldestDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
             .format(java.util.Date(oldestKey - windowMs))
 
         viewModelScope.launch {
-            val past = repo.getMinuteCandle(symbol, unitMin, to = "$oldestDate+09:00")
+            // 1) 과거 REST 호출: 분 단위 / 일 단위 분기
+            val past = if (unitMin == 1440) {
+                repo.getDayCandle(symbol, to = "$oldestDate+09:00")     // 일봉 전용 엔드포인트
+            } else {
+                repo.getMinuteCandle(symbol, unitMin, to = "$oldestDate+09:00")
+            }
             Log.d("dateCheck2", "[이후로드] ${past.size}개")
             val before = past.filter {
                 val key = (it.timestamp / windowMs) * windowMs

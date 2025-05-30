@@ -43,7 +43,7 @@ fun ChartSection(
     val minuteLabels by viewModel.minuteTimeLabels.observeAsState(emptyList())
 
     var selectedIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h")
+    val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d")
 
     LaunchedEffect(symbol, selectedIndex) {
         viewModel.fetchCandles(symbol, selectedIndex)
@@ -142,6 +142,7 @@ fun IncrementalCandleChartWithPriceBox(
         IncrementalCandleChart(
             entries = entries,
             xLabels = xLabels,
+            tabIndex = tabIndex,
             modifier = Modifier.fillMaxSize(),
             onLastVisibleClose = { close, y, open ->
                 lastClose = close
@@ -202,6 +203,7 @@ fun IncrementalCandleChartWithPriceBox(
 fun IncrementalCandleChart(
     entries: List<CandleEntry>,
     xLabels: List<String>,
+    tabIndex: Int,
     modifier: Modifier = Modifier,
     onAxisRightTextSizePx: ((Float) -> Unit)? = null,
     onLastVisibleClose: ((Float, Float, Float) -> Unit)? = null,
@@ -221,7 +223,7 @@ fun IncrementalCandleChart(
         }
     }
     val candleData = remember { CandleData(dataSet) }
-    var firstZoom by remember { mutableStateOf(true) }
+    var firstZoom by remember(tabIndex) { mutableStateOf(true) }
 
     AndroidView(
         factory = { ctx ->
@@ -302,7 +304,7 @@ fun IncrementalCandleChart(
             }
 
             chart.setVisibleXRangeMinimum(10f)
-            chart.setVisibleXRangeMaximum(100f)
+            chart.setVisibleXRangeMaximum(200f)
             chart.invalidate()
         },
         modifier = modifier
