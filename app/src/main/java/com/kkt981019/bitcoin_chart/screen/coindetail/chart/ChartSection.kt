@@ -43,7 +43,7 @@ fun ChartSection(
     val minuteLabels by viewModel.minuteTimeLabels.observeAsState(emptyList())
 
     var selectedIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d")
+    val tabs = listOf("1분", "3분", "5분", "15분", "30분", "1시간", "4시간", "1일")
 
     LaunchedEffect(symbol, selectedIndex) {
         viewModel.fetchCandles(symbol, selectedIndex)
@@ -184,6 +184,16 @@ fun IncrementalCandleChartWithPriceBox(
             }
         }
 
+        LaunchedEffect(tabIndex, entries.size) {
+            // entries.size를 의존성에 추가해서, 데이터가 전부 로드된 뒤에 실행되게 함
+            chartRef.value?.let { chart ->
+                if (entries.isNotEmpty()) {
+                    val lastX = entries.last().x
+                    chart.moveViewToX(lastX)
+                }
+            }
+        }
+
         // 이전 데이터 로딩 스피너
         if (isLoadingPrev) {
             Box(
@@ -306,6 +316,19 @@ fun IncrementalCandleChart(
             chart.setVisibleXRangeMinimum(10f)
             chart.setVisibleXRangeMaximum(200f)
             chart.invalidate()
+
+            chart.post {
+                if (chart.data != null) {
+                    val set = chart.data.getDataSetByIndex(0) as CandleDataSet
+                    if (set.entryCount > 0) {
+                        val lastIdx = set.entryCount - 1
+                        val lastEntry = set.getEntryForIndex(lastIdx)
+                        val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
+                            .getPixelForValues(0f, lastEntry.close)
+                        onLastVisibleClose?.invoke(lastEntry.close, pt.y.toFloat(), lastEntry.open)
+                    }
+                }
+            }
         },
         modifier = modifier
     )

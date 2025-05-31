@@ -26,7 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.idapgroup.autosizetext.AutoSizeText
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtTradeViewModel
 import java.text.DecimalFormat
@@ -200,7 +202,7 @@ fun DailyList(
                 )
 
                 // 거래량
-                Text(
+                AutoSizeText(
                     text = DecimalFormat("#,###.########").format(candle.candleAccTradeVolume),
                     modifier = Modifier
                         .weight(1f)
@@ -208,6 +210,9 @@ fun DailyList(
                         .padding(10.dp),
                     textAlign = TextAlign.End,
                     maxLines = 1,
+                    fontSize = 12.sp,
+                    minFontSize = 1.sp,
+                    lineHeight = 14.sp,
                     overflow = TextOverflow.Ellipsis
                 )
             }

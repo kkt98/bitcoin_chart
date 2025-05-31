@@ -86,4 +86,6 @@ dependencies {
     //Room
     implementation(libs.androidx.room.runtime)
     kapt (libs.androidx.room.compiler)
+    //AutosizeText
+    implementation (libs.autosizetext.compose.v030)
 }

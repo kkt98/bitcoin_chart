@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -43,7 +44,7 @@ class CoinDtChartViewModel @Inject constructor(
         if (tabIndex in 0..7) {
             val unitList = listOf(1, 3, 5, 15, 30, 60, 240, 1440)
             val unitMin = unitList[tabIndex]
-            val interval = if (unitMin == 1440) "1d" else "${unitMin}m"
+            val interval = if (unitMin == 1440) "1일" else "${unitMin}m"
             val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
 
             viewModelScope.launch {
@@ -133,18 +134,53 @@ class CoinDtChartViewModel @Inject constructor(
         interval: String,
         windowMs: Long
     ) {
-        socket = webSocketRepository.starCandleSocket(symbol, interval) { ws: WebSocketCandleResponse ->
-            val key  = (ws.timestamp / windowMs) * windowMs
-            val hhmm = ws.candleDateTimeKst.substring(11, 16)
-            val agg = candleMap.getOrPut(key) {
-                AggregatedCandle(key.toFloat(), ws.openPrice, ws.highPrice, ws.lowPrice, ws.tradePrice, hhmm)
-            }.apply {
-                high  = maxOf(high, ws.highPrice)
-                low   = minOf(low,  ws.lowPrice)
-                close = ws.tradePrice
-                label = hhmm
+        socket = if (interval == "1일") {
+            webSocketRepository.startTradeSocket(symbol) { ws: WebSocketTradeResponse ->
+                // timestamp는 ms 단위 epoch
+                val key = (ws.timestamp / windowMs) * windowMs
+
+                // KST 0시 기준 레이블 (MM-dd)
+                val dateLabel = Instant.ofEpochMilli(key)
+                    .atZone(ZoneId.of("Asia/Seoul"))
+                    .format(DateTimeFormatter.ofPattern("MM-dd"))
+
+                val agg = candleMap.getOrPut(key) {
+                    AggregatedCandle(
+                        time  = key.toFloat(),
+                        open  = ws.tradePrice,
+                        high  = ws.tradePrice,
+                        low   = ws.tradePrice,
+                        close = ws.tradePrice,
+                        label = dateLabel
+                    )
+                }
+
+                // 매 체결마다 High/Low/Close 갱신
+                agg.apply {
+                    high  = maxOf(high, ws.tradePrice)
+                    low   = minOf(low,  ws.tradePrice)
+                    close = ws.tradePrice
+                    // label은 하루 동안 동일하므로 재설정 불필요
+                }
+
+                postMinuteData()
             }
-            postMinuteData()
+
+        } else {
+            // 분·시간 봉은 기존 캔들 스트림
+            webSocketRepository.starCandleSocket(symbol, interval) { ws: WebSocketCandleResponse ->
+                val key  = (ws.timestamp / windowMs) * windowMs
+                val hhmm = ws.candleDateTimeKst.substring(11, 16)
+                val agg = candleMap.getOrPut(key) {
+                    AggregatedCandle(key.toFloat(), ws.openPrice, ws.highPrice, ws.lowPrice, ws.tradePrice, hhmm)
+                }.apply {
+                    high  = maxOf(high, ws.highPrice)
+                    low   = minOf(low,  ws.lowPrice)
+                    close = ws.tradePrice
+                    label = hhmm
+                }
+                postMinuteData()
+            }
         }
     }
 
