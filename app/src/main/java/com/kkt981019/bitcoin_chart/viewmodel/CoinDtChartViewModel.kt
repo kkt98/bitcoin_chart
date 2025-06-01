@@ -199,6 +199,7 @@ class CoinDtChartViewModel @Inject constructor(
         )
         _minuteTimeLabels.postValue(sorted.map { it.label })
     }
+
     data class AggregatedCandle(
         val time: Float,
         var open: Double,

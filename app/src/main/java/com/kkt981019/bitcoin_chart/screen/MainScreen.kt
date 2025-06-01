@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
@@ -412,27 +413,27 @@ fun CoinItemRow(
     ) {
 
         Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.bodyMedium)
-            Text(coin.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Text(name, fontSize = 13.sp)
+            Text(coin.symbol, fontSize = 10.sp, color = Color.Gray)
         }
 
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Box(Modifier.border(1.dp, borderColor.value).padding(2.dp)) {
-                Text(format.priceDf.format(coin.tradePrice ?: 0.0), color = color)
+                Text(format.priceDf.format(coin.tradePrice ?: 0.0), fontSize = 13.sp, color = color)
             }
         }
 
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-            Text(String.format("%.2f%%", (coin.changeRate ?: 0.0) * 100), color = color)
+            Text(String.format("%.2f%%", (coin.changeRate ?: 0.0) * 100), color = color, fontSize = 13.sp)
             when (selectedTabIndex) {
                 0 -> Text(text = DecimalFormat("#,##0.###").format(coin.signed ?: 0.0),
-                    style = MaterialTheme.typography.labelSmall, color = color)
+                    fontSize = 10.sp, color = color)
                 1 -> null
                 2 -> null
             }
         }
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-            Text(volumeText, color = Color.Black)
+            Text(volumeText, color = Color.Black, fontSize = 13.sp)
         }
     }
     Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)

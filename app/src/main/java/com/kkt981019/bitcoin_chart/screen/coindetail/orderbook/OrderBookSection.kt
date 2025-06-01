@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kkt981019.bitcoin_chart.network.Data.CoinDetailResponse
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
@@ -71,12 +72,12 @@ fun OrderBookSection(
                     modifier = Modifier
                         .weight(1f)
                         .background(color = Color.Blue.copy(alpha = 0.1f))
-                        .padding(6.dp),
+                        .padding(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
                         text = dsPrice.format(unit.askSize),
-                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 12.sp,
                     )
                 }
                 Spacer(modifier = Modifier.width(1.dp))
@@ -89,7 +90,7 @@ fun OrderBookSection(
                             Modifier.border(width = 1.dp, color = Color.Black)  // 경계선 색상은 원하는 대로 조절
                         else Modifier
                         )
-                        .padding(6.dp),
+                        .padding(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
                     Row(modifier = Modifier
@@ -97,13 +98,13 @@ fun OrderBookSection(
 
                         Text(
                             text = format.priceDf.format(unit.askPrice),
-                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 12.sp,
                             color = diffColor
                         )
                         Spacer(modifier = Modifier.width(8.dp)) // 8.dp 간격 추가
                         Text(
                             text = diffText,
-                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 12.sp,
                             color = diffColor
                         )
                     }
@@ -113,7 +114,7 @@ fun OrderBookSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(6.dp),
+                        .padding(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
                     // 필요하다면 다른 텍스트나 UI 요소를 배치
@@ -150,7 +151,7 @@ fun OrderBookSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(6.dp),
+                        .padding(8.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
 
@@ -161,19 +162,19 @@ fun OrderBookSection(
                     modifier = Modifier
                         .weight(1f)
                         .background(color = Color.Red.copy(alpha = 0.1f))
-                        .padding(6.dp),
+                        .padding(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
                     Row {
                         Text(
                         text = format.priceDf.format(unit.bidPrice),
-                        style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 12.sp,
                         color = diffColor
                         )
                         Spacer(modifier = Modifier.width(8.dp)) // 8.dp 간격 추가
                         Text(
                             text = diffText,
-                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 12.sp,
                             color = diffColor
                         )
                     }
@@ -186,12 +187,12 @@ fun OrderBookSection(
                     modifier = Modifier
                         .weight(1f)
                         .background(color = Color.Red.copy(alpha = 0.1f))
-                        .padding(6.dp),
+                        .padding(8.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
                         text = dsPrice.format(unit.bidSize),
-                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 12.sp,
                     )
                 }
             }

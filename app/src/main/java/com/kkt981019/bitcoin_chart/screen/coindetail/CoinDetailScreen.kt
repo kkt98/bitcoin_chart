@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
@@ -81,7 +82,7 @@ fun CoinDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "$koreanName ($symbol)") },
+                title = { Text(text = "$koreanName ($symbol)", fontSize = 21.sp) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
@@ -148,7 +149,7 @@ fun CoinDetailScreen(
                 // trade_price는 숫자로 변환 후 포맷팅
                 Text(
                     text = format.priceDf.format(ticker?.trade_price?.toDoubleOrNull() ?: 0.0),
-                    style = MaterialTheme.typography.headlineSmall,
+                    fontSize = 21.sp,
                     color = color
                 )
 
@@ -158,7 +159,7 @@ fun CoinDetailScreen(
                 ) {
                     Text(
                         text = changeRate,
-                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 14.sp,
                         color = color,
                         modifier = Modifier.padding(end = 14.dp)
                     )
@@ -168,14 +169,14 @@ fun CoinDetailScreen(
                             painter = changeIcon,
                             contentDescription = "변동 아이콘",
                             tint = color,
-                            modifier = Modifier.size(20.dp) // 아이콘 크기를 24.dp로 설정
+                            modifier = Modifier.size(15.dp) // 아이콘 크기를 24.dp로 설정
                                 .padding(end = 6.dp)
                         )
                     }
 
                     Text(
                         text = si.format(ticker?.signed_change_price?.toDoubleOrNull() ?: 0.0),
-                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 14.sp,
                         color = color
                     )
                 }

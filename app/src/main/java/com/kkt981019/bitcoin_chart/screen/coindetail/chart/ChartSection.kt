@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -70,6 +71,7 @@ fun ChartSection(
                 ) {
                     Text(
                         text = title,
+                        fontSize = 12.sp,
                         color = if (isSel) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurface
                     )
@@ -185,11 +187,15 @@ fun IncrementalCandleChartWithPriceBox(
         }
 
         LaunchedEffect(tabIndex, entries.size) {
-            // entries.size를 의존성에 추가해서, 데이터가 전부 로드된 뒤에 실행되게 함
             chartRef.value?.let { chart ->
                 if (entries.isNotEmpty()) {
-                    val lastX = entries.last().x
-                    chart.moveViewToX(lastX)
+                    val lastIdx = entries.last().x.toInt()  // 또는 entries.size - 1
+                    val curRightIdx = chart.highestVisibleX.toInt()
+
+                    // → 이미 마지막 봉을 보고 있을 때만 이동
+                    if (curRightIdx == lastIdx) {
+                        chart.moveViewToX(entries.last().x)
+                    }
                 }
             }
         }
@@ -322,10 +328,19 @@ fun IncrementalCandleChart(
                     val set = chart.data.getDataSetByIndex(0) as CandleDataSet
                     if (set.entryCount > 0) {
                         val lastIdx = set.entryCount - 1
-                        val lastEntry = set.getEntryForIndex(lastIdx)
-                        val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                            .getPixelForValues(0f, lastEntry.close)
-                        onLastVisibleClose?.invoke(lastEntry.close, pt.y.toFloat(), lastEntry.open)
+
+                        // ★ “현재 보이는 가장 오른쪽 봉 인덱스”가 마지막 봉 인덱스일 때만
+                        if (chart.highestVisibleX.toInt() == lastIdx) {
+                            val lastEntry = set.getEntryForIndex(lastIdx)
+                            val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
+                                .getPixelForValues(0f, lastEntry.close)
+                            onLastVisibleClose?.invoke(
+                                lastEntry.close,
+                                pt.y.toFloat(),
+                                lastEntry.open
+                            )
+                        }
+                        // ※ 만약 과거 봉을 보고 있으면 아무런 호출도 하지 않음
                     }
                 }
             }
@@ -337,5 +352,6 @@ fun IncrementalCandleChart(
 @Composable
 fun pxToSp(px: Float): Float {
     val density = LocalDensity.current
-    return px / density.density
+    val spValue: TextUnit = with(density) { px.toSp() }
+    return spValue.value
 }

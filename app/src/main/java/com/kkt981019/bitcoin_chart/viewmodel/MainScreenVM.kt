@@ -26,7 +26,6 @@ class MainScreenVM @Inject constructor(
 
     private var currentSocket: WebSocket? = null
 
-    /** 탭이 바뀔 때마다 호출하세요 */
     fun fetchCoins(tabIndex: Int) {
         // 1) 이전 소켓 정리
         currentSocket?.close(1000, "Tab changed")
@@ -85,7 +84,7 @@ class MainScreenVM @Inject constructor(
             }
 
             // 2) 초기 데이터 방출
-            _coins.postValue(list)
+            _coins.postValue(list!!)
 
             // 3) WebSocket 업데이트 시작
             startWebSocketUpdates(list)
