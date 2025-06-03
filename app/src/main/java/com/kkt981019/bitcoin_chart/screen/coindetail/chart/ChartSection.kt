@@ -340,7 +340,6 @@ fun IncrementalCandleChart(
                                 lastEntry.open
                             )
                         }
-                        // ※ 만약 과거 봉을 보고 있으면 아무런 호출도 하지 않음
                     }
                 }
             }
