@@ -314,7 +314,7 @@ fun IncrementalCandleChart(
             }
 
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRangeMinimum(30f)
+                chart.zoom(2.5f, 1f, entries.last().x, 0f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
