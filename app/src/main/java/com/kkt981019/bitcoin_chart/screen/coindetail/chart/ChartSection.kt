@@ -304,7 +304,9 @@ fun IncrementalCandleChart(
             }
         },
         update = { chart ->
+            // 1) 데이터 갱신
             dataSet.values = entries
+            chart.data = candleData
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
 
@@ -313,36 +315,25 @@ fun IncrementalCandleChart(
                 setLabelCount(minOf(xLabels.size, 6), false)
             }
 
+            // 2) 최초 로드 혹은 탭 변경 직후에만 실행
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRangeMinimum(30f)
-                chart.moveViewToX(entries.last().x)
+                // 3) 정확히 80봉만 보이도록
+                chart.setVisibleXRange(80f, 80f)
+
+                // 4) 최신봉(x max)이 오른쪽 끝에 오도록 이동
+                val lastX = entries.last().x
+                val startX = (lastX - 80f).coerceAtLeast(0f)
+                chart.moveViewToX(startX)
+
                 firstZoom = false
             }
 
+            // 3) 이후부터는 줌인/줌아웃 허용: 원하시는 최소·최대 범위로 설정
             chart.setVisibleXRangeMinimum(10f)
             chart.setVisibleXRangeMaximum(200f)
+
+            // 5) 화면 갱신
             chart.invalidate()
-
-            chart.post {
-                if (chart.data != null) {
-                    val set = chart.data.getDataSetByIndex(0) as CandleDataSet
-                    if (set.entryCount > 0) {
-                        val lastIdx = set.entryCount - 1
-
-                        // ★ “현재 보이는 가장 오른쪽 봉 인덱스”가 마지막 봉 인덱스일 때만
-                        if (chart.highestVisibleX.toInt() == lastIdx) {
-                            val lastEntry = set.getEntryForIndex(lastIdx)
-                            val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                                .getPixelForValues(0f, lastEntry.close)
-                            onLastVisibleClose?.invoke(
-                                lastEntry.close,
-                                pt.y.toFloat(),
-                                lastEntry.open
-                            )
-                        }
-                    }
-                }
-            }
         },
         modifier = modifier
     )
