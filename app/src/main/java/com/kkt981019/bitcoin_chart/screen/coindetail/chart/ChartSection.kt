@@ -123,8 +123,8 @@ fun IncrementalCandleChartWithPriceBox(
         if (addedCount > 0) {
             chartRef.value?.apply {
                 moveViewToX(lastLowestVisibleX + addedCount)
-                setVisibleXRange(lastVisibleRange, lastVisibleRange)
-            }
+                setVisibleXRangeMaximum(lastVisibleRange)
+                setVisibleXRangeMinimum(10f)            }
             addedCount = 0
         }
     }
