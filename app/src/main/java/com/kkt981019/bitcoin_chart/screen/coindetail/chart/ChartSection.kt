@@ -116,15 +116,20 @@ fun IncrementalCandleChartWithPriceBox(
     val chartRef = remember { mutableStateOf<CandleStickChart?>(null) }
     var addedCount by remember { mutableStateOf(0) }
     var lastLowestVisibleX by remember { mutableStateOf(0f) }
+    var lastHighestVisibleX by remember { mutableStateOf(0f) }
     var lastVisibleRange by remember { mutableStateOf(0f) }
     var isLoadingPrev by remember { mutableStateOf(false) }
 
     LaunchedEffect(addedCount) {
         if (addedCount > 0) {
             chartRef.value?.apply {
-                moveViewToX(lastLowestVisibleX + addedCount)
-                setVisibleXRangeMaximum(lastVisibleRange)
-                setVisibleXRangeMinimum(10f)            }
+                moveViewToX(lastLowestVisibleX + addedCount- 20)
+//                setVisibleXRange(
+//                    lastHighestVisibleX - lastLowestVisibleX,
+//                    lastHighestVisibleX - lastLowestVisibleX
+//                )
+//                setVisibleXRangeMinimum(10f)
+            }
             addedCount = 0
         }
     }
@@ -156,7 +161,7 @@ fun IncrementalCandleChartWithPriceBox(
                 chartRef.value?.let { chart ->
                     isLoadingPrev = true
                     lastLowestVisibleX = chart.lowestVisibleX
-                    lastVisibleRange = chart.visibleXRange
+                    lastHighestVisibleX = chart.highestVisibleX
                     viewModel.fetchPreviousCandles(symbol, tabIndex) { added ->
                         addedCount = added
                         isLoadingPrev = false
@@ -253,7 +258,7 @@ fun IncrementalCandleChart(
                 setScaleYEnabled(false)
                 setDoubleTapToZoomEnabled(true)
                 isDragEnabled = true
-                setDragOffsetX(20f)
+                setDragOffsetX(30f)
                 isAutoScaleMinMaxEnabled = true
 
                 xAxis.apply {
