@@ -74,6 +74,7 @@ class CoinDtChartViewModel @Inject constructor(
                 // 받은 과거 캔들들을 key(timestamp)로 map에 넣는다.
                 past.forEach { r ->
                     val key = (r.timestamp / windowMs) * windowMs
+                    Log.d("timestampLog", r.timestamp.toString())
                     // 레이블: 분 단위는 “HH:mm”, 일 단위는 “MM-dd”
                     val label = if (unitMin == 1440) {
                         r.candleDateTimeKst.substring(5, 10)   // ex: "05-31"
@@ -212,19 +213,11 @@ class CoinDtChartViewModel @Inject constructor(
         }
     }
 
-    /**
-     * candleMap을 “timestamp 키 순서” 로 정렬해서,
-     *   1) sorted List<AggregatedCandle> 만들기
-     *   2) List<AggregatedCandle> 을 mapIndexed로 순회하며 CandleEntry(x=i, ...)로 변환
-     *   3) 그 결과를 LiveData로 즉시(value =) 업데이트
-     *   4) 레이블도 함께 LiveData로 업데이트
-     */
     private fun postMinuteData() {
         val sorted = candleMap.entries
             .sortedBy { it.key }
             .map { it.value }
 
-        // **중요**: postValue() 대신.value= 로 동기 업데이트
         _minuteCandleState.value = sorted.mapIndexed { i, c ->
             CandleEntry(
                 i.toFloat(),

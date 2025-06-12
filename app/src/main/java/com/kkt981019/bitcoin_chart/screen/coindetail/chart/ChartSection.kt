@@ -123,12 +123,17 @@ fun IncrementalCandleChartWithPriceBox(
     LaunchedEffect(addedCount) {
         if (addedCount > 0) {
             chartRef.value?.apply {
-                moveViewToX(lastLowestVisibleX + addedCount)
-//                setVisibleXRange(
-//                    lastHighestVisibleX - lastLowestVisibleX,
-//                    lastHighestVisibleX - lastLowestVisibleX
-//                )
-//                setVisibleXRangeMinimum(10f)
+                // 1) 픽셀 단위로 준 dragOffsetX 값
+                val pixelOffset = 30f
+
+                // 2) 차트가 현재 X축으로 얼마나 확대(scale)된 상태인지
+                val scaleX = viewPortHandler.scaleX
+
+                // 3) 픽셀을 X축 값 단위로 변환
+                val xValueOffset = pixelOffset / scaleX
+
+                // 4) 원래 계산하던 값에서 뺀 후 이동
+                moveViewToX(lastLowestVisibleX + addedCount - xValueOffset)
             }
             addedCount = 0
         }
@@ -260,6 +265,7 @@ fun IncrementalCandleChart(
                 isDragEnabled = true
                 setDragOffsetX(30f)
                 isAutoScaleMinMaxEnabled = true
+                setDragDecelerationEnabled(false)
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
