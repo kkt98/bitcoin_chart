@@ -266,7 +266,7 @@ fun IncrementalCandleChart(
                 setDragOffsetX(30f)
                 isAutoScaleMinMaxEnabled = true
                 setDragDecelerationEnabled(false)
-
+// ----------------------------------------  setDragDecelerationEnabled(false) --------------------------------- 여기 들어가서 추가되도 그대로 유지해주는 기느 있는지 확인
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     granularity = 1f
