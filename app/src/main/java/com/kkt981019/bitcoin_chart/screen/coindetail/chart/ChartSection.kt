@@ -255,6 +255,7 @@ fun IncrementalCandleChart(
                 isDragEnabled = true
                 setDragOffsetX(20f)
                 isAutoScaleMinMaxEnabled = true
+                setDragDecelerationEnabled(false)
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
@@ -314,7 +315,7 @@ fun IncrementalCandleChart(
             }
 
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRangeMinimum(30f)
+                chart.setVisibleXRange(80f, 80f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
@@ -329,7 +330,6 @@ fun IncrementalCandleChart(
                     if (set.entryCount > 0) {
                         val lastIdx = set.entryCount - 1
 
-                        // ★ “현재 보이는 가장 오른쪽 봉 인덱스”가 마지막 봉 인덱스일 때만
                         if (chart.highestVisibleX.toInt() == lastIdx) {
                             val lastEntry = set.getEntryForIndex(lastIdx)
                             val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
@@ -340,7 +340,6 @@ fun IncrementalCandleChart(
                                 lastEntry.open
                             )
                         }
-                        // ※ 만약 과거 봉을 보고 있으면 아무런 호출도 하지 않음
                     }
                 }
             }
