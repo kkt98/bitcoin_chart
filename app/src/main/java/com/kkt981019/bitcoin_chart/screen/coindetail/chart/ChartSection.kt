@@ -255,7 +255,6 @@ fun IncrementalCandleChart(
                 isDragEnabled = true
                 setDragOffsetX(20f)
                 isAutoScaleMinMaxEnabled = true
-                setDragDecelerationEnabled(false)
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
@@ -315,7 +314,7 @@ fun IncrementalCandleChart(
             }
 
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRange(80f, 80f)
+                chart.setVisibleXRangeMinimum(30f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }

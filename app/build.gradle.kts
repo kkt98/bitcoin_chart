@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.converter.gson)
     //차트
     implementation (libs.mpandroidchart)
+    implementation ("com.github.PhilJay:MPAndroidChart:3.1.0")
+
     //Room
     implementation(libs.androidx.room.runtime)
     kapt (libs.androidx.room.compiler)

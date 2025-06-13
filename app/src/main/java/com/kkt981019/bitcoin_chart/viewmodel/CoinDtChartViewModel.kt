@@ -106,7 +106,7 @@ class CoinDtChartViewModel @Inject constructor(
             } else {
                 repo.getMinuteCandle(symbol, unitMin, to = "$oldestDate+09:00")
             }
-            Log.d("dateCheck2", "[이후로드] ${past.size}개") //12
+            Log.d("dateCheck2", "[이후로드] ${past.size}개")
             val before = past.filter {
                 val key = (it.timestamp / windowMs) * windowMs
                 Log.d("dateCheck2", it.candleDateTimeKst)
