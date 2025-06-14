@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.mikephil.charting.charts.CandleStickChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
@@ -33,6 +32,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.listener.ChartTouchListener
 import com.github.mikephil.charting.listener.OnChartGestureListener
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtChartViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun ChartSection(
@@ -119,16 +119,6 @@ fun IncrementalCandleChartWithPriceBox(
     var lastVisibleRange by remember { mutableStateOf(0f) }
     var isLoadingPrev by remember { mutableStateOf(false) }
 
-    LaunchedEffect(addedCount) {
-        if (addedCount > 0) {
-            chartRef.value?.apply {
-                moveViewToX(lastLowestVisibleX + addedCount)
-                setVisibleXRange(lastVisibleRange, lastVisibleRange)
-            }
-            addedCount = 0
-        }
-    }
-
     var lastClose by remember { mutableStateOf(0f) }
     var lastOpen by remember { mutableStateOf(0f) }
     var boxOffsetY by remember { mutableStateOf<Float?>(null) }
@@ -145,6 +135,10 @@ fun IncrementalCandleChartWithPriceBox(
             entries = entries,
             xLabels = xLabels,
             tabIndex = tabIndex,
+            addedCount = addedCount,
+            lastLowestVisibleX = lastLowestVisibleX,
+            lastVisibleRange = lastVisibleRange,
+            onConsumedAddedCount = { addedCount = 0 },
             modifier = Modifier.fillMaxSize(),
             onLastVisibleClose = { close, y, open ->
                 lastClose = close
@@ -186,25 +180,25 @@ fun IncrementalCandleChartWithPriceBox(
             }
         }
 
+        // 자동 스크롤 방지
         LaunchedEffect(tabIndex, entries.size) {
-            chartRef.value?.let { chart ->
-                if (entries.isNotEmpty()) {
-                    val lastIdx = entries.last().x.toInt()  // 또는 entries.size - 1
-                    val curRightIdx = chart.highestVisibleX.toInt()
-
-                    // → 이미 마지막 봉을 보고 있을 때만 이동
-                    if (curRightIdx == lastIdx) {
-                        chart.moveViewToX(entries.last().x)
+            if (!isLoadingPrev) {
+                chartRef.value?.let { chart ->
+                    if (entries.isNotEmpty()) {
+                        val lastIdx = entries.last().x.toInt()
+                        val curRightIdx = chart.highestVisibleX.toInt()
+                        if (curRightIdx == lastIdx) {
+                            chart.moveViewToX(entries.last().x)
+                        }
                     }
                 }
             }
         }
 
-        // 이전 데이터 로딩 스피너
+        // 로딩 스피너
         if (isLoadingPrev) {
             Box(
-                Modifier
-                    .fillMaxSize(),
+                Modifier.fillMaxSize(),
                 contentAlignment = Alignment.CenterStart
             ) {
                 CircularProgressIndicator(
@@ -220,6 +214,10 @@ fun IncrementalCandleChart(
     entries: List<CandleEntry>,
     xLabels: List<String>,
     tabIndex: Int,
+    addedCount: Int,
+    lastLowestVisibleX: Float,
+    lastVisibleRange: Float,
+    onConsumedAddedCount: () -> Unit,
     modifier: Modifier = Modifier,
     onAxisRightTextSizePx: ((Float) -> Unit)? = null,
     onLastVisibleClose: ((Float, Float, Float) -> Unit)? = null,
@@ -254,9 +252,7 @@ fun IncrementalCandleChart(
                 setDoubleTapToZoomEnabled(true)
                 setDragDecelerationEnabled(false)
                 isDragEnabled = true
-                setDragOffsetX(20f)
                 isAutoScaleMinMaxEnabled = true
-
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
@@ -289,8 +285,8 @@ fun IncrementalCandleChart(
 
                     private fun postUpdate() {
                         post {
-                            data?.let { cd ->
-                                val set = cd.getDataSetByIndex(0) as CandleDataSet
+                            data?.let {
+                                val set = it.getDataSetByIndex(0) as CandleDataSet
                                 val idx = highestVisibleX.toInt().coerceAtMost(set.entryCount - 1)
                                 val e = set.getEntryForIndex(idx)
                                 val pt = getTransformer(YAxis.AxisDependency.RIGHT)
@@ -306,29 +302,28 @@ fun IncrementalCandleChart(
             }
         },
         update = { chart ->
-            val curLowest = chart.lowestVisibleX
-
             dataSet.values = entries
             chart.data.notifyDataChanged()
-            chart.notifyDataSetChanged()
 
-            chart.xAxis.apply {
-                valueFormatter = IndexAxisValueFormatter(xLabels)
-                setLabelCount(minOf(xLabels.size, 6), false)
+            // 이전 데이터 로드 시 뷰 고정 + 이동
+            if (addedCount > 0) {
+                chart.moveViewToX(lastLowestVisibleX + addedCount + 10)
+                onConsumedAddedCount()
             }
 
+            chart.notifyDataSetChanged()
+
+            // 첫 렌더링 초기 줌
             if (firstZoom && entries.isNotEmpty()) {
-                chart.setVisibleXRangeMinimum(30f)
+                chart.fitScreen()
+                chart.setVisibleXRangeMinimum(80f)
+                chart.setVisibleXRangeMaximum(80f)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
 
             chart.setVisibleXRangeMinimum(10f)
             chart.setVisibleXRangeMaximum(200f)
-
-            chart.moveViewToX(curLowest)
-
-            chart.invalidate()
 
             chart.post {
                 if (chart.data != null) {
@@ -350,6 +345,8 @@ fun IncrementalCandleChart(
                     }
                 }
             }
+
+            chart.invalidate()
         },
         modifier = modifier
     )
