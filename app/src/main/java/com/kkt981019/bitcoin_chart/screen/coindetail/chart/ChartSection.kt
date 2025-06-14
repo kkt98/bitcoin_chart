@@ -252,9 +252,11 @@ fun IncrementalCandleChart(
                 setScaleXEnabled(true)
                 setScaleYEnabled(false)
                 setDoubleTapToZoomEnabled(true)
+                setDragDecelerationEnabled(false)
                 isDragEnabled = true
                 setDragOffsetX(20f)
                 isAutoScaleMinMaxEnabled = true
+
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
@@ -304,6 +306,8 @@ fun IncrementalCandleChart(
             }
         },
         update = { chart ->
+            val curLowest = chart.lowestVisibleX
+
             dataSet.values = entries
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
@@ -321,6 +325,9 @@ fun IncrementalCandleChart(
 
             chart.setVisibleXRangeMinimum(10f)
             chart.setVisibleXRangeMaximum(200f)
+
+            chart.moveViewToX(curLowest)
+
             chart.invalidate()
 
             chart.post {
@@ -340,7 +347,6 @@ fun IncrementalCandleChart(
                                 lastEntry.open
                             )
                         }
-                        // ※ 만약 과거 봉을 보고 있으면 아무런 호출도 하지 않음
                     }
                 }
             }
