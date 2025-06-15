@@ -27,14 +27,14 @@ interface UpbitApi {
     @GET("v1/trades/ticks")
     suspend fun getTrade(
         @Query("market") market: String,
-        @Query("count") count: Int = 100
+        @Query("count") count: Int = 200
     ): List<RetrofitTradeResponse>
 
     // 일별 캔들 조회
     @GET("v1/candles/days")
     suspend fun getDayCandles(
         @Query("market") market: String,    // ex: "KRW-BTC"
-        @Query("count") count: Int = 100,
+        @Query("count") count: Int = 200,
         @Query("to") to: String? = null   // 이 ISO 8601 시각 이전 데이터
     ): List<RetrofitCandleResponse>
 
@@ -43,7 +43,7 @@ interface UpbitApi {
     suspend fun getMinuteCandles(
         @Path("unit") unit: Int,         // 1,3,5,15,30,60,240
         @Query("market") market: String,  // ex: "KRW-BTC"
-        @Query("count") count: Int = 100, // 최대 200개
+        @Query("count") count: Int = 200, // 최대 200개
         @Query("to") to: String? = null   // 이 ISO 8601 시각 이전 데이터
     ): List<RetrofitCandleResponse>
 

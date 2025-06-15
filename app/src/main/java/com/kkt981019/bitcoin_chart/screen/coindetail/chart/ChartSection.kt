@@ -1,3 +1,4 @@
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.view.MotionEvent
 import android.view.View
@@ -16,6 +17,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.OffsetEffect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -181,19 +183,19 @@ fun IncrementalCandleChartWithPriceBox(
         }
 
         // 자동 스크롤 방지
-        LaunchedEffect(tabIndex, entries.size) {
-            if (!isLoadingPrev) {
-                chartRef.value?.let { chart ->
-                    if (entries.isNotEmpty()) {
-                        val lastIdx = entries.last().x.toInt()
-                        val curRightIdx = chart.highestVisibleX.toInt()
-                        if (curRightIdx == lastIdx) {
-                            chart.moveViewToX(entries.last().x)
-                        }
-                    }
-                }
-            }
-        }
+//        LaunchedEffect(tabIndex, entries.size) {
+//            if (!isLoadingPrev) {
+//                chartRef.value?.let { chart ->
+//                    if (entries.isNotEmpty()) {
+//                        val lastIdx = entries.last().x.toInt()
+//                        val curRightIdx = chart.highestVisibleX.toInt()
+//                        if (curRightIdx == lastIdx) {
+//                            chart.moveViewToX(entries.last().x)
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         // 로딩 스피너
         if (isLoadingPrev) {
@@ -302,50 +304,56 @@ fun IncrementalCandleChart(
             }
         },
         update = { chart ->
+            // 1) 화면에 보이는 봉 개수 저장
+            val currentRange = chart.visibleXRange
+            // 2) matrix 저장
+            val savedMatrix = Matrix(chart.viewPortHandler.matrixTouch)
+
+            // 3) 데이터 갱신
             dataSet.values = entries
             chart.data.notifyDataChanged()
+            chart.notifyDataSetChanged()
 
-            // 이전 데이터 로드 시 뷰 고정 + 이동
+            // 4) matrix 복원 + translation
+            chart.viewPortHandler.refresh(savedMatrix, chart, false)
             if (addedCount > 0) {
-                chart.moveViewToX(lastLowestVisibleX + addedCount + 10)
+                val newLowestX = lastLowestVisibleX + addedCount
+                val transformer = chart.getTransformer(YAxis.AxisDependency.RIGHT)
+                val ptOld = transformer.getPixelForValues(lastLowestVisibleX, 0f)
+                val ptNew = transformer.getPixelForValues(newLowestX, 0f)
+                val dx = ptOld.x - ptNew.x
+                val m = Matrix(chart.viewPortHandler.matrixTouch)
+                m.postTranslate(dx.toFloat(), 0f)
+                chart.viewPortHandler.refresh(m, chart, false)
                 onConsumedAddedCount()
             }
 
-            chart.notifyDataSetChanged()
+            // 5) 고정된 화면 범위 재설정
+            chart.setVisibleXRange(currentRange, currentRange)
 
-            // 첫 렌더링 초기 줌
-            if (firstZoom && entries.isNotEmpty()) {
+            // 6) 초기 줌 한 번 설정
+            val expected = if (tabIndex == 7) 30f else 80f
+            if (firstZoom && entries.size >= expected) {
                 chart.fitScreen()
-                chart.setVisibleXRangeMinimum(80f)
-                chart.setVisibleXRangeMaximum(80f)
+                chart.setVisibleXRange(expected, expected)
                 chart.moveViewToX(entries.last().x)
                 firstZoom = false
             }
 
-            chart.setVisibleXRangeMinimum(10f)
-            chart.setVisibleXRangeMaximum(200f)
-
+            // 6) 오른쪽 가격 박스 업데이트
             chart.post {
-                if (chart.data != null) {
-                    val set = chart.data.getDataSetByIndex(0) as CandleDataSet
-                    if (set.entryCount > 0) {
-                        val lastIdx = set.entryCount - 1
-
-                        // ★ “현재 보이는 가장 오른쪽 봉 인덱스”가 마지막 봉 인덱스일 때만
-                        if (chart.highestVisibleX.toInt() == lastIdx) {
-                            val lastEntry = set.getEntryForIndex(lastIdx)
-                            val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                                .getPixelForValues(0f, lastEntry.close)
-                            onLastVisibleClose?.invoke(
-                                lastEntry.close,
-                                pt.y.toFloat(),
-                                lastEntry.open
-                            )
-                        }
+                chart.data?.let {
+                    val set = it.getDataSetByIndex(0) as CandleDataSet
+                    if (set.entryCount > 0 && chart.highestVisibleX.toInt() == set.entryCount - 1) {
+                        val e = set.getEntryForIndex(set.entryCount - 1)
+                        val pt = chart.getTransformer(YAxis.AxisDependency.RIGHT)
+                            .getPixelForValues(0f, e.close)
+                        onLastVisibleClose?.invoke(e.close, pt.y.toFloat(), e.open)
                     }
                 }
             }
 
+            // 7) 한 번만 다시 그리기
             chart.invalidate()
         },
         modifier = modifier
