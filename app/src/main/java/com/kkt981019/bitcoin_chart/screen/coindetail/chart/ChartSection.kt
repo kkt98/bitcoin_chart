@@ -255,13 +255,14 @@ fun IncrementalCandleChart(
                 setDragDecelerationEnabled(false)
                 isDragEnabled = true
                 isAutoScaleMinMaxEnabled = true
+                setVisibleXRangeMinimum(10f)   // 화면에 최소 5개
+                setVisibleXRangeMaximum(20f)  // 화면에 최대 20개
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     granularity = 1f
                     setGranularityEnabled(true)
                     setAvoidFirstLastClipping(true)
-                    valueFormatter = IndexAxisValueFormatter(xLabels)
                 }
 
                 axisLeft.isEnabled = false
@@ -305,32 +306,39 @@ fun IncrementalCandleChart(
             }
         },
         update = { chart ->
-            // 1) 화면에 보이는 봉 개수 저장
-            val currentRange = chart.visibleXRange
-            // 2) matrix 저장
             val savedMatrix = Matrix(chart.viewPortHandler.matrixTouch)
+            val savedLowestX = chart.lowestVisibleX
 
-            // 3) 데이터 갱신
+            val currentVisibleRange = chart.visibleXRange
+
+            chart.xAxis.valueFormatter = IndexAxisValueFormatter(xLabels)
+
+
+            // 2) 데이터 갱신
             dataSet.values = entries
             chart.data.notifyDataChanged()
             chart.notifyDataSetChanged()
 
-            // 4) matrix 복원 + translation
+            // 3) matrix 복원으로 줌·팬 상태 유지
             chart.viewPortHandler.refresh(savedMatrix, chart, false)
+
+            // 4) 신규 봉 개수만큼 뷰포트 좌측 이동
             if (addedCount > 0) {
-                val newLowestX = lastLowestVisibleX + addedCount
+                // 픽셀 좌표 차이를 계산해서 매트릭스를 translate
                 val transformer = chart.getTransformer(YAxis.AxisDependency.RIGHT)
-                val ptOld = transformer.getPixelForValues(lastLowestVisibleX, 0f)
-                val ptNew = transformer.getPixelForValues(newLowestX, 0f)
-                val dx = ptOld.x - ptNew.x
-                val m = Matrix(chart.viewPortHandler.matrixTouch)
-                m.postTranslate(dx.toFloat(), 0f)
-                chart.viewPortHandler.refresh(m, chart, false)
+                val ptOld = transformer.getPixelForValues(savedLowestX, 0f)
+                val ptNew = transformer.getPixelForValues(savedLowestX + addedCount, 0f)
+                savedMatrix.postTranslate((ptOld.x - ptNew.x).toFloat(), 0f)
+
+                // translate된 매트릭스 다시 적용
+                chart.viewPortHandler.refresh(savedMatrix, chart, false)
                 onConsumedAddedCount()
             }
 
-            // 5) 고정된 화면 범위 재설정
-            chart.setVisibleXRange(currentRange, currentRange)
+            chart.setVisibleXRange(currentVisibleRange, currentVisibleRange)
+
+            chart.setVisibleXRangeMinimum(50f)
+            chart.setVisibleXRangeMaximum(200f)
 
             // 6) 초기 줌 한 번 설정
             val expected = if (tabIndex == 7) 30f else 80f
