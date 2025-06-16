@@ -261,6 +261,7 @@ fun IncrementalCandleChart(
                     granularity = 1f
                     setGranularityEnabled(true)
                     setAvoidFirstLastClipping(true)
+                    valueFormatter = IndexAxisValueFormatter(xLabels)
                 }
 
                 axisLeft.isEnabled = false
