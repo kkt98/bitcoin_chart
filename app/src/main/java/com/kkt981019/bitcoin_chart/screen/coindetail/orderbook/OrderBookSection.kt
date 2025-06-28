@@ -87,7 +87,7 @@ fun OrderBookSection(
                         .weight(1f)
                         .background(color = Color.Blue.copy(alpha = 0.1f))
                         .then(if (currentPrice == unit.askPrice)
-                            Modifier.border(width = 1.dp, color = Color.Black)  // 경계선 색상은 원하는 대로 조절
+                            Modifier.border(width = 1.dp, color = Color.Black)
                         else Modifier
                         )
                         .padding(8.dp),

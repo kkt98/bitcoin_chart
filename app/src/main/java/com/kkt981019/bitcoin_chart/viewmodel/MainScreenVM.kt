@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.viewmodel
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,7 +23,7 @@ class MainScreenVM @Inject constructor(
 ) : ViewModel() {
 
     private val _coins = MutableLiveData<List<CoinData>>(emptyList())
-    val coins: MutableLiveData<List<CoinData>> = _coins
+    val coins: LiveData<List<CoinData>> = _coins
 
     private var currentSocket: WebSocket? = null
 

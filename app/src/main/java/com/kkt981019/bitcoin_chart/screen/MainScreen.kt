@@ -17,7 +17,6 @@ import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,33 +30,35 @@ import kotlinx.coroutines.delay
 import java.text.DecimalFormat
 import kotlin.text.substringBefore
 
+// 가격 정렬 상태를 정의하는 enum
 enum class PriceSort { NONE, DESC, ASC }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navController: NavController,
-    viewModel: MainScreenVM = hiltViewModel()
+    viewModel: MainScreenVM = hiltViewModel() // Hilt를 통한 ViewModel 주입
 ) {
+    // LiveData로부터 코인 목록을 구독하고 초기값은 빈 리스트
     val coins by viewModel.coins.observeAsState(emptyList())
 
-    // 검색어, 탭, 언어, 정렬 상태
+    // 검색어, 언어 토글, 정렬 상태, 정렬 기준, 탭 인덱스 설정
     var query       by remember { mutableStateOf("") }
     var useEnglish  by remember { mutableStateOf(false) }
     var priceSort   by remember { mutableStateOf(PriceSort.NONE) }
     var sortBy      by remember { mutableStateOf("none") }
     val tabs        = listOf("KRW","BTC","USDT","관심")
     var selectedTab by rememberSaveable { mutableStateOf(0) }
-    // 화면 진입 & 탭 변경 시 데이터 로드
+
+    // 컴포저블 시작 시 및 탭 변경 시 ViewModel에 데이터 요청
     LaunchedEffect(selectedTab) {
         viewModel.fetchCoins(selectedTab)
     }
 
-    // 배경 색
-    val bg      = MaterialTheme.colorScheme.background
-    val surface = MaterialTheme.colorScheme.surface
+    // 테마에서 배경 색상 가져오기
+    val bg = MaterialTheme.colorScheme.background
 
-    // 정렬·검색 처리
+    // 정렬 로직: 가격, 변동률, 거래대금 순으로 오름/내림차순 처리
     val sortedByPrice = when (priceSort) {
         PriceSort.DESC -> coins.sortedByDescending { it.tradePrice ?: 0.0 }
         PriceSort.ASC  -> coins.sortedBy { it.tradePrice ?: 0.0 }
@@ -73,12 +74,14 @@ fun MainScreen(
         PriceSort.ASC  -> coins.sortedBy { it.volume ?: 0.0 }
         else           -> coins
     }
+    // 사용자가 선택한 기준에 따라 정렬된 리스트 선택
     val displayed = when (sortBy) {
         "price"  -> sortedByPrice
         "rate"   -> sortedByRate
         "volume" -> sortedByVol
         else     -> coins
     }
+    // 검색어가 있다면 이름/심볼로 필터링
     val filtered = if (query.isNotBlank()) {
         displayed.filter {
             it.koreanName.contains(query, true)
@@ -87,9 +90,11 @@ fun MainScreen(
         }
     } else displayed
 
+    // 화면 레이아웃: Scaffold로 구조 구성
     Scaffold(
         modifier = Modifier.background(bg)
     ) { inner ->
+        // 안전 영역 패딩 계산
         val topInset = (inner.calculateTopPadding() - 16.dp).coerceAtLeast(0.dp)
         Column(
             Modifier
@@ -101,7 +106,7 @@ fun MainScreen(
                     bottom = inner.calculateBottomPadding()
                 )
         ) {
-            // 검색 바
+            // 검색 바 Row
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -116,55 +121,50 @@ fun MainScreen(
                     placeholder = { Text("코인명/심볼 검색", color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
-                        // container 색
                         focusedContainerColor   = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
-                        // 밑줄(Indicator) 색
                         focusedIndicatorColor   = Color.Black,
                         unfocusedIndicatorColor = Color.Gray,
-                        // 커서 색
                         cursorColor             = Color.Black,
-                        // 플레이스홀더 색
                         focusedPlaceholderColor   = Color.Gray,
                         unfocusedPlaceholderColor = Color.Gray,
                     )
                 )
             }
 
-            // 탭
+            // 탭 선택 영역
             TabRow(
                 selectedTabIndex = selectedTab,
-                // 탭 배경색(선택사항)
-                containerColor = Color.Transparent,
-                // 인디케이터
+                containerColor   = Color.Transparent,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
                         modifier = Modifier
                             .tabIndicatorOffset(tabPositions[selectedTab])
-                            .height(3.dp),        // 인디케이터 높이 조절
-                        color = Color(0xFF2979FF)       // 원하는 색으로 변경
+                            .height(3.dp),
+                        color = Color(0xFF2979FF)
                     )
                 }
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) },
-                        selectedContentColor = Color.Black,
+                        selected               = selectedTab == index,
+                        onClick                = { selectedTab = index },
+                        text                   = { Text(title) },
+                        selectedContentColor   = Color.Black,
                         unselectedContentColor = Color.Black
                     )
                 }
             }
 
-            // 헤더 (0..2 탭만 보여줘)
+            // 목록 헤더 (탭이 0~3인 경우만 표시)
             if (selectedTab in 0..3) {
                 CoinListHeader(
                     useEnglish = useEnglish,
-                    priceSort = priceSort,
-                    sortBy = sortBy,
-                    onToggleLanguage = { useEnglish = !useEnglish },
+                    priceSort  = priceSort,
+                    sortBy     = sortBy,
+                    onToggleLanguage   = { useEnglish = !useEnglish },
                     onCurrentPriceClick = {
+                        // 가격 클릭 시 오름/내림/기본 순환
                         priceSort = when (priceSort) {
                             PriceSort.NONE -> PriceSort.DESC
                             PriceSort.DESC -> PriceSort.ASC
@@ -191,30 +191,35 @@ fun MainScreen(
                 )
             }
 
-            // 리스트
+            // 코인 목록 출력
             LazyColumn(Modifier.fillMaxSize()) {
                 items(filtered) { coin ->
                     CoinItemRow(
-                        coin = coin,
-                        backgroundColor   = bg,
-                        useEnglish        = useEnglish,
-                        selectedTabIndex  = selectedTab
-                    ) {
-                        navController.navigate(
-                            "coin_detail/${coin.symbol}/${coin.koreanName}/${coin.englishName}"
-                        )
-                    }
+                        coin               = coin,
+                        backgroundColor    = bg,
+                        useEnglish         = useEnglish,
+                        selectedTabIndex   = selectedTab,
+                        onClick            = {
+                            // 클릭 시 상세 화면으로 네비게이션
+                            navController.navigate(
+                                "coin_detail/${coin.symbol}/${coin.koreanName}/${coin.englishName}"
+                            )
+                        }
+                    )
                 }
             }
         }
     }
 }
 
+/**
+ * 코인 목록의 각 컬럼 제목과 정렬 아이콘을 표시하는 헤더 컴포저블
+ */
 @Composable
 fun CoinListHeader(
     useEnglish: Boolean,
     priceSort: PriceSort,
-    sortBy: String,              // ← 여기 추가
+    sortBy: String,
     onToggleLanguage: () -> Unit,
     onCurrentPriceClick: () -> Unit,
     onChangeRateClick: () -> Unit,
@@ -226,12 +231,12 @@ fun CoinListHeader(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-        // (1) 이름
-        Box(modifier = Modifier.weight(1f)
-            .clickable(onClick = onToggleLanguage),
-            contentAlignment = Alignment.CenterStart)
-        {
+        // (1) 이름 컬럼
+        Box(
+            modifier = Modifier.weight(1f)
+                .clickable(onClick = onToggleLanguage),
+            contentAlignment = Alignment.CenterStart
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = if (useEnglish) "영문명" else "한글명",
@@ -239,14 +244,14 @@ fun CoinListHeader(
                 )
                 Spacer(Modifier.width(4.dp))
                 Icon(
-                    painter = painterResource(R.drawable.exchange),
+                    painter           = painterResource(R.drawable.exchange),
                     contentDescription = null,
-                    modifier = Modifier.size(8.dp),
+                    modifier          = Modifier.size(8.dp),
                 )
             }
         }
 
-        // (2) 현재가
+        // (2) 현재가 컬럼
         Box(
             modifier = Modifier.weight(1f).clickable(onClick = onCurrentPriceClick),
             contentAlignment = Alignment.CenterEnd
@@ -254,11 +259,11 @@ fun CoinListHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("현재가", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.width(4.dp))
-                // price 컬럼 전용 tint
-                val priceUpTint   = if (sortBy=="price"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
-                val priceDownTint = if (sortBy=="price"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Gray
+                // 오름/내림 정렬 아이콘 색 설정
+                val priceUpTint   = if (sortBy=="price" && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
+                val priceDownTint = if (sortBy=="price" && priceSort==PriceSort.DESC) Color.Blue else Color.Gray
                 Column(
-                    verticalArrangement   = Arrangement.Center,
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
@@ -277,7 +282,7 @@ fun CoinListHeader(
             }
         }
 
-        // (3) 전일대비
+        // (3) 전일대비 컬럼
         Box(
             modifier = Modifier.weight(1f).clickable(onClick = onChangeRateClick),
             contentAlignment = Alignment.CenterEnd
@@ -285,11 +290,10 @@ fun CoinListHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("전일대비", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.width(4.dp))
-                // rate 컬럼 전용 tint
-                val rateUpTint   = if (sortBy=="rate"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
-                val rateDownTint = if (sortBy=="rate"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Gray
+                val rateUpTint   = if (sortBy=="rate" && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
+                val rateDownTint = if (sortBy=="rate" && priceSort==PriceSort.DESC) Color.Blue else Color.Gray
                 Column(
-                    verticalArrangement   = Arrangement.Center,
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
@@ -308,7 +312,7 @@ fun CoinListHeader(
             }
         }
 
-        // (4) 거래대금
+        // (4) 거래대금 컬럼
         Box(
             modifier = Modifier.weight(1f).clickable(onClick = onVolumeClick),
             contentAlignment = Alignment.CenterEnd
@@ -316,11 +320,10 @@ fun CoinListHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("거래대금", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.width(4.dp))
-                // volume 컬럼 전용 tint
-                val volUpTint   = if (sortBy=="volume"  && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
-                val volDownTint = if (sortBy=="volume"  && priceSort==PriceSort.DESC)  Color.Blue else Color.Gray
+                val volUpTint   = if (sortBy=="volume" && priceSort==PriceSort.ASC )  Color.Blue else Color.Gray
+                val volDownTint = if (sortBy=="volume" && priceSort==PriceSort.DESC) Color.Blue else Color.Gray
                 Column(
-                    verticalArrangement   = Arrangement.Center,
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
@@ -340,14 +343,16 @@ fun CoinListHeader(
         }
     }
 
+    // 구분선
     Divider(
         color     = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
         thickness = 0.5.dp
     )
 }
 
-
-
+/**
+ * 각 코인 항목을 표시하는 리스트 행 컴포저블
+ */
 @Composable
 fun CoinItemRow(
     coin: CoinData,
@@ -356,85 +361,84 @@ fun CoinItemRow(
     selectedTabIndex: Int,
     onClick: () -> Unit
 ) {
+    // 상승/하락/변동 없음에 따른 텍스트 색상 설정
     val color = when (coin.change) {
         "RISE" -> Color.Red
         "EVEN" -> Color.Black
-        else   -> Color.Blue
+        else    -> Color.Blue
     }
 
-    val format= getTradeFormatters(coin.symbol.substringBefore('-'))
+    // 화폐 단위에 맞춘 거래량 포맷터 가져오기
+    val format = getTradeFormatters(coin.symbol.substringBefore('-'))
 
+    // 거래대금 단위 표시 (백만 단위 등)
     val volumeText = when {
         coin.symbol.startsWith("KRW") -> "${DecimalFormat("#,##0").format((coin.volume ?: 0.0) / 1_000_000)}백만"
         coin.symbol.startsWith("BTC") -> String.format("%.3f", coin.volume)
         else -> String.format("%,.3f", coin.volume)
     }
 
+    // 표시할 이름: 영어/한글 선택
     val name = if (useEnglish) coin.englishName else coin.koreanName
 
-    // 이전 가격와 테두리 색상 상태를 기억합니다.
+    // 이전 가격과 테두리 색상을 기억하여 깜빡임 효과 구현
     val previousPrice = remember(coin.symbol) { mutableStateOf(coin.tradePrice ?: 0.0) }
-    val borderColor = remember(coin.symbol) { mutableStateOf(Color.Transparent) }
+    val borderColor   = remember(coin.symbol) { mutableStateOf(Color.Transparent) }
 
-    // 가격이 바뀔 때마다 실행되는 효과 블록
     LaunchedEffect(coin.tradePrice) {
         val newPrice = coin.tradePrice ?: 0.0
         if (newPrice > previousPrice.value) {
-            // 상승한 경우: 빨간색 테두리 깜빡임
+            // 가격 상승 시 빨간색 테두리 깜빡임
             repeat(3) {
-                borderColor.value = Color.Red
-                delay(50)
-                borderColor.value = Color.Transparent
-                delay(50)
+                borderColor.value = Color.Red; delay(50)
+                borderColor.value = Color.Transparent; delay(50)
             }
         } else if (newPrice < previousPrice.value) {
-            // 하락한 경우: 파란색 테두리 깜빡임
+            // 가격 하락 시 파란색 테두리 깜빡임
             repeat(3) {
-                borderColor.value = Color.Blue
-                delay(50)
-                borderColor.value = Color.Transparent
-                delay(50)
+                borderColor.value = Color.Blue; delay(50)
+                borderColor.value = Color.Transparent; delay(50)
             }
         }
-        // 변동이 없으면 아무 효과 없음
         previousPrice.value = newPrice
     }
 
-
+    // 행 레이아웃
     Row(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(backgroundColor)
-//            .border(width = 2.dp, color = borderColor.value, shape = MaterialTheme.shapes.medium)
             .padding(vertical = 8.dp, horizontal = 16.dp),
-
         verticalAlignment = Alignment.CenterVertically
     ) {
-
+        // 이름 및 심볼
         Column(Modifier.weight(1f)) {
             Text(name, fontSize = 13.sp)
             Text(coin.symbol, fontSize = 10.sp, color = Color.Gray)
         }
 
+        // 현재가 (테두리 효과 포함)
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Box(Modifier.border(1.dp, borderColor.value).padding(2.dp)) {
                 Text(format.priceDf.format(coin.tradePrice ?: 0.0), fontSize = 13.sp, color = color)
             }
         }
 
+        // 전일 대비 및 절대 변동값
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(String.format("%.2f%%", (coin.changeRate ?: 0.0) * 100), color = color, fontSize = 13.sp)
-            when (selectedTabIndex) {
-                0 -> Text(text = DecimalFormat("#,##0.###").format(coin.signed ?: 0.0),
-                    fontSize = 10.sp, color = color)
-                1 -> null
-                2 -> null
+            if (selectedTabIndex == 0) {
+                Text(text = DecimalFormat("#,##0.###").format(coin.signed ?: 0.0), fontSize = 10.sp, color = color)
             }
         }
+
+        // 거래대금 표시
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(volumeText, color = Color.Black, fontSize = 13.sp)
         }
     }
+
+    // 각 항목 구분선
     Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
 }
