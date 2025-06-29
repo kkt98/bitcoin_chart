@@ -17,7 +17,7 @@ data class OrderbookUnit(
     @SerializedName("ask_price") val askPrice: Double,
     @SerializedName("bid_price") val bidPrice: Double,
     @SerializedName("ask_size") val askSize: Double,
-    @SerializedName("bid_size") val bidSize: Double
+    @SerializedName("bid_size") val bidSize: Double,
 )
 
 data class WebSocketTradeResponse(

@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +34,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.util.DecimalFormat
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtTradeViewModel
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import kotlin.text.substringAfter
 import kotlin.text.substringBefore
 
@@ -54,6 +57,14 @@ fun TradeList(
     if (trades.isEmpty()) {
         return
     }
+
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+    // UTC 문자열 → KST 문자열 변환
+    fun String.utcToKST(): String = runCatching {
+        val utcTime = LocalTime.parse(this, timeFormatter)
+        val kstTime = utcTime.plusHours(9)    // UTC+9
+        kstTime.format(timeFormatter)
+    }.getOrElse { this }
 
     // 2) 안전하게 첫 요소에 접근
     val code = trades.first().code
@@ -134,7 +145,7 @@ fun TradeList(
             ) {
                 // 체결시간
                 Text(
-                    text = t.tradeTime,
+                    text =  remember(t.tradeTime) { t.tradeTime.utcToKST() },
                     modifier = Modifier
                         .weight(0.5f)
                         .fillMaxHeight()
