@@ -166,6 +166,11 @@ fun OrderBookSection(
                         modifier = Modifier
                             .weight(1f)
                             .background(color = Color.Red.copy(alpha = 0.1f))
+                            .then(
+                                if (currentPrice == unit.bidPrice)
+                                    Modifier.border(width = 1.dp, color = Color.Black)
+                                else Modifier
+                            )
                             .padding(8.dp),
                         horizontalAlignment = Alignment.End
                     ) {
