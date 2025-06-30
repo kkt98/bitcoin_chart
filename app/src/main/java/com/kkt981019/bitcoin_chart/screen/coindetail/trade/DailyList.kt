@@ -54,7 +54,7 @@ fun DailyList(
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         stickyHeader {
-            // 헤더도 IntrinsicSize.Min 적용
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,7 +148,8 @@ fun DailyList(
                         .weight(0.5f)
                         .fillMaxHeight()
                         .padding(10.dp),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontSize = 13.sp
                 )
                 Divider(
                     modifier = Modifier
@@ -165,7 +166,8 @@ fun DailyList(
                         .fillMaxHeight()
                         .padding(10.dp),
                     textAlign = TextAlign.End,
-                    color = textColor
+                    color = textColor,
+                    fontSize = 13.sp
                 )
                 Divider(
                     modifier = Modifier
@@ -181,14 +183,16 @@ fun DailyList(
                 ) {
                     Text(
                         text = String.format("%.2f%%", diffRate ?: 0.0),
-                        color = textColor
+                        color = textColor,
+                        fontSize = 13.sp
                     )
 
                     when(candle.code.substringBefore("-")) {
                         "KRW" ->Text(
                             text = DecimalFormat("#,###.#####").format(diffAmount),
                             color = textColor,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 9.sp
                         )
                         else -> null
                     }
@@ -210,7 +214,7 @@ fun DailyList(
                         .padding(10.dp),
                     textAlign = TextAlign.End,
                     maxLines = 1,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     minFontSize = 1.sp,
                     lineHeight = 14.sp,
                     overflow = TextOverflow.Ellipsis

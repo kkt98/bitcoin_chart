@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kkt981019.bitcoin_chart.network.Data.WebSocketCandleResponse
 
-// 2) TradeSection 은 단일 TradeResponse 가 아닌 리스트를 받도록!
 @Composable
 fun TradeSection(
     symbol: String,

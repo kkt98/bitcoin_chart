@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.R
 import com.kkt981019.bitcoin_chart.util.DecimalFormat
@@ -150,7 +151,8 @@ fun TradeList(
                         .weight(0.5f)
                         .fillMaxHeight()
                         .padding(10.dp),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontSize = 13.sp
                 )
                 Divider(
                     modifier = Modifier
@@ -168,7 +170,8 @@ fun TradeList(
                         .fillMaxHeight()
                         .padding(10.dp),
                     textAlign = TextAlign.End,
-                    color = color
+                    color = color,
+                    fontSize = 13.sp
                 )
                 Divider(
                     modifier = Modifier
@@ -186,7 +189,8 @@ fun TradeList(
                         .fillMaxHeight()
                         .padding(10.dp),
                     textAlign = TextAlign.End,
-                    color = if (t.askBid == "ASK") Color.Blue else Color.Red
+                    color = if (t.askBid == "ASK") Color.Blue else Color.Red,
+                    fontSize = 13.sp
                 )
             }
             Divider() // 각 row 아래 가로줄
