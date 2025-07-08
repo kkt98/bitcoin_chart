@@ -14,7 +14,6 @@ import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Dispatcher
 import okhttp3.WebSocket
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -36,41 +35,49 @@ class CoinDtChartViewModel @Inject constructor(
     private val _minuteTimeLabels = MutableLiveData<List<String>>(emptyList())
     val minuteTimeLabels: LiveData<List<String>> = _minuteTimeLabels
 
-    private var socket: WebSocket? = null
+    private var tradeSocket: WebSocket? = null
+    private var candleSocket: WebSocket? = null
     private val candleMap = mutableMapOf<Long, AggregatedCandle>()
 
+    /** 정상적인 종료를 위한 메서드 */
+    fun stopTrade() {
+        tradeSocket?.close(1000, "normal shutdown")
+        tradeSocket = null
+    }
+
+    fun stopCandle() {
+        candleSocket?.close(1000, "normal shutdown")
+        candleSocket = null
+    }
+
+    /** REST 스냅샷 + WebSocket 구독 */
     fun fetchCandles(symbol: String, tabIndex: Int) {
-        socket?.cancel()
+        // 이전 스트림 종료 및 데이터 초기화
+        stopTrade()
+        stopCandle()
         candleMap.clear()
 
-        if (tabIndex in 0..7) {
-            val unitList = listOf(1, 3, 5, 15, 30, 60, 240, 1440)
-            val unitMin = unitList[tabIndex]
-            val interval = if (unitMin == 1440) "1일" else "${unitMin}m"
-            val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
+        if (tabIndex !in 0..7) return
 
-            viewModelScope.launch(Dispatchers.IO) {
-                // 현재 시각 ISO 포맷 (KST)
-                val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul"))
-                    .withSecond(0).withNano(0)
+        val unitList = listOf(1, 3, 5, 15, 30, 60, 240, 1440)
+        val unitMin = unitList[tabIndex]
+        val interval = if (unitMin == 1440) "1일" else "${unitMin}m"
+        val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
+
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1) 과거 데이터(REST) 조회
+            try {
+                val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).withSecond(0).withNano(0)
                 val toIso = nowSeoul.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-                // 1) 과거 REST 호출: 분 단위 / 일 단위 분기
-                val past = if (unitMin == 1440) {
-                    repo.getDayCandle(symbol, to = toIso)     // 일봉 전용 엔드포인트
+                val past: List<RetrofitCandleResponse> = if (unitMin == 1440) {
+                    repo.getDayCandle(symbol, to = toIso)
                 } else {
                     repo.getMinuteCandle(symbol, unitMin, to = toIso)
                 }
-
                 past.forEach { r ->
                     val key = (r.timestamp / windowMs) * windowMs
-                    // 레이블: 분 단위는 “HH:mm”, 일 단위는 “MM-dd”
-                    val label = if (unitMin == 1440) {
-                        r.candleDateTimeKst.substring(5, 10)   // ex: "05-31"
-                    } else {
-                        r.candleDateTimeKst.substring(11, 16)  // ex: "14:05"
-                    }
-
+                    val label = if (unitMin == 1440) r.candleDateTimeKst.substring(5, 10)
+                    else r.candleDateTimeKst.substring(11, 16)
                     candleMap[key] = AggregatedCandle(
                         time  = key.toFloat(),
                         open  = r.openingPrice,
@@ -81,129 +88,118 @@ class CoinDtChartViewModel @Inject constructor(
                     )
                 }
                 postMinuteData()
-
-                // 2) WebSocket 구독: interval("1d" 혹은 "{n}m") 그대로 전달
-                startAggregation(symbol, interval, windowMs)
+            } catch (e: Exception) {
+                Log.e("ChartVM", "REST fetch failed", e)
+                candleMap.clear()
+                postMinuteData()
             }
+
+            // 2) 실시간 스트림 구독
+            startAggregation(symbol, interval, windowMs)
         }
     }
 
+    /** 과거 캔들 추가 로드 */
     fun fetchPreviousCandles(
         symbol: String,
         tabIndex: Int,
         onComplete: (Int) -> Unit
     ) {
+        if (tabIndex !in 0..7) { onComplete(0); return }
+
         val unitList = listOf(1, 3, 5, 15, 30, 60, 240, 1440)
         val unitMin = unitList[tabIndex]
         val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
-
-        val oldestKey = candleMap.keys.minOrNull() ?: return
+        val oldestKey = candleMap.keys.minOrNull() ?: run { onComplete(0); return }
         val oldestDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
             .format(java.util.Date(oldestKey - windowMs))
 
         viewModelScope.launch(Dispatchers.IO) {
-            // 1) 과거 REST 호출: 분 단위 / 일 단위 분기
-            val past = if (unitMin == 1440) {
-                repo.getDayCandle(symbol, to = "$oldestDate+09:00")     // 일봉 전용 엔드포인트
-            } else {
-                repo.getMinuteCandle(symbol, unitMin, to = "$oldestDate+09:00")
+            try {
+                val past: List<RetrofitCandleResponse> = if (unitMin == 1440) {
+                    repo.getDayCandle(symbol, to = "$oldestDate+09:00")
+                } else {
+                    repo.getMinuteCandle(symbol, unitMin, to = "$oldestDate+09:00")
+                }
+                val before = past.filterNot { r ->
+                    val key = (r.timestamp / windowMs) * windowMs
+                    candleMap.containsKey(key)
+                }
+                before.forEach { r ->
+                    val key = (r.timestamp / windowMs) * windowMs
+                    val label = r.candleDateTimeKst.substring(11, 16)
+                    candleMap[key] = AggregatedCandle(
+                        time  = key.toFloat(),
+                        open  = r.openingPrice,
+                        high  = r.highPrice,
+                        low   = r.lowPrice,
+                        close = r.tradePrice,
+                        label = label
+                    )
+                }
+                postMinuteData()
+                onComplete(before.size)
+            } catch (e: Exception) {
+                Log.e("ChartVM", "Load previous failed", e)
+                onComplete(0)
             }
-            Log.d("dateCheck2", "[이후로드] ${past.size}개")
-            val before = past.filter {
-                val key = (it.timestamp / windowMs) * windowMs
-                Log.d("dateCheck2", it.candleDateTimeKst)
-                !candleMap.containsKey(key)
-            }
-            before.forEach { r ->
-                val key = (r.timestamp / windowMs) * windowMs
-                val hhmm = r.candleDateTimeKst.substring(11, 16)
-                candleMap[key] = AggregatedCandle(
-                    time  = key.toFloat(),
-                    open  = r.openingPrice,
-                    high  = r.highPrice,
-                    low   = r.lowPrice,
-                    close = r.tradePrice,
-                    label = hhmm
-                )
-            }
-            postMinuteData()
-            onComplete(before.size)
         }
     }
 
+    /** 채널별 WebSocket 구독 */
     private fun startAggregation(
         symbol: String,
         interval: String,
         windowMs: Long
     ) {
-        socket = if (interval == "1일") {
-            webSocketRepository.startTradeSocket(symbol) { ws: WebSocketTradeResponse ->
-                // timestamp는 ms 단위 epoch
+        if (interval == "1일") {
+            tradeSocket = webSocketRepository.startTradeSocket(symbol) { ws ->
                 val key = (ws.timestamp / windowMs) * windowMs
-
-                // KST 0시 기준 레이블 (MM-dd)
                 val dateLabel = Instant.ofEpochMilli(key)
                     .atZone(ZoneId.of("Asia/Seoul"))
                     .format(DateTimeFormatter.ofPattern("MM-dd"))
 
                 val agg = candleMap.getOrPut(key) {
-                    AggregatedCandle(
-                        time  = key.toFloat(),
-                        open  = ws.tradePrice,
-                        high  = ws.tradePrice,
-                        low   = ws.tradePrice,
-                        close = ws.tradePrice,
-                        label = dateLabel
-                    )
+                    AggregatedCandle(key.toFloat(), ws.tradePrice, ws.tradePrice, ws.tradePrice, ws.tradePrice, dateLabel)
                 }
-
-                // 매 체결마다 High/Low/Close 갱신
                 agg.apply {
-                    high  = maxOf(high, ws.tradePrice)
-                    low   = minOf(low,  ws.tradePrice)
-                    close = ws.tradePrice
-                    // label은 하루 동안 동일하므로 재설정 불필요
+                    high = maxOf(high, ws.tradePrice)
+                    low  = minOf(low,  ws.tradePrice)
+                    close= ws.tradePrice
                 }
-
                 postMinuteData()
             }
-
         } else {
-            // 분·시간 봉은 기존 캔들 스트림
-            webSocketRepository.starCandleSocket(symbol, interval) { ws: WebSocketCandleResponse ->
+            candleSocket = webSocketRepository.starCandleSocket(symbol, interval) { ws ->
                 val key  = (ws.timestamp / windowMs) * windowMs
-                val hhmm = ws.candleDateTimeKst.substring(11, 16)
-                val agg = candleMap.getOrPut(key) {
-                    AggregatedCandle(key.toFloat(), ws.openPrice, ws.highPrice, ws.lowPrice, ws.tradePrice, hhmm)
-                }.apply {
+                val label= ws.candleDateTimeKst.substring(11, 16)
+                val agg  = candleMap.getOrPut(key) {
+                    AggregatedCandle(key.toFloat(), ws.openPrice, ws.highPrice, ws.lowPrice, ws.tradePrice, label)
+                }
+                agg.apply {
                     high  = maxOf(high, ws.highPrice)
                     low   = minOf(low,  ws.lowPrice)
                     close = ws.tradePrice
-                    label = hhmm
+                    this.label = label
                 }
                 postMinuteData()
             }
         }
     }
 
+    /** LiveData 업데이트 */
     private fun postMinuteData() {
         val sorted = candleMap.entries.sortedBy { it.key }.map { it.value }
         _minuteCandleState.postValue(
             sorted.mapIndexed { i, c ->
-                CandleEntry(
-                    i.toFloat(),
-                    c.high.toFloat(),
-                    c.low.toFloat(),
-                    c.open.toFloat(),
-                    c.close.toFloat()
-                )
+                CandleEntry(i.toFloat(), c.high.toFloat(), c.low.toFloat(), c.open.toFloat(), c.close.toFloat())
             }
         )
         _minuteTimeLabels.postValue(sorted.map { it.label })
     }
 
     data class AggregatedCandle(
-        val time: Float,
+        var time: Float,
         var open: Double,
         var high: Double,
         var low: Double,
@@ -212,8 +208,8 @@ class CoinDtChartViewModel @Inject constructor(
     )
 
     override fun onCleared() {
-        socket?.cancel()
+        stopTrade()
+        stopCandle()
         super.onCleared()
     }
 }
-

@@ -31,8 +31,19 @@ class CoinDtOrderBookViewModel @Inject constructor(
     private var tickerSocket: WebSocket? = null
     private var orderBookSocket: WebSocket? = null
 
+    // 구독 해제
+    fun stopTicker() {
+        tickerSocket?.close(1000, "stopped")
+        tickerSocket = null
+    }
+
+    fun stopOrderBook() {
+        orderBookSocket?.close(1000, "stopped")
+        orderBookSocket = null
+    }
+
     fun startOrderBook(symbol: String) {
-        orderBookSocket?.close(1000, "ViewModel cleared")
+        stopOrderBook()
 
         viewModelScope.launch(Dispatchers.IO) {
             orderBookSocket = webSocketRepository.startOrderBookSocket(
@@ -45,7 +56,7 @@ class CoinDtOrderBookViewModel @Inject constructor(
     }
 
     fun startTicker(symbol: String) {
-        tickerSocket?.close(1000, "ViewModel cleared")
+        stopTicker()
 
         viewModelScope.launch(Dispatchers.IO) {
             tickerSocket = webSocketRepository.startTickerSocket(
@@ -59,8 +70,8 @@ class CoinDtOrderBookViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        tickerSocket?.close(1000, "ViewModel cleared")
-        orderBookSocket?.close(1000, "ViewModel cleared")
+        stopTicker()
+        stopOrderBook()
         super.onCleared()
     }
 }
