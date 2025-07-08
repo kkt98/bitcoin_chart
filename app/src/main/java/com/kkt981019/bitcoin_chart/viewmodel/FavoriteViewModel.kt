@@ -57,9 +57,4 @@ class FavoriteViewModel @Inject constructor(
             addFavorite(market, kor, eng)
         }
     }
-
-    // ⑥ 현재 이 마켓이 즐겨찾기인지 체크
-    fun isFavorite(market: String): Boolean {
-        return (_favorites.value ?: emptyList()).any { it.market == market }
-    }
 }

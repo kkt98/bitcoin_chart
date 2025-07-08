@@ -11,6 +11,7 @@ import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.repository.RetrofitRepository
 import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
 import javax.inject.Inject
@@ -33,57 +34,88 @@ class CoinDtTradeViewModel @Inject constructor(
     private val _dayCandleState = MutableLiveData<List<WebSocketCandleResponse>>(emptyList())
     val dayCandleState: LiveData<List<WebSocketCandleResponse>> = _dayCandleState
 
+    // 구독 해제
+    fun stopTrade() {
+        tradeSocket?.close(1000, "stopped")
+        tradeSocket = null
+    }
+
+    fun stopCandle() {
+        candleSocket?.close(1000, "stopped")
+        candleSocket = null
+    }
+
+    // 체결 구독 시작
     fun startTrade(marketCode: String) {
-        // 이전 trade 전용 소켓만 닫는다
-        tradeSocket?.close(1000, "re-subscribing-trade")
+        stopTrade()
 
-        viewModelScope.launch {
-            val restTrades = retrofitRepository.getTrade(marketCode)
-            _tradeState.postValue(restTrades.map { it.toWS() })
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1) REST 스냅샷 예외 처리
+            try {
+                val restTrades = retrofitRepository.getTrade(marketCode)
+                _tradeState.postValue(restTrades.map { it.toWS() })
+            } catch (e: Exception) {
+                // 네트워크 혹은 파싱 오류 시 빈 리스트 전달
+                _tradeState.postValue(emptyList())
+            }
 
-            tradeSocket = webSocketRepository.startTradeSocket(
-                marketCode = marketCode,
-                onTradeUpdate = { trade ->
-                    val current = _tradeState.value.orEmpty()
-                    _tradeState.postValue((listOf(trade) + current).take(100))
-                }
-            )
+            // 2) WebSocket 구독 예외 처리
+            try {
+                tradeSocket = webSocketRepository.startTradeSocket(
+                    marketCode = marketCode,
+                    onTradeUpdate = { trade ->
+                        val current = _tradeState.value.orEmpty()
+                        _tradeState.postValue((listOf(trade) + current).take(100))
+                    }
+                )
+            } catch (e: Exception) {
+                // TODO: 소켓 연결 실패 처리
+            }
         }
     }
 
+    // 일봉 구독 시작
     fun startCandle(marketCode: String, interval: String) {
-        // 이전 candle 전용 소켓만 닫는다
-        candleSocket?.close(1000, "re-subscribing-candle")
+        stopCandle()
 
-        viewModelScope.launch {
-            val restDays = retrofitRepository.getDayCandle(marketCode)
-            _dayCandleState.postValue(restDays.map { it.toWS() })
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1) REST 스냅샷 예외 처리
+            try {
+                val restDays = retrofitRepository.getDayCandle(marketCode)
+                _dayCandleState.postValue(restDays.map { it.toWS() })
+            } catch (e: Exception) {
+                _dayCandleState.postValue(emptyList())
+            }
 
-            candleSocket = webSocketRepository.starCandleSocket(
-                marketCode = marketCode,
-                interval = interval,
-                onCandleUpdate = { candle ->
-                    val current = _dayCandleState.value.orEmpty()
-                    val newDate = candle.candleDateTimeUtc.take(10)
-                    val existing = current.firstOrNull { it.candleDateTimeUtc.take(10) == newDate }
-                    val updated = existing?.copy(
-                        candleAccTradeVolume = existing.candleAccTradeVolume + candle.candleAccTradeVolume,
-                        tradePrice = candle.tradePrice
-                    ) ?: candle
-                    val merged = listOf(updated) + current.filter { it.candleDateTimeUtc.take(10) != newDate }
-                    _dayCandleState.postValue(merged)
-                }
-            )
+            // 2) WebSocket 구독 예외 처리
+            try {
+                candleSocket = webSocketRepository.starCandleSocket(
+                    marketCode = marketCode,
+                    interval = interval,
+                    onCandleUpdate = { candle ->
+                        val current = _dayCandleState.value.orEmpty()
+                        val newDate = candle.candleDateTimeUtc.take(10)
+                        val existing = current.firstOrNull { it.candleDateTimeUtc.take(10) == newDate }
+                        val updated = existing?.copy(
+                            candleAccTradeVolume = existing.candleAccTradeVolume + candle.candleAccTradeVolume,
+                            tradePrice = candle.tradePrice
+                        ) ?: candle
+                        val merged = listOf(updated) + current.filter { it.candleDateTimeUtc.take(10) != newDate }
+                        _dayCandleState.postValue(merged)
+                    }
+                )
+            } catch (e: Exception) {
+                // TODO: 소켓 연결 실패 처리
+            }
         }
     }
 
     override fun onCleared() {
-        tradeSocket?.close(1000, "ViewModel cleared")
-        candleSocket?.close(1000, "ViewModel cleared")
+        stopTrade()
+        stopCandle()
         super.onCleared()
     }
 }
-
 
 // Retrofit → WebSocket DTO 변환 확장함수
 private fun RetrofitTradeResponse.toWS(): WebSocketTradeResponse = WebSocketTradeResponse(
@@ -108,16 +140,16 @@ private fun RetrofitTradeResponse.toWS(): WebSocketTradeResponse = WebSocketTrad
 )
 
 private fun RetrofitCandleResponse.toWS(): WebSocketCandleResponse = WebSocketCandleResponse(
-    type = "candle",
-    code = market,
-    candleDateTimeUtc = candleDateTimeUtc,
-    candleDateTimeKst = candleDateTimeKst,
-    openPrice = 0.0,
-    highPrice = 0.0,
-    lowPrice = 0.0,
-    tradePrice = tradePrice,
-    candleAccTradePrice = candleAccTradePrice,
-    candleAccTradeVolume = candleAccTradeVolume,
-    unit = "1d",
-    timestamp = timestamp
+    type                  = "candle",
+    code                  = market,
+    candleDateTimeUtc     = candleDateTimeUtc,
+    candleDateTimeKst     = candleDateTimeKst,
+    openPrice             = 0.0,
+    highPrice             = 0.0,
+    lowPrice              = 0.0,
+    tradePrice            = tradePrice,
+    candleAccTradePrice   = candleAccTradePrice,
+    candleAccTradeVolume  = candleAccTradeVolume,
+    unit                  = "1d",
+    timestamp             = timestamp
 )

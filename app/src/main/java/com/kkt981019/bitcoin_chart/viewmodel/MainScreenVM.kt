@@ -109,7 +109,6 @@ class MainScreenVM @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        currentSocket?.close(1000, "ViewModel cleared")
     }
 }
 

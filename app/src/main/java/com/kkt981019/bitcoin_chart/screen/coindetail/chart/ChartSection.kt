@@ -182,21 +182,6 @@ fun IncrementalCandleChartWithPriceBox(
             }
         }
 
-        // 자동 스크롤 방지
-//        LaunchedEffect(tabIndex, entries.size) {
-//            if (!isLoadingPrev) {
-//                chartRef.value?.let { chart ->
-//                    if (entries.isNotEmpty()) {
-//                        val lastIdx = entries.last().x.toInt()
-//                        val curRightIdx = chart.highestVisibleX.toInt()
-//                        if (curRightIdx == lastIdx) {
-//                            chart.moveViewToX(entries.last().x)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
         // 로딩 스피너
         if (isLoadingPrev) {
             Box(

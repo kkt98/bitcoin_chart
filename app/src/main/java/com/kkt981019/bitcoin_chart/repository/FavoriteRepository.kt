@@ -9,10 +9,6 @@ import javax.inject.Singleton
 @Singleton
 class FavoriteRepository @Inject constructor(private val dao: FavoriteDao)  {
 
-    /**
-     * 즐겨찾기 전체 리스트를 Flow 로 가져옵니다.
-     * DB 에 추가/삭제가 일어나면 자동으로 새로운 리스트를 흘려줍니다.
-     */
     suspend fun getAllFavorites(): List<FavoriteEntity> =
         dao.getAllFavorites()
 

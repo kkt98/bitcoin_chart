@@ -12,7 +12,9 @@ import com.kkt981019.bitcoin_chart.network.Data.WebSocketTradeResponse
 import com.kkt981019.bitcoin_chart.repository.RetrofitRepository
 import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.Dispatcher
 import okhttp3.WebSocket
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -47,7 +49,7 @@ class CoinDtChartViewModel @Inject constructor(
             val interval = if (unitMin == 1440) "1일" else "${unitMin}m"
             val windowMs = if (unitMin == 1440) 86_400_000L else unitMin * 60_000L
 
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 // 현재 시각 ISO 포맷 (KST)
                 val nowSeoul = OffsetDateTime.now(ZoneId.of("Asia/Seoul"))
                     .withSecond(0).withNano(0)
@@ -99,7 +101,7 @@ class CoinDtChartViewModel @Inject constructor(
         val oldestDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
             .format(java.util.Date(oldestKey - windowMs))
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             // 1) 과거 REST 호출: 분 단위 / 일 단위 분기
             val past = if (unitMin == 1440) {
                 repo.getDayCandle(symbol, to = "$oldestDate+09:00")     // 일봉 전용 엔드포인트

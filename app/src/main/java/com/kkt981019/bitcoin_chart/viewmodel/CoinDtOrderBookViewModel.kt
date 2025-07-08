@@ -10,6 +10,7 @@ import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
 import com.kkt981019.bitcoin_chart.repository.RetrofitRepository
 import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
 import javax.inject.Inject
@@ -33,7 +34,7 @@ class CoinDtOrderBookViewModel @Inject constructor(
     fun startOrderBook(symbol: String) {
         orderBookSocket?.close(1000, "ViewModel cleared")
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             orderBookSocket = webSocketRepository.startOrderBookSocket(
                 marketCode = symbol,
                 onOrderbookUpdate = { orderBook ->
@@ -46,7 +47,7 @@ class CoinDtOrderBookViewModel @Inject constructor(
     fun startTicker(symbol: String) {
         tickerSocket?.close(1000, "ViewModel cleared")
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             tickerSocket = webSocketRepository.startTickerSocket(
                 marketCodes = listOf(symbol),
                 onTickerUpdate = { coinDetail ->
