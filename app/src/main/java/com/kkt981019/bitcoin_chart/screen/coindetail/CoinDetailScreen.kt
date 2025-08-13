@@ -18,7 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -76,7 +75,7 @@ fun CoinDetailScreen(
     val orderbook by viewModel.orderbookState.observeAsState() //호가정보
 
     // 탭 UI 구성
-    val tabTitles = listOf("호가", "차트", "시세")
+    val tabTitles = listOf("호가", "주문", "차트", "시세")
     var selectedTabIndex by remember { mutableStateOf(0) }
 
     Scaffold(
@@ -210,8 +209,9 @@ fun CoinDetailScreen(
             //호가, 차트, 시세 스크린
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
-                1 -> ChartSection(symbol)
-                2 -> TradeSection(symbol, color)
+                1 -> CoinOrderSection(orderbook, ticker, changeRate, symbol)
+                2 -> ChartSection(symbol)
+                3 -> TradeSection(symbol, color)
             }
         }
     }
