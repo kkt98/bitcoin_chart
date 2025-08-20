@@ -3,6 +3,7 @@ package com.kkt981019.bitcoin_chart.screen.coindetail
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -86,13 +87,14 @@ fun CoinOrderSection(
                 else -> Color.Unspecified
             }
 
-            Spacer(modifier = Modifier.width(1.dp))
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(bgLite.takeIf { isAsk } ?: Color.Transparent)
-                    .padding(vertical = 2.dp),
+                    .border(
+                        width = if (isCurrent) 1.dp else 0.dp,
+                        color = if (isCurrent) Color.Black.copy(alpha = 0.6f) else Color.Transparent
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 가격 + 대비%
@@ -110,17 +112,11 @@ fun CoinOrderSection(
                     Text(text = String.format("%.2f%%", percent), fontSize = 10.sp, color = pctColor)
                 }
 
-                Spacer(modifier = Modifier.width(1.dp))
-
                 // 수량 + 비례 배경바
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(30.dp)
-                        .border(
-                            width = if (isCurrent) 1.dp else 0.dp,
-                            color = if (isCurrent) Color.Black.copy(alpha = 0.6f) else Color.Transparent
-                        )
                         .padding(horizontal = 8.dp),
                     contentAlignment = if (isAsk) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
@@ -137,7 +133,8 @@ fun CoinOrderSection(
 
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             // ── 매도(ASK): 위쪽
             items(units.reversed()) { unit ->
