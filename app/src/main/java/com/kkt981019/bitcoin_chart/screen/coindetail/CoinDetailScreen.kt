@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kkt981019.bitcoin_chart.R
+import com.kkt981019.bitcoin_chart.screen.coindetail.coinorder.CoinOrderSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.orderbook.OrderBookSection
 import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
 import com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters
