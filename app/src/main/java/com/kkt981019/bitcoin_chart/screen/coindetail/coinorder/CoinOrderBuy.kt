@@ -22,6 +22,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,12 +71,12 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                         color = Color(0xFF000000),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                     )
-                    .padding(horizontal = 12.dp),                    // 안쪽 여백
+                    .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("가격", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("${currentPrice}", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("$currentPrice", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -82,6 +84,9 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
             var qty by remember { mutableStateOf("0") }
             val qtyNum = qty.toDoubleOrNull() ?: 0.0
             val total = qtyNum * currentPrice
+
+            // ▼ 드롭다운 열림 상태
+            var ratioMenuExpanded by remember { mutableStateOf(false) }
 
             // 수량 영역
             Row(
@@ -110,7 +115,6 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                     BasicTextField(
                         value = qty,
                         onValueChange = { s ->
-
                             qty = s.filter { it.isDigit() || it == '.' }
                         },
                         singleLine = true,
@@ -135,7 +139,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                     )
                 }
 
-                // ▶ 오른쪽: '비율' 버튼
+                // ▶ 오른쪽: '비율' 버튼 + 드롭다운
                 Box(
                     modifier = Modifier
                         .width(56.dp)
@@ -144,10 +148,45 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                             color = Color(0xFF9E9E9E),
                             shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
                         )
-                        .clickable { /* TODO: 비율 선택 BottomSheet 열기 */ },
+                        .clickable { ratioMenuExpanded = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("비율", color = Color.White, fontSize = 12.sp)
+
+                    // ▼ 드롭다운 메뉴
+                    DropdownMenu(
+                        expanded = ratioMenuExpanded,
+                        onDismissRequest = { ratioMenuExpanded = false }
+                    ) {
+                        val items = listOf(
+                            "최대" to 1.0,
+                            "75" to 0.75,
+                            "50" to 0.50,
+                            "25" to 0.25,
+                            "10" to 0.10
+                        )
+
+                        items.forEach { (label, ratio) ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (label == "최대") label else "$label%",
+                                        fontSize = 14.sp
+                                    )
+                                },
+                                onClick = {
+                                    ratioMenuExpanded = false
+                                    // TODO: 실제 로직 넣기
+
+                                    Toast.makeText(
+                                        context,
+                                        if (label == "최대") "최대 선택" else "$label% 선택",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -163,7 +202,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                         color = Color(0xFF000000),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                     )
-                    .padding(horizontal = 12.dp),                    // 안쪽 여백
+                    .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -185,19 +224,16 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
             ) {
                 // 초기화
                 Button(
-                    onClick = {
-                        // 요청: 수량을 "0"으로
-                        qty = "0"
-                    },
+                    onClick = { qty = "0" },
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color(0xFFE0E0E0),  // 밝은 회색 배경
+                        containerColor = Color(0xFFE0E0E0),
                         contentColor = Color.Black
                     ),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 0.dp) // 테두리 안 보이게
+                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 0.dp)
                 ) {
                     Text("초기화")
                 }
@@ -205,9 +241,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                 // 매수
                 Button(
                     onClick = {
-                        Toast
-                            .makeText(context, "매수완료", Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(context, "매수완료", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -217,9 +251,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                         containerColor = Color.Red,
                         contentColor = Color.White,
                     )
-                ) {
-                    Text("매수")
-                }
+                ) { Text("매수") }
             }
 
             Spacer(Modifier.height(8.dp))
@@ -227,9 +259,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
             // 총액 지정하여 매수 버튼
             Button(
                 onClick = {
-                    Toast
-                        .makeText(context, "총액 지정 매수", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(context, "총액 지정 매수", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,11 +269,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                     containerColor = Color.Red,
                     contentColor = Color.White,
                 )
-            ) {
-                Text("총액 지정하여 매수")
-            }
+            ) { Text("총액 지정하여 매수") }
         }
-
     }
-
 }
