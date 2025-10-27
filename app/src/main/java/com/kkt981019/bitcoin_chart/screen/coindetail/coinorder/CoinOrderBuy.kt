@@ -1,5 +1,6 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail.coinorder
 
+import TotalAmountDialog
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -84,6 +85,12 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
             var qty by remember { mutableStateOf("0") }
             val qtyNum = qty.toDoubleOrNull() ?: 0.0
             val total = qtyNum * currentPrice
+
+            // ✅ 다이얼로그 열림 상태
+            var showAmountDialog by remember { mutableStateOf(false) }
+
+            // TODO: 실제 주문가능 금액으로 교체
+            val availableBalance = 10_186_097.0
 
             // ▼ 드롭다운 열림 상태
             var ratioMenuExpanded by remember { mutableStateOf(false) }
@@ -259,8 +266,8 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
             // 총액 지정하여 매수 버튼
             Button(
                 onClick = {
-                    Toast.makeText(context, "총액 지정 매수", Toast.LENGTH_SHORT).show()
-                },
+                    showAmountDialog = true
+                          },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp),
@@ -270,6 +277,28 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                     contentColor = Color.White,
                 )
             ) { Text("총액 지정하여 매수") }
+
+            TotalAmountDialog(
+                show = showAmountDialog,
+                onDismiss = { showAmountDialog = false },
+                currentPrice = currentPrice,
+                availableBalance = availableBalance,
+                onConfirm = { amount ->
+                    // 사용자가 입력/버튼으로 확정한 총액(amount)으로 수량 계산
+                    if (amount <= 0.0 || currentPrice <= 0.0) {
+                        Toast.makeText(context, "유효한 총액을 입력하세요.", Toast.LENGTH_SHORT).show()
+                        return@TotalAmountDialog
+                    }
+                    val computedQty = amount / currentPrice
+                    qty = DecimalFormat("0.########").format(computedQty)
+                    Toast.makeText(
+                        context,
+                        "총액 ${DecimalFormat("#,##0").format(amount)} KRW로 수량 설정",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
         }
     }
 }
+
