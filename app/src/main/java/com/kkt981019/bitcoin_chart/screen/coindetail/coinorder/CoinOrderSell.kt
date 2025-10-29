@@ -44,7 +44,11 @@ import androidx.compose.ui.unit.sp
 import java.text.DecimalFormat
 
 @Composable
-fun CoinOrderSell(currentPrice: Double, context: Context) {
+fun CoinOrderSell(
+    currentPrice: Double,
+    format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
+    context: Context
+) {
 
     Box(
         modifier = Modifier

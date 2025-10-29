@@ -184,7 +184,7 @@ fun CoinOrderSection(
 
         Spacer(Modifier.width(8.dp))
 
-        // ── 오른쪽: 예약 공간(고정폭). 나중에 주문패널 꽂기
+        // ── 오른쪽 코인 사고 파는 영역
         Column(
             modifier = Modifier
                 .weight(1.5f)
@@ -231,8 +231,8 @@ fun CoinOrderSection(
                 }
             }
             when (selectedTab) {
-                0 -> CoinOrderBuy(currentPrice, context)
-                1 -> CoinOrderSell(currentPrice, context)
+                0 -> CoinOrderBuy(currentPrice, format, context)
+                1 -> CoinOrderSell(currentPrice, format, context)
                 2 -> CoinOrderHistory()
             }
 

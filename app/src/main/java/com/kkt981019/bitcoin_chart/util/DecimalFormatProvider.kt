@@ -6,9 +6,9 @@ object DecimalFormat {
 
     // 1) 포맷터를 담을 데이터 클래스
     data class TradeFormatters(
-        val priceDf: DecimalFormat,
-        val volumeDf: DecimalFormat,
-        val amountDf: DecimalFormat
+        val priceDf: DecimalFormat, // 가격
+        val volumeDf: DecimalFormat, // 거래량
+        val amountDf: DecimalFormat // 거래금액
     )
 
     // 2) moneyName 에 따라 한 번에 생성해 주는 헬퍼

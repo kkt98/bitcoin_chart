@@ -44,7 +44,11 @@ import androidx.compose.ui.unit.sp
 import java.text.DecimalFormat
 
 @Composable
-fun CoinOrderBuy(currentPrice: Double, context: Context) {
+fun CoinOrderBuy(
+    currentPrice: Double,
+    format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
+    context: Context
+) {
 
     Box(
         modifier = Modifier
@@ -77,7 +81,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("가격", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("$currentPrice", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("${format.priceDf.format(currentPrice)}", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(Modifier.height(8.dp))
