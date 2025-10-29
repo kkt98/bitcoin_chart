@@ -267,7 +267,7 @@ fun CoinOrderBuy(currentPrice: Double, context: Context) {
             Button(
                 onClick = {
                     showAmountDialog = true
-                          },
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp),
