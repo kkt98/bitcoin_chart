@@ -232,7 +232,7 @@ fun CoinOrderSection(
             }
             when (selectedTab) {
                 0 -> CoinOrderBuy(currentPrice, format, context)
-                1 -> CoinOrderSell(currentPrice, format, context)
+                1 -> CoinOrderSell(currentPrice, format, context, symbol)
                 2 -> CoinOrderHistory()
             }
 

@@ -47,7 +47,8 @@ import java.text.DecimalFormat
 fun CoinOrderSell(
     currentPrice: Double,
     format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
-    context: Context
+    context: Context,
+    symbol: String
 ) {
 
     Box(
@@ -60,8 +61,14 @@ fun CoinOrderSell(
 
             //주문가능 영역 (내가 현재 가지고 있는 돈)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("주문 가능", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("${"00"} KRW", color = Color.Black, fontSize = 12.sp)
+                Text("보유수량", color = Color(0xFF000000), fontSize = 12.sp)
+                Text("${"00"} ${symbol.substringAfter("-")}", color = Color.Black, fontSize = 12.sp)
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Text("= ${"00"} ${symbol.substringBefore("-")}", color = Color.Gray, fontSize = 10.sp)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -81,7 +88,7 @@ fun CoinOrderSell(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("가격", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("$currentPrice", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("${format.priceDf.format(currentPrice)}", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -228,7 +235,7 @@ fun CoinOrderSell(
 
             Spacer(Modifier.height(8.dp))
 
-            //초기화, 매수 버튼
+            //초기화, 매도 버튼
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -249,25 +256,25 @@ fun CoinOrderSell(
                     Text("초기화")
                 }
 
-                // 매수
+                // 매도
                 Button(
                     onClick = {
-                        Toast.makeText(context, "매수완료", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "매도완료", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red,
+                        containerColor = Color.Blue,
                         contentColor = Color.White,
                     )
-                ) { Text("매수") }
+                ) { Text("매도") }
             }
 
             Spacer(Modifier.height(8.dp))
 
-            // 총액 지정하여 매수 버튼
+            // 총액 지정하여 매도 버튼
             Button(
                 onClick = {
                     showAmountDialog = true
@@ -277,10 +284,10 @@ fun CoinOrderSell(
                     .height(44.dp),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red,
+                    containerColor = Color.Blue,
                     contentColor = Color.White,
                 )
-            ) { Text("총액 지정하여 매수") }
+            ) { Text("총액 지정하여 매도") }
 
             TotalAmountDialog(
                 show = showAmountDialog,
