@@ -34,7 +34,11 @@ fun TotalAmountDialog(
     onDismiss: () -> Unit,
     currentPrice: Double,
     availableBalance: Double,
-    onConfirm: (Double) -> Unit
+    onConfirm: (Double) -> Unit,
+    title: String = "총액 지정하여 매수",
+    qtyLabel: String = "매수 수량",
+    btnText: String = "매수",
+    btnColor: Color = Color.Red,
 ) {
     if (!show) return
 
@@ -54,7 +58,7 @@ fun TotalAmountDialog(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "총액 지정하여 매수",
+                    text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -78,7 +82,7 @@ fun TotalAmountDialog(
                 Spacer(Modifier.height(10.dp))
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("매수 수량", fontSize = 14.sp)
+                    Text(qtyLabel, fontSize = 14.sp)
                     Text("${DecimalFormat("0.########").format(qty)} BTC", fontWeight = FontWeight.Bold)
                 }
 
@@ -182,10 +186,10 @@ fun TotalAmountDialog(
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Red,
+                            containerColor = btnColor,
                             contentColor = Color.White
                         )
-                    ) { Text("매수") }
+                    ) { Text(btnText) }
                 }
             }
         }

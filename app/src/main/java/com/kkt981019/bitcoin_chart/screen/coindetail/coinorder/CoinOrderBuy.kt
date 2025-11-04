@@ -300,7 +300,11 @@ fun CoinOrderBuy(
                         "총액 ${DecimalFormat("#,##0").format(amount)} KRW로 수량 설정",
                         Toast.LENGTH_SHORT
                     ).show()
-                }
+                },
+                title = "총액 지정하여 매수",
+                qtyLabel = "매수 수량",
+                btnText = "매수",
+                btnColor = Color.Red
             )
         }
     }

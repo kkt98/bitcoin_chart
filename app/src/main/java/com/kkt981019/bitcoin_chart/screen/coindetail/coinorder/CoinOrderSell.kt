@@ -119,7 +119,7 @@ fun CoinOrderSell(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // ▶ 왼쪽: 라벨 + 숫자 입력(오른쪽 정렬)
-                Row(
+                Row(   
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -307,7 +307,11 @@ fun CoinOrderSell(
                         "총액 ${DecimalFormat("#,##0").format(amount)} KRW로 수량 설정",
                         Toast.LENGTH_SHORT
                     ).show()
-                }
+                },
+                title = "총액 지정하여 매도",
+                qtyLabel = "매수 매도",
+                btnText = "매도",
+                btnColor = Color.Blue
             )
         }
     }

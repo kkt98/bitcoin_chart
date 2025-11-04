@@ -216,14 +216,22 @@ fun CoinOrderSection(
                             modifier = Modifier
                                 .height(36.dp)
                                 .background(
-                                    if (selectedTab == idx) Color(0xFF2979FF) else Color.Transparent,
+                                    Color.Transparent,
                                     RoundedCornerShape(corner)
                                 ),
                             text = {
                                 Text(
                                     text = title,
                                     fontSize = 11.sp,
-                                    color = if (selectedTab == idx) Color.White else Color.Black,
+                                    color = if (selectedTab == idx) {
+                                        when (idx) {
+                                            0 -> Color.Red    // 매수
+                                            1 -> Color.Blue   // 매도
+                                            else -> Color.Black // 거래내역
+                                        }
+                                    } else {
+                                        Color.Gray
+                                    }
                                 )
                             }
                         )
