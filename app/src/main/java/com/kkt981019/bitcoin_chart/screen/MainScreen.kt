@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -110,7 +111,7 @@ fun MainScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp),
+                    .padding(start = 8.dp, end = 8.dp, top = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Filled.Search, contentDescription = null)
@@ -119,17 +120,26 @@ fun MainScreen(
                     value = query,
                     onValueChange = { query = it },
                     placeholder = { Text("코인명/심볼 검색", color = Color.Gray) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor   = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor   = Color.Black,
-                        unfocusedIndicatorColor = Color.Gray,
+                        focusedIndicatorColor   = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
                         cursorColor             = Color.Black,
-                        focusedPlaceholderColor   = Color.Gray,
-                        unfocusedPlaceholderColor = Color.Gray,
                     )
                 )
+
+                // 내 정보 아이콘
+                IconButton(
+                    onClick = { navController.navigate("my_page") }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "내 정보",
+                        tint = Color.Black
+                    )
+                }
             }
 
             // 탭 선택 영역

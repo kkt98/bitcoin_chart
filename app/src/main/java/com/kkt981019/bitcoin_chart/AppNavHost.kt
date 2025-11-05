@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kkt981019.bitcoin_chart.screen.coindetail.CoinDetailScreen
 import com.kkt981019.bitcoin_chart.screen.MainScreen
+import com.kkt981019.bitcoin_chart.screen.MyPageScreen
 
 @Composable
 fun AppNavHost() {
@@ -33,6 +34,9 @@ fun AppNavHost() {
                 navController = navController,
                 englishName = englishName
             )
+        }
+        composable("my_page") {
+            MyPageScreen(navController = navController)
         }
     }
 }
