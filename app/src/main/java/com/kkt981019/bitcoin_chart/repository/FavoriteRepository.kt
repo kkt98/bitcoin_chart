@@ -1,8 +1,7 @@
 package com.kkt981019.bitcoin_chart.repository
 
-import com.kkt981019.bitcoin_chart.room.FavoriteDao
-import com.kkt981019.bitcoin_chart.room.FavoriteEntity
-import kotlinx.coroutines.flow.Flow
+import com.kkt981019.bitcoin_chart.room.favorite.FavoriteDao
+import com.kkt981019.bitcoin_chart.room.favorite.FavoriteEntity
 import javax.inject.Inject
 import javax.inject.Singleton
 

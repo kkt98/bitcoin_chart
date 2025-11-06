@@ -2,6 +2,8 @@ package com.kkt981019.bitcoin_chart.room
 
 import android.content.Context
 import androidx.room.Room
+import com.kkt981019.bitcoin_chart.room.chargemoney.UserMoneyDao
+import com.kkt981019.bitcoin_chart.room.favorite.FavoriteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,13 +17,13 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideFavoriteDatabase(
+    fun provideAppDatabase(
         @ApplicationContext ctx: Context
-    ): FavoriteDatabase {
+    ): AppDatabase {
         return Room.databaseBuilder(
             ctx,
-            FavoriteDatabase::class.java,
-            "favorite_db"
+            AppDatabase::class.java,
+            "app_db"
         )
             .fallbackToDestructiveMigration()
             .build()
@@ -30,6 +32,10 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideFavoriteDao(
-        db: FavoriteDatabase
+        db: AppDatabase
     ): FavoriteDao = db.favoriteDao()
+
+    @Provides
+    @Singleton
+    fun provideUserMoneyDao(db: AppDatabase): UserMoneyDao = db.userMoneyDao()
 }

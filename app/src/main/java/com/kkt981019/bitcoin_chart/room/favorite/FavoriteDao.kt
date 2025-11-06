@@ -1,4 +1,4 @@
-package com.kkt981019.bitcoin_chart.room
+package com.kkt981019.bitcoin_chart.room.favorite
 
 import androidx.room.Dao
 import androidx.room.Delete

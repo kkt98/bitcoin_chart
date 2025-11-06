@@ -41,14 +41,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import java.text.DecimalFormat
 
 @Composable
 fun CoinOrderBuy(
     currentPrice: Double,
     format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
-    context: Context
+    context: Context,
+    myPageViewModel: MyPageViewModel = hiltViewModel()
 ) {
+
+    val balance = myPageViewModel.balance
 
     Box(
         modifier = Modifier
@@ -61,7 +66,11 @@ fun CoinOrderBuy(
             //주문가능 영역 (내가 현재 가지고 있는 돈)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("주문 가능", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("${"00"} KRW", color = Color.Black, fontSize = 12.sp)
+                Text(
+                    text = "${"%,d".format(balance)} KRW",
+                    color = Color.Black,
+                    fontSize = 12.sp
+                )
             }
 
             Spacer(Modifier.height(8.dp))
