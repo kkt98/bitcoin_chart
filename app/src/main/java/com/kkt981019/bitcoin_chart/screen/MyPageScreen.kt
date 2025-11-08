@@ -2,9 +2,15 @@ package com.kkt981019.bitcoin_chart.screen
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,7 +58,7 @@ fun MyPageScreen(navController: NavHostController,
                             myPageViewModel.onCharge(10_000_000)
                             Toast.makeText(
                                 navController.context,
-                                "1,000만 원 충전 완료!",
+                                "1,000만 원 충전 완료",
                                 Toast.LENGTH_SHORT
                             ).show()
                             Log.d("chargemoneyyyyy", myPageViewModel.balance.toString())
@@ -72,14 +78,68 @@ fun MyPageScreen(navController: NavHostController,
                 }
             )
         }
-    )  { inner ->
-        Box(
+    ) { inner ->
+        Column(
             Modifier
                 .fillMaxSize()
-                .padding(inner),
-            contentAlignment = Alignment.Center
+                .padding(inner)
+                .padding(8.dp)
         ) {
-            Text("여기에 가상머니 충전 & 거래내역 화면이 들어올 예정입니다.")
+            // ✅ 요약 정보 박스 (숫자 모두 0)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(8.dp))
+                    .padding(16.dp)
+            ) {
+                Column {
+                    // 윗줄 (보유 KRW, 총 보유자산)
+                    Row(Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("보유 KRW", fontSize = 13.sp, color = Color.Gray)
+                            Text("0", fontSize = 24.sp, color = Color.Black)
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("총 보유자산", fontSize = 13.sp, color = Color.Gray)
+                            Text("0", fontSize = 24.sp, color = Color.Black)
+                        }
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    // 아랫줄 1 (총매수 / 평가손익)
+                    Row(Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("총매수", fontSize = 13.sp, color = Color.Gray)
+                            Text("0", fontSize = 14.sp, color = Color.Black)
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text("평가손익", fontSize = 13.sp, color = Color.Gray)
+                            Text("0", fontSize = 14.sp, color = Color(0xFF1976D2)) // 파란색
+                        }
+                    }
+
+                    Spacer(Modifier.height(4.dp))
+
+                    // 아랫줄 2 (총평가 / 수익률)
+                    Row(Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("총평가", fontSize = 13.sp, color = Color.Gray)
+                            Text("0", fontSize = 14.sp, color = Color.Black)
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text("수익률", fontSize = 13.sp, color = Color.Gray)
+                            Text("0.00%", fontSize = 14.sp, color = Color(0xFF1976D2))
+                        }
+                    }
+                }
+            }
         }
     }
 }
