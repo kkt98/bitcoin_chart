@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -68,9 +69,10 @@ fun MyPageScreen(navController: NavHostController,
                             .height(36.dp),
                         shape = RoundedCornerShape(6.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Red,
-                            contentColor = Color.White
+                            contentColor = Color.Black,
+                            containerColor = Color.Transparent
                         ),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF8F8F8)),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     ) {
                         Text("충전", fontSize = 13.sp)
@@ -83,13 +85,12 @@ fun MyPageScreen(navController: NavHostController,
             Modifier
                 .fillMaxSize()
                 .padding(inner)
-                .padding(8.dp)
         ) {
-            // ✅ 요약 정보 박스 (숫자 모두 0)
+            // 요약 정보 박스
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(8.dp))
+                    .background(Color(0xFFF8F8F8))
                     .padding(16.dp)
             ) {
                 Column {
@@ -99,6 +100,9 @@ fun MyPageScreen(navController: NavHostController,
                             Text("보유 KRW", fontSize = 13.sp, color = Color.Gray)
                             Text("0", fontSize = 24.sp, color = Color.Black)
                         }
+
+                        Spacer(Modifier.width(10.dp))
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text("총 보유자산", fontSize = 13.sp, color = Color.Gray)
                             Text("0", fontSize = 24.sp, color = Color.Black)
@@ -109,13 +113,19 @@ fun MyPageScreen(navController: NavHostController,
 
                     // 아랫줄 1 (총매수 / 평가손익)
                     Row(Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
                             Text("총매수", fontSize = 13.sp, color = Color.Gray)
                             Text("0", fontSize = 14.sp, color = Color.Black)
                         }
-                        Column(
+
+                        Spacer(Modifier.width(10.dp))
+
+                        Row(
                             modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.End
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("평가손익", fontSize = 13.sp, color = Color.Gray)
                             Text("0", fontSize = 14.sp, color = Color(0xFF1976D2)) // 파란색
@@ -126,13 +136,19 @@ fun MyPageScreen(navController: NavHostController,
 
                     // 아랫줄 2 (총평가 / 수익률)
                     Row(Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
                             Text("총평가", fontSize = 13.sp, color = Color.Gray)
                             Text("0", fontSize = 14.sp, color = Color.Black)
                         }
-                        Column(
+
+                        Spacer(Modifier.width(10.dp))
+
+                        Row(
                             modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.End
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("수익률", fontSize = 13.sp, color = Color.Gray)
                             Text("0.00%", fontSize = 14.sp, color = Color(0xFF1976D2))
