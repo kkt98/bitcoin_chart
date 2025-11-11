@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -46,7 +49,7 @@ fun MyPageScreen(navController: NavHostController,
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("내 정보") },
+                title = { Text("투자 내역") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
@@ -75,7 +78,7 @@ fun MyPageScreen(navController: NavHostController,
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF8F8F8)),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     ) {
-                        Text("충전", fontSize = 13.sp)
+                        Text("KRW 충전", fontSize = 13.sp)
                     }
                 }
             )
@@ -155,6 +158,26 @@ fun MyPageScreen(navController: NavHostController,
                         }
                     }
                 }
+            }
+            Row(
+                Modifier.padding(start = 16.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Search, contentDescription = null)
+//                Spacer(Modifier.height(4.dp))
+                TextField(
+                    value = "",
+                    onValueChange = {  },
+                    placeholder = { Text("코인명/심볼 검색", color = Color.Gray) },
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor   = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor   = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        cursorColor             = Color.Black,
+                    )
+                )
             }
         }
     }
