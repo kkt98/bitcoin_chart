@@ -7,13 +7,13 @@ import javax.inject.Inject
 class MyPageRepository @Inject constructor(private val userMoneyDao: UserMoneyDao) {
 
     suspend fun getUserMoney(): Long {
-        return userMoneyDao.getUserMoney()?.money ?: 0
+        return (userMoneyDao.getUserMoney()?.money ?: 0L)
     }
 
     suspend fun initBalanceIfNeeded() {
         val current = userMoneyDao.getUserMoney()
         if (current == null) {
-            userMoneyDao.upsertBalance(UserMoneyEntity(money = 0))
+            userMoneyDao.upsertBalance(UserMoneyEntity(money = 0L))
         }
     }
 

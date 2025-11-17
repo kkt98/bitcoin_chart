@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.screen
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -44,8 +42,6 @@ import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 fun MyPageScreen(navController: NavHostController,
                  myPageViewModel: MyPageViewModel = hiltViewModel())
 {
-
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -65,7 +61,6 @@ fun MyPageScreen(navController: NavHostController,
                                 "1,000만 원 충전 완료",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            Log.d("chargemoneyyyyy", myPageViewModel.balance.toString())
                         },
                         modifier = Modifier
                             .padding(end = 8.dp)

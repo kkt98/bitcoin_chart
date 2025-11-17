@@ -50,6 +50,7 @@ fun CoinOrderBuy(
     currentPrice: Double,
     format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
     context: Context,
+    symbol: String,
     myPageViewModel: MyPageViewModel = hiltViewModel()
 ) {
 
@@ -205,7 +206,7 @@ fun CoinOrderBuy(
                                     }
 
                                     // 비율만큼 사용할 금액
-                                    val useAmount = balance.toDouble() * ratio
+                                    val useAmount = balance * ratio
 
                                     // 수량 계산 = (사용 금액 / 현재가)
                                     val computedQty = useAmount / currentPrice
@@ -273,9 +274,24 @@ fun CoinOrderBuy(
                     Text("초기화")
                 }
 
-                // 매수
+                // 매수 버튼
                 Button(
                     onClick = {
+                        // 총액이 0 이하이면 막기
+                        if (total <= 0.0) {
+                            Toast.makeText(context, "유효한 수량을 입력하세요.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        // 잔액 부족 체크
+                        if (total.toLong() > balance) {
+                            Toast.makeText(context, "잔액이 부족합니다.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        // 4) 잔액 차감
+                        myPageViewModel.onSpend(total.toLong())
+
                         Toast.makeText(context, "매수완료", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier

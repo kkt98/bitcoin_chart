@@ -100,8 +100,6 @@ fun CoinOrderSell(
             // ✅ 다이얼로그 열림 상태
             var showAmountDialog by remember { mutableStateOf(false) }
 
-            // TODO: 실제 주문가능 금액으로 교체
-            val availableBalance = 10_186_097.0
 
             // ▼ 드롭다운 열림 상태
             var ratioMenuExpanded by remember { mutableStateOf(false) }
@@ -293,7 +291,7 @@ fun CoinOrderSell(
                 show = showAmountDialog,
                 onDismiss = { showAmountDialog = false },
                 currentPrice = currentPrice,
-                availableBalance = availableBalance.toLong(),
+                availableBalance = 0,
                 onConfirm = { amount ->
                     // 사용자가 입력/버튼으로 확정한 총액(amount)으로 수량 계산
                     if (amount <= 0.0 || currentPrice <= 0.0) {
