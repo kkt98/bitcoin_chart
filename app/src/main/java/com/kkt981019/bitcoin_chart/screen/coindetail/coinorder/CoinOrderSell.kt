@@ -293,7 +293,7 @@ fun CoinOrderSell(
                 show = showAmountDialog,
                 onDismiss = { showAmountDialog = false },
                 currentPrice = currentPrice,
-                availableBalance = availableBalance,
+                availableBalance = availableBalance.toLong(),
                 onConfirm = { amount ->
                     // 사용자가 입력/버튼으로 확정한 총액(amount)으로 수량 계산
                     if (amount <= 0.0 || currentPrice <= 0.0) {

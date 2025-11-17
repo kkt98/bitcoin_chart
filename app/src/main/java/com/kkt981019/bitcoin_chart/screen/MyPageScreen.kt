@@ -164,7 +164,6 @@ fun MyPageScreen(navController: NavHostController,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Filled.Search, contentDescription = null)
-//                Spacer(Modifier.height(4.dp))
                 TextField(
                     value = "",
                     onValueChange = {  },

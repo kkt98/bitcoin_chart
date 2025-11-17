@@ -33,7 +33,7 @@ fun TotalAmountDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     currentPrice: Double,
-    availableBalance: Double,
+    availableBalance: Long,
     onConfirm: (Double) -> Unit,
     title: String = "총액 지정하여 매수",
     qtyLabel: String = "매수 수량",

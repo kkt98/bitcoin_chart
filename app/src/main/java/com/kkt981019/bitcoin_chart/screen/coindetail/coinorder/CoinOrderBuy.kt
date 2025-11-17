@@ -53,7 +53,7 @@ fun CoinOrderBuy(
     myPageViewModel: MyPageViewModel = hiltViewModel()
 ) {
 
-    val balance = myPageViewModel.balance
+    val balance = myPageViewModel.balance // 현재 내가 가진 돈
 
     Box(
         modifier = Modifier
@@ -101,9 +101,6 @@ fun CoinOrderBuy(
 
             // ✅ 다이얼로그 열림 상태
             var showAmountDialog by remember { mutableStateOf(false) }
-
-            // TODO: 실제 주문가능 금액으로 교체
-            val availableBalance = 10_186_097.0
 
             // ▼ 드롭다운 열림 상태
             var ratioMenuExpanded by remember { mutableStateOf(false) }
@@ -196,7 +193,25 @@ fun CoinOrderBuy(
                                 },
                                 onClick = {
                                     ratioMenuExpanded = false
-                                    // TODO: 실제 로직 넣기
+
+                                    // 현재가 / 잔액 체크
+                                    if (balance <= 0L) {
+                                        Toast.makeText(
+                                            context,
+                                            "주문 가능 금액이 유효하지 않습니다.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        return@DropdownMenuItem
+                                    }
+
+                                    // 비율만큼 사용할 금액
+                                    val useAmount = balance.toDouble() * ratio
+
+                                    // 수량 계산 = (사용 금액 / 현재가)
+                                    val computedQty = useAmount / currentPrice
+
+                                    // 수량 필드에 반영 (소수 8자리까지)
+                                    qty = DecimalFormat("0.########").format(computedQty)
 
                                     Toast.makeText(
                                         context,
@@ -295,7 +310,7 @@ fun CoinOrderBuy(
                 show = showAmountDialog,
                 onDismiss = { showAmountDialog = false },
                 currentPrice = currentPrice,
-                availableBalance = availableBalance,
+                availableBalance = balance,
                 onConfirm = { amount ->
                     // 사용자가 입력/버튼으로 확정한 총액(amount)으로 수량 계산
                     if (amount <= 0.0 || currentPrice <= 0.0) {
