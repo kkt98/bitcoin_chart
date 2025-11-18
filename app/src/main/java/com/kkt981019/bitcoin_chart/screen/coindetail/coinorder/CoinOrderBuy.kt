@@ -42,19 +42,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import java.text.DecimalFormat
 
 @Composable
 fun CoinOrderBuy(
-    currentPrice: Double,
-    format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
-    context: Context,
-    symbol: String,
-    myPageViewModel: MyPageViewModel = hiltViewModel()
+    currentPrice: Double,  // 현재 코인 가격
+    format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters, // 가격 포맷터
+    context: Context,      // Toast 등에서 사용할 Context
+    symbol: String,        // 코인 심볼 (예: "KRW-BTC")
+    myPageViewModel: MyPageViewModel = hiltViewModel(), // 잔액 관리용 ViewModel
+    myCoinViewModel: MyCoinViewModel = hiltViewModel()  // 보유 코인 관리용 ViewModel
 ) {
 
-    val balance = myPageViewModel.balance // 현재 내가 가진 돈
+    // 현재 보유 KRW 잔액 (Room에서 가져와서 ViewModel에 보관 중인 값)
+    val balance = myPageViewModel.balance
 
     Box(
         modifier = Modifier
@@ -64,11 +67,14 @@ fun CoinOrderBuy(
 
         Column(Modifier.fillMaxSize()) {
 
-            //주문가능 영역 (내가 현재 가지고 있는 돈)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            // 상단 "주문 가능" 영역 (사용자가 쓸 수 있는 KRW 표시)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text("주문 가능", color = Color(0xFF000000), fontSize = 12.sp)
                 Text(
-                    text = "${"%,d".format(balance)} KRW",
+                    text = "${"%,d".format(balance)} KRW", // 3자리 콤마 포맷
                     color = Color.Black,
                     fontSize = 12.sp
                 )
@@ -76,7 +82,7 @@ fun CoinOrderBuy(
 
             Spacer(Modifier.height(8.dp))
 
-            // 가격 영역
+            // 현재가 영역 (고정 가격 표시)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,29 +90,39 @@ fun CoinOrderBuy(
                     .border(
                         width = 1.dp,
                         color = Color(0xFF000000),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp)
                     )
                     .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("가격", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("${format.priceDf.format(currentPrice)}", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = format.priceDf.format(currentPrice),
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(Modifier.height(8.dp))
 
+            // 사용자가 입력하는 수량 (문자열 상태)
             var qty by remember { mutableStateOf("0") }
+
+            // 문자열 수량을 Double로 변환한 값 (계산용)
             val qtyNum = qty.toDoubleOrNull() ?: 0.0
+
+            // 총 매수 금액 = 수량 * 현재가
             val total = qtyNum * currentPrice
 
-            // ✅ 다이얼로그 열림 상태
+            // "총액 지정하여 매수" 다이얼로그 열림 상태
             var showAmountDialog by remember { mutableStateOf(false) }
 
-            // ▼ 드롭다운 열림 상태
+            // 비율 드롭다운 메뉴 열림 상태
             var ratioMenuExpanded by remember { mutableStateOf(false) }
 
-            // 수량 영역
+            // 수량 입력 + 비율 버튼 영역
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -114,11 +130,11 @@ fun CoinOrderBuy(
                     .border(
                         1.dp,
                         Color(0xFF000000),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp)
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // ▶ 왼쪽: 라벨 + 숫자 입력(오른쪽 정렬)
+                // 왼쪽: "수량" 텍스트 + 수량 입력 필드
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -130,9 +146,11 @@ fun CoinOrderBuy(
 
                     Spacer(Modifier.weight(1f))
 
+                    // 수량 입력 필드 (BasicTextField)
                     BasicTextField(
                         value = qty,
                         onValueChange = { s ->
+                            // 숫자와 소수점만 입력 허용
                             qty = s.filter { it.isDigit() || it == '.' }
                         },
                         singleLine = true,
@@ -148,6 +166,7 @@ fun CoinOrderBuy(
                                 modifier = Modifier.widthIn(min = 24.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
+                                // 비어 있을 때는 0 표시
                                 if (qty.isBlank()) {
                                     Text("0", color = Color(0x80000000), fontSize = 12.sp)
                                 }
@@ -157,7 +176,7 @@ fun CoinOrderBuy(
                     )
                 }
 
-                // ▶ 오른쪽: '비율' 버튼 + 드롭다운
+                // 오른쪽: "비율" 버튼 및 드롭다운 메뉴
                 Box(
                     modifier = Modifier
                         .width(56.dp)
@@ -171,11 +190,12 @@ fun CoinOrderBuy(
                 ) {
                     Text("비율", color = Color.White, fontSize = 12.sp)
 
-                    // ▼ 드롭다운 메뉴
+                    // 비율 선택 드롭다운 메뉴
                     DropdownMenu(
                         expanded = ratioMenuExpanded,
                         onDismissRequest = { ratioMenuExpanded = false }
                     ) {
+                        // label: 화면에 보이는 텍스트, ratio: 잔액에 곱할 비율
                         val items = listOf(
                             "최대" to 1.0,
                             "75" to 0.75,
@@ -195,7 +215,7 @@ fun CoinOrderBuy(
                                 onClick = {
                                     ratioMenuExpanded = false
 
-                                    // 현재가 / 잔액 체크
+                                    // 잔액이 0 이하인 경우
                                     if (balance <= 0L) {
                                         Toast.makeText(
                                             context,
@@ -205,13 +225,13 @@ fun CoinOrderBuy(
                                         return@DropdownMenuItem
                                     }
 
-                                    // 비율만큼 사용할 금액
+                                    // 사용할 금액 = 잔액 * 선택한 비율
                                     val useAmount = balance * ratio
 
-                                    // 수량 계산 = (사용 금액 / 현재가)
+                                    // 수량 = 사용할 금액 / 현재가
                                     val computedQty = useAmount / currentPrice
 
-                                    // 수량 필드에 반영 (소수 8자리까지)
+                                    // 소수 8자리까지 포맷팅해서 수량에 반영
                                     qty = DecimalFormat("0.########").format(computedQty)
 
                                     Toast.makeText(
@@ -228,7 +248,7 @@ fun CoinOrderBuy(
 
             Spacer(Modifier.height(8.dp))
 
-            // 총액 text 영역
+            // 총액 표시 영역
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -236,7 +256,7 @@ fun CoinOrderBuy(
                     .border(
                         width = 1.dp,
                         color = Color(0xFF000000),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp)
                     )
                     .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -244,7 +264,7 @@ fun CoinOrderBuy(
             ) {
                 Text("총액", color = Color(0xFF000000), fontSize = 12.sp)
                 Text(
-                    text = DecimalFormat("#,##0.##").format(total),
+                    text = DecimalFormat("#,##0.##").format(total), // 총 매수 금액
                     color = Color.Black,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
@@ -253,18 +273,18 @@ fun CoinOrderBuy(
 
             Spacer(Modifier.height(8.dp))
 
-            //초기화, 매수 버튼
+            // 초기화 / 매수 버튼 영역
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // 초기화
+                // 수량 초기화 버튼
                 Button(
                     onClick = { qty = "0" },
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color(0xFFE0E0E0),
                         contentColor = Color.Black
@@ -277,7 +297,7 @@ fun CoinOrderBuy(
                 // 매수 버튼
                 Button(
                     onClick = {
-                        // 총액이 0 이하이면 막기
+                        // 총액이 0 이하일 경우 (수량을 안 넣었거나 0인 경우) 방지
                         if (total <= 0.0) {
                             Toast.makeText(context, "유효한 수량을 입력하세요.", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -289,15 +309,24 @@ fun CoinOrderBuy(
                             return@Button
                         }
 
-                        // 4) 잔액 차감
+                        // 잔액 차감 (user_money 테이블 업데이트)
                         myPageViewModel.onSpend(total.toLong())
+
+                        // 보유 코인 저장 (평균 단가 포함)
+                        // qtyNum: 이번에 매수한 수량
+                        // currentPrice: 이번에 매수한 1코인 가격
+                        myCoinViewModel.onBuy(
+                            symbol = symbol,
+                            qty = qtyNum,
+                            price = currentPrice
+                        )
 
                         Toast.makeText(context, "매수완료", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Red,
                         contentColor = Color.White,
@@ -307,7 +336,7 @@ fun CoinOrderBuy(
 
             Spacer(Modifier.height(8.dp))
 
-            // 총액 지정하여 매수 버튼
+            // "총액 지정하여 매수" 버튼 (다이얼로그 열기용)
             Button(
                 onClick = {
                     showAmountDialog = true
@@ -315,38 +344,40 @@ fun CoinOrderBuy(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Red,
                     contentColor = Color.White,
                 )
             ) { Text("총액 지정하여 매수") }
 
+            // 총액 지정 다이얼로그
             TotalAmountDialog(
                 show = showAmountDialog,
                 onDismiss = { showAmountDialog = false },
                 currentPrice = currentPrice,
                 availableBalance = balance,
                 onConfirm = { amount ->
-                    // 사용자가 입력/버튼으로 확정한 총액(amount)으로 수량 계산
+                    // 입력된 총액이랑 현재가가 0 이하인 경우 방지
                     if (amount <= 0.0 || currentPrice <= 0.0) {
                         Toast.makeText(context, "유효한 총액을 입력하세요.", Toast.LENGTH_SHORT).show()
                         return@TotalAmountDialog
                     }
+                    // 총액 기반으로 수량 계산 후 입력 필드에 반영
                     val computedQty = amount / currentPrice
                     qty = DecimalFormat("0.########").format(computedQty)
+
                     Toast.makeText(
                         context,
                         "총액 ${DecimalFormat("#,##0").format(amount)} KRW로 수량 설정",
                         Toast.LENGTH_SHORT
                     ).show()
                 },
-                title = "총액 지정하여 매수",
-                qtyLabel = "매수 수량",
-                btnText = "매수",
-                btnColor = Color.Red
+                title = "총액 지정하여 매수", // 다이얼로그 제목
+                qtyLabel = "매수 수량",        // 수량 라벨 텍스트
+                btnText = "매수",             // 확인 버튼 텍스트
+                btnColor = Color.Red          // 확인 버튼 색상
             )
         }
     }
 }
-

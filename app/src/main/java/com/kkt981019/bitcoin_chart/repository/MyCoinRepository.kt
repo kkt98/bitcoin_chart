@@ -15,7 +15,7 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
         val existing = myCoinDao.getCoin(symbol)
 
         if (existing == null) {
-            // ⬆ 처음 구매한 코인
+            // 처음 구매한 코인
             myCoinDao.upsert(
                 MyCoinEntity(
                     symbol = symbol,
@@ -24,7 +24,7 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
                 )
             )
         } else {
-            // ⬆ 추가 매수 → 평균 단가 재계산
+            // 추가 매수 → 평균 단가 재계산
             val newAmount = existing.amount + qty
             val newAvgPrice =
                 (existing.amount * existing.avgPrice + qty * price) / newAmount

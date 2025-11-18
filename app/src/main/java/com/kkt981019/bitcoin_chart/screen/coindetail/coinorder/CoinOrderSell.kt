@@ -28,6 +28,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
 import java.text.DecimalFormat
 
 @Composable
@@ -48,8 +52,18 @@ fun CoinOrderSell(
     currentPrice: Double,
     format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters,
     context: Context,
-    symbol: String
+    symbol: String,
+    myCoinViewModel: MyCoinViewModel = hiltViewModel()
 ) {
+
+    LaunchedEffect(symbol) {
+        myCoinViewModel.loadCoin(symbol)
+    }
+
+    // StateFlow 를 collect해서 화면에서 씀
+    val myCoin by myCoinViewModel.currentCoin.collectAsState()
+
+    val holdingAmount = myCoin?.amount ?: 0.0
 
     Box(
         modifier = Modifier
@@ -62,7 +76,7 @@ fun CoinOrderSell(
             //주문가능 영역 (내가 현재 가지고 있는 돈)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("보유수량", color = Color(0xFF000000), fontSize = 12.sp)
-                Text("${"00"} ${symbol.substringAfter("-")}", color = Color.Black, fontSize = 12.sp)
+                Text( "${DecimalFormat("0.########").format(holdingAmount)} ${symbol.substringAfter("-")}", fontSize = 12.sp)
             }
 
             Spacer(Modifier.height(4.dp))
