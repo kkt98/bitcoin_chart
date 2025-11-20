@@ -264,7 +264,7 @@ fun CoinOrderBuy(
             ) {
                 Text("총액", color = Color(0xFF000000), fontSize = 12.sp)
                 Text(
-                    text = DecimalFormat("#,##0.##").format(total), // 총 매수 금액
+                    text = DecimalFormat("#,##0").format(total), // 총 매수 금액
                     color = Color.Black,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
@@ -320,6 +320,9 @@ fun CoinOrderBuy(
                             qty = qtyNum,
                             price = currentPrice
                         )
+
+                        //수량 0 으로 초기화
+                        qty = "0"
 
                         Toast.makeText(context, "매수완료", Toast.LENGTH_SHORT).show()
                     },
