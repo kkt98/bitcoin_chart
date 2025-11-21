@@ -23,9 +23,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -204,7 +206,10 @@ fun CoinOrderSell(
                     modifier = Modifier
                         .width(56.dp)
                         .fillMaxHeight()
-                        .background(Color(0xFF9E9E9E), RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
+                        .background(
+                            Color(0xFF9E9E9E),
+                            RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
+                        )
                         .clickable { ratioMenuExpanded = true },
                     contentAlignment = Alignment.Center
                 ) {
@@ -231,7 +236,17 @@ fun CoinOrderSell(
                                 onClick = {
                                     ratioMenuExpanded = false
 
-                                    // TODO: 실제 매도 가능한 수량 기준으로 비율 계산 로직 필요
+                                    if (holdingAmount <= 0) {
+
+                                        Toast.makeText(context, "보유 수량이 부족합니다.", Toast.LENGTH_SHORT).show()
+                                        return@DropdownMenuItem
+                                    }
+
+                                    val coinQuantity = holdingAmount * ratio
+
+
+                                    qty = DecimalFormat("0.########").format(coinQuantity)
+
                                     Toast.makeText(
                                         context,
                                         if (label == "최대") "최대 선택" else "$label% 선택",
@@ -279,7 +294,9 @@ fun CoinOrderSell(
                 // 수량 초기화
                 Button(
                     onClick = { qty = "0" },
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color(0xFFE0E0E0),
@@ -294,7 +311,9 @@ fun CoinOrderSell(
                     onClick = {
                         Toast.makeText(context, "매도완료", Toast.LENGTH_SHORT).show()
                     },
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Blue,
@@ -310,13 +329,34 @@ fun CoinOrderSell(
             // ------------------------------
             Button(
                 onClick = { showAmountDialog = true },
-                modifier = Modifier.fillMaxWidth().height(44.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Blue,
                     contentColor = Color.White,
                 )
             ) { Text("총액 지정하여 매도") }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                Modifier.fillMaxWidth()
+            ) {
+
+                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
+
+                Text(
+                    text = "총 보유자산",         // 원하는 텍스트로 바꾸면 됨
+                    fontSize = 12.sp,
+                    color = Color.Black,
+                )
+
+
+            }
+
+
 
             // 총액 입력 다이얼로그
             TotalAmountDialog(
