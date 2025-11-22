@@ -139,9 +139,9 @@ fun CoinOrderSell(
             // ------------------------------------------
             // 매도 입력 상태 변수: 매도 수량 입력
             // ------------------------------------------
-            var qty by remember { mutableStateOf("0") }
-            val qtyNum = qty.toDoubleOrNull() ?: 0.0
-            val total = qtyNum * currentPrice // 매도 시 받을 총액
+            var amountText by remember { mutableStateOf("0") }         // 입력 필드 값 (문자열)
+            val amount = amountText.toDoubleOrNull() ?: 0.0            // 실제 매도 수량 (Double)
+            val total = amount * currentPrice                          // 매도 시 받을 총액
 
             // 총액 지정하여 매도하는 다이얼로그
             var showAmountDialog by remember { mutableStateOf(false) }
@@ -174,10 +174,10 @@ fun CoinOrderSell(
 
                     // 매도 수량 입력하는 텍스트필드
                     BasicTextField(
-                        value = qty,
+                        value = amountText,
                         onValueChange = { s ->
                             // 숫자 또는 소수점만 허용
-                            qty = s.filter { it.isDigit() || it == '.' }
+                            amountText = s.filter { it.isDigit() || it == '.' }
                         },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(
@@ -194,7 +194,8 @@ fun CoinOrderSell(
                                 modifier = Modifier.widthIn(min = 24.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
-                                if (qty.isBlank())  Text(text = "0", color = Color.Gray, fontSize = 12.sp)
+                                if (amountText.isBlank())
+                                    Text(text = "0", color = Color.Gray, fontSize = 12.sp)
                                 inner()
                             }
                         }
@@ -237,15 +238,19 @@ fun CoinOrderSell(
                                     ratioMenuExpanded = false
 
                                     if (holdingAmount <= 0) {
-
-                                        Toast.makeText(context, "보유 수량이 부족합니다.", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "보유 수량이 부족합니다.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         return@DropdownMenuItem
                                     }
 
-                                    val coinQuantity = holdingAmount * ratio
+                                    // 비율만큼 매도할 코인 수량
+                                    val coinAmount = holdingAmount * ratio
 
-
-                                    qty = DecimalFormat("0.########").format(coinQuantity)
+                                    // 입력 필드에 반영
+                                    amountText = DecimalFormat("0.########").format(coinAmount)
 
                                     Toast.makeText(
                                         context,
@@ -262,7 +267,7 @@ fun CoinOrderSell(
             Spacer(Modifier.height(8.dp))
 
             // ------------------------------
-            // 총액 표시 (qty * currentPrice)
+            // 총액 표시 (amount * currentPrice)
             // ------------------------------
             Row(
                 modifier = Modifier
@@ -293,7 +298,7 @@ fun CoinOrderSell(
             ) {
                 // 수량 초기화
                 Button(
-                    onClick = { qty = "0" },
+                    onClick = { amountText = "0" },
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp),
@@ -309,6 +314,24 @@ fun CoinOrderSell(
                 // 매도 버튼
                 Button(
                     onClick = {
+
+                        // 1) 수량 유효성 체크
+                        if (amount <= 0.0) {
+                            Toast.makeText(context, "유효한 수량을 입력하세요.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        // 2) 보유 수량보다 많이 팔려고 하는지 체크
+                        if (amount > holdingAmount) {
+                            Toast.makeText(context, "보유 수량을 초과했습니다.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        // 실제 매도 로직 호출
+                        myCoinViewModel.onSell(symbol = symbol, qty = amount)
+
+                        amountText = "0"
+
                         Toast.makeText(context, "매도완료", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
@@ -341,22 +364,22 @@ fun CoinOrderSell(
 
             Spacer(Modifier.height(8.dp))
 
-            Row(
+            Column (
                 Modifier.fillMaxWidth()
+                    .padding(top = 8.dp)
             ) {
 
-                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), thickness = 0.5.dp)
+                Divider(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                    thickness = 1.dp
+                )
 
                 Text(
-                    text = "총 보유자산",         // 원하는 텍스트로 바꾸면 됨
+                    text = "총 보유자산",
                     fontSize = 12.sp,
                     color = Color.Black,
                 )
-
-
             }
-
-
 
             // 총액 입력 다이얼로그
             TotalAmountDialog(
@@ -364,18 +387,18 @@ fun CoinOrderSell(
                 onDismiss = { showAmountDialog = false },
                 currentPrice = currentPrice,
                 availableBalance = 0, // 매도는 잔액이 아니라 보유코인 기준
-                onConfirm = { amount ->
+                onConfirm = { totalAmount ->
                     // 총액에서 수량 계산
-                    if (amount <= 0.0 || currentPrice <= 0.0) {
+                    if (totalAmount <= 0.0 || currentPrice <= 0.0) {
                         Toast.makeText(context, "유효한 총액을 입력하세요.", Toast.LENGTH_SHORT).show()
                         return@TotalAmountDialog
                     }
-                    val computedQty = amount / currentPrice
-                    qty = DecimalFormat("0.########").format(computedQty)
+                    val computedAmount = totalAmount / currentPrice
+                    amountText = DecimalFormat("0.########").format(computedAmount)
 
                     Toast.makeText(
                         context,
-                        "총액 ${DecimalFormat("#,##0").format(amount)} KRW로 수량 설정",
+                        "총액 ${DecimalFormat("#,##0").format(totalAmount)} KRW로 수량 설정",
                         Toast.LENGTH_SHORT
                     ).show()
                 },

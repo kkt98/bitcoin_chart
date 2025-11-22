@@ -38,18 +38,18 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
         }
     }
 
-//    // 매도 처리 (남은 수량 <= 0 → 삭제)
-//    suspend fun sell(symbol: String, qty: Double) {
-//        val existing = dao.getCoin(symbol) ?: return
-//
-//        val remaining = existing.amount - qty
-//
-//        if (remaining <= 0) {
-//            dao.delete(existing) // 전량 매도 → 기록 삭제
-//        } else {
-//            dao.updateAmount(symbol, remaining)
-//        }
-//    }
+    // 매도 처리 (남은 수량 <= 0 → 삭제)
+    suspend fun sell(symbol: String, qty: Double) {
+        val existing = myCoinDao.getCoin(symbol) ?: return
+
+        val remaining = existing.amount - qty
+
+        if (remaining <= 0) {
+            myCoinDao.delete(existing) // 전량 매도 → 기록 삭제
+        } else {
+            myCoinDao.updateAmount(symbol, remaining)
+        }
+    }
 
     // 단일 코인 조회
     suspend fun getCoin(symbol: String) = myCoinDao.getCoin(symbol)

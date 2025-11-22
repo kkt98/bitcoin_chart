@@ -46,6 +46,14 @@ class MyCoinViewModel @Inject constructor(
         }
     }
 
+    fun onSell(symbol: String, qty: Double) {
+        viewModelScope.launch {
+            myCoinRepository.sell(symbol = symbol, qty = qty)
+            refreshMyCoins()
+            loadCoin(symbol)
+        }
+    }
+
     // 특정 심볼 코인 한 개 로드해서 상태에 저장
     fun loadCoin(symbol: String) {
         viewModelScope.launch {

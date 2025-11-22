@@ -24,4 +24,8 @@ interface MyCoinDao {
     // 전체 코인 조회
     @Query("SELECT * FROM my_coin ORDER BY symbol ASC")
     suspend fun getAllCoins(): List<MyCoinEntity>
+
+    // 수량만 업데이트
+    @Query("UPDATE my_coin SET amount = :amount WHERE symbol = :symbol")
+    suspend fun updateAmount(symbol: String, amount: Double)
 }
