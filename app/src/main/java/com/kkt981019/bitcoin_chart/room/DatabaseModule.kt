@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.kkt981019.bitcoin_chart.room.chargemoney.UserMoneyDao
 import com.kkt981019.bitcoin_chart.room.favorite.FavoriteDao
 import com.kkt981019.bitcoin_chart.room.mycoin.MyCoinDao
+import com.kkt981019.bitcoin_chart.room.trade_history.TradeHistoryDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,4 +44,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideMyCoinDao(db: AppDatabase): MyCoinDao = db.myCoinDao()
+
+    @Provides
+    @Singleton
+    fun provideTradeHistoryDao(db: AppDatabase): TradeHistoryDao = db.tradeHistoryDao()
 }

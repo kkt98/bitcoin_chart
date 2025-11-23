@@ -38,8 +38,6 @@ fun CoinOrderSection(
     ticker: WebsocketResponse?,
     changeRate: String,
     symbol: String,
-    // 👉 오른쪽 패널 예약 영역
-    rightContent: (@Composable () -> Unit)? = null, // 나중에 주문패널 넣을 슬롯
 ) {
     val currentPrice = ticker?.trade_price?.toDoubleOrNull() ?: 0.0
     val units = orderbook?.orderbook_units ?: emptyList()
@@ -97,6 +95,7 @@ fun CoinOrderSection(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(IntrinsicSize.Max)
                             .background(Color.Transparent)
                             .border(
                                 width = if (isCurrent) 1.dp else 0.dp,
@@ -107,6 +106,7 @@ fun CoinOrderSection(
                         Column(
                             modifier = Modifier
                                 .weight(1.4f)
+                                .fillMaxHeight()
                                 .then(
                                     if (isCurrent) Modifier.border(
                                         1.dp,
@@ -121,17 +121,20 @@ fun CoinOrderSection(
                             Text(text = String.format("%.2f%%", percent), fontSize = 10.sp, color = pctColor)
                         }
 
+                        Spacer(modifier = Modifier.width(1.dp))   // 원하는 만큼 dp 조절
+
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(30.dp)
+                                .fillMaxHeight()
+                                .background(bgLite)
                                 .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.CenterEnd
                         ) {
 
                             AutoSizeText(
                                 text = amountText,
-                                modifier = Modifier.align(if (isAsk) Alignment.CenterEnd else Alignment.CenterStart),
+                                modifier = Modifier.align(Alignment.CenterEnd),
                                 maxLines = 1,
                                 fontSize = 12.sp,
                                 minFontSize = 1.sp,
@@ -189,7 +192,6 @@ fun CoinOrderSection(
             modifier = Modifier
                 .weight(1.5f)
                 .fillMaxHeight()
-                .border(1.dp, Color(0xFF000000))
         ) {
 
             var selectedTab by remember { mutableStateOf(0) }
@@ -241,7 +243,7 @@ fun CoinOrderSection(
             when (selectedTab) {
                 0 -> CoinOrderBuy(currentPrice, format, context, symbol)
                 1 -> CoinOrderSell(currentPrice, format, context, symbol)
-                2 -> CoinOrderHistory()
+                2 -> CoinOrderHistory(context, symbol)
             }
 
         }

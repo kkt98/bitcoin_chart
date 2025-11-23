@@ -8,10 +8,13 @@ import com.kkt981019.bitcoin_chart.room.favorite.FavoriteDao
 import com.kkt981019.bitcoin_chart.room.favorite.FavoriteEntity
 import com.kkt981019.bitcoin_chart.room.mycoin.MyCoinDao
 import com.kkt981019.bitcoin_chart.room.mycoin.MyCoinEntity
+import com.kkt981019.bitcoin_chart.room.trade_history.TradeHistoryDao
+import com.kkt981019.bitcoin_chart.room.trade_history.TradeHistoryEntity
 
 @Database(entities = [FavoriteEntity::class,
                      UserMoneyEntity::class,
-                        MyCoinEntity::class], version = 3)
+                        MyCoinEntity::class,
+                        TradeHistoryEntity::class], version = 4)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun favoriteDao(): FavoriteDao
@@ -19,5 +22,7 @@ abstract class AppDatabase: RoomDatabase() {
     abstract fun userMoneyDao(): UserMoneyDao
 
     abstract fun myCoinDao(): MyCoinDao
+
+    abstract fun tradeHistoryDao(): TradeHistoryDao
 
 }

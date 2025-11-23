@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.TradeHistoryViewModel
 import java.text.DecimalFormat
 
 @Composable
@@ -55,7 +56,8 @@ fun CoinOrderSell(
     format: com.kkt981019.bitcoin_chart.util.DecimalFormat.TradeFormatters, // 가격 포맷터
     context: Context, // Toast 등 UI 용
     symbol: String, // 예: "KRW-BTC"
-    myCoinViewModel: MyCoinViewModel = hiltViewModel() // 매도 로직 / 보유 코인 정보 조회 ViewModel
+    myCoinViewModel: MyCoinViewModel = hiltViewModel(), // 매도 로직 / 보유 코인 정보 조회 ViewModel
+    tradeHistoryViewModel: TradeHistoryViewModel = hiltViewModel()
 ) {
 
     // symbol 변경될 때마다 해당 코인 정보 DB에서 가져와서 currentCoin 에 저장
@@ -65,9 +67,24 @@ fun CoinOrderSell(
 
     // StateFlow -> Compose State 로 변환하여 화면에서 사용
     val myCoin by myCoinViewModel.currentCoin.collectAsState()
-
     // 보유 수량 (없으면 0)
     val holdingAmount = myCoin?.amount ?: 0.0
+
+    // 매수 평균 단가 (없으면 0)
+    val avgPrice = myCoin?.avgPrice ?: 0.0
+    // 총 매수 금액 = 보유 수량 * 매수 평균 단가
+    val totalBuyAmount = holdingAmount * avgPrice
+    // 평가 금액 = 보유 수량 * 현재 가격
+    val evalAmount = holdingAmount * currentPrice
+    // 평가 손익 = 평가 금액 - 총 매수 금액
+    val profit = evalAmount - totalBuyAmount
+    // 수익률 = 평가 손익 / 총 매수 금액 * 100 (%)
+    // 총 매수 금액이 0이면 0으로 처리
+    val profitRate = if (totalBuyAmount > 0) {
+        (profit / totalBuyAmount) * 100.0
+    } else {
+        0.0
+    }
 
     Box(
         modifier = Modifier
@@ -330,6 +347,8 @@ fun CoinOrderSell(
                         // 실제 매도 로직 호출
                         myCoinViewModel.onSell(symbol = symbol, qty = amount)
 
+                        tradeHistoryViewModel.addTrade(symbol = symbol, "매도", currentPrice, amount, total)
+
                         amountText = "0"
 
                         Toast.makeText(context, "매도완료", Toast.LENGTH_SHORT).show()
@@ -364,21 +383,104 @@ fun CoinOrderSell(
 
             Spacer(Modifier.height(8.dp))
 
-            Column (
-                Modifier.fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
+            if (holdingAmount > 0.0) {
+                Column(
+                    Modifier.fillMaxWidth()
+                ) {
 
-                Divider(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                    thickness = 1.dp
-                )
+                    Divider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                        thickness = 1.dp
+                    )
 
-                Text(
-                    text = "총 보유자산",
-                    fontSize = 12.sp,
-                    color = Color.Black,
-                )
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "총 보유자산",
+                        fontSize = 20.sp,
+                        color = Color.Black,
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "매수평균가",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = DecimalFormat("#,##0.##").format(avgPrice),
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "평가금액",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = DecimalFormat("#,##0").format(evalAmount),
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "평가손익",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = DecimalFormat("#,##0").format(profit),
+                            fontSize = 12.sp,
+                            color = when {
+                                profit > 0 -> Color.Red
+                                profit < 0 -> Color.Blue
+                                else -> Color.Black
+                            }
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "수익률",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = String.format("%.2f%%", profitRate),
+                            fontSize = 12.sp,
+                            color = when {
+                                profitRate > 0 -> Color.Red
+                                profitRate < 0 -> Color.Blue
+                                else -> Color.Black
+                            }
+                        )
+                    }
+                }
             }
 
             // 총액 입력 다이얼로그

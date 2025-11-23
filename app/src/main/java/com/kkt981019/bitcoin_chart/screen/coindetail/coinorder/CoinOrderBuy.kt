@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.TradeHistoryViewModel
 import java.text.DecimalFormat
 
 @Composable
@@ -53,7 +54,8 @@ fun CoinOrderBuy(
     context: Context,      // Toast 등에서 사용할 Context
     symbol: String,        // 코인 심볼 (예: "KRW-BTC")
     myPageViewModel: MyPageViewModel = hiltViewModel(), // 잔액 관리용 ViewModel
-    myCoinViewModel: MyCoinViewModel = hiltViewModel()  // 보유 코인 관리용 ViewModel
+    myCoinViewModel: MyCoinViewModel = hiltViewModel(),  // 보유 코인 관리용 ViewModel
+    tradeHistoryViewModel: TradeHistoryViewModel = hiltViewModel()
 ) {
 
     // 현재 보유 KRW 잔액 (Room에서 가져와서 ViewModel에 보관 중인 값)
@@ -320,6 +322,8 @@ fun CoinOrderBuy(
                             qty = qtyNum,
                             price = currentPrice
                         )
+
+                        tradeHistoryViewModel.addTrade(symbol, "매수", currentPrice, qtyNum, total)
 
                         //수량 0 으로 초기화
                         qty = "0"
