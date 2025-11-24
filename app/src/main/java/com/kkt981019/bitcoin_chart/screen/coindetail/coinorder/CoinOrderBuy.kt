@@ -64,15 +64,16 @@ fun CoinOrderBuy(
     Box(
         modifier = Modifier
             .fillMaxHeight()
-            .padding(12.dp)
+//            .padding(12.dp)
     ) {
 
         Column(Modifier.fillMaxSize()) {
 
             // 상단 "주문 가능" 영역 (사용자가 쓸 수 있는 KRW 표시)
             Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                Modifier.fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text("주문 가능", color = Color(0xFF000000), fontSize = 12.sp)
                 Text(
@@ -323,7 +324,7 @@ fun CoinOrderBuy(
                             price = currentPrice
                         )
 
-                        tradeHistoryViewModel.addTrade(symbol, "매수", currentPrice, qtyNum, total)
+                        tradeHistoryViewModel.addTrade(symbol, "BUY", currentPrice, qtyNum, total)
 
                         //수량 0 으로 초기화
                         qty = "0"

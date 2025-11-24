@@ -185,8 +185,6 @@ fun CoinOrderSection(
             }
         }
 
-        Spacer(Modifier.width(8.dp))
-
         // ── 오른쪽 코인 사고 파는 영역
         Column(
             modifier = Modifier
@@ -204,7 +202,6 @@ fun CoinOrderSection(
                     .fillMaxWidth(),
                 color = Color.Transparent,
                 shape = RoundedCornerShape(corner),
-                border = BorderStroke(1.dp, Color.Gray)
             ) {
                 TabRow(
                     selectedTabIndex = selectedTab,
@@ -218,8 +215,9 @@ fun CoinOrderSection(
                             modifier = Modifier
                                 .height(36.dp)
                                 .background(
-                                    Color.Transparent,
-                                    RoundedCornerShape(corner)
+                                    color = if (selectedTab == idx)  Color.Transparent else Color(
+                                        0xFFEEEEEE
+                                    ),
                                 ),
                             text = {
                                 Text(
@@ -232,8 +230,8 @@ fun CoinOrderSection(
                                             else -> Color.Black // 거래내역
                                         }
                                     } else {
-                                        Color.Gray
-                                    }
+                                        Color.Black
+                                    },
                                 )
                             }
                         )

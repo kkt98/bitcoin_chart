@@ -89,7 +89,6 @@ fun CoinOrderSell(
     Box(
         modifier = Modifier
             .fillMaxHeight()
-            .padding(12.dp)
     ) {
 
         Column(Modifier.fillMaxSize()) {
@@ -98,7 +97,8 @@ fun CoinOrderSell(
             // 상단: 보유 수량 표시
             // ------------------------------
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth()
+                    .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("보유수량", color = Color.Black, fontSize = 12.sp)
@@ -347,7 +347,7 @@ fun CoinOrderSell(
                         // 실제 매도 로직 호출
                         myCoinViewModel.onSell(symbol = symbol, qty = amount)
 
-                        tradeHistoryViewModel.addTrade(symbol = symbol, "매도", currentPrice, amount, total)
+                        tradeHistoryViewModel.addTrade(symbol = symbol, "SELL", currentPrice, amount, total)
 
                         amountText = "0"
 
