@@ -23,11 +23,15 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +64,31 @@ fun CoinOrderBuy(
 
     // 현재 보유 KRW 잔액 (Room에서 가져와서 ViewModel에 보관 중인 값)
     val balance = myPageViewModel.balance
+
+    LaunchedEffect(symbol) {
+        myCoinViewModel.loadCoin(symbol)
+    }
+
+    // StateFlow -> Compose State 로 변환하여 화면에서 사용
+    val myCoin by myCoinViewModel.currentCoin.collectAsState()
+    // 보유 수량 (없으면 0)
+    val holdingAmount = myCoin?.amount ?: 0.0
+
+    // 매수 평균 단가 (없으면 0)
+    val avgPrice = myCoin?.avgPrice ?: 0.0
+    // 총 매수 금액 = 보유 수량 * 매수 평균 단가
+    val totalBuyAmount = holdingAmount * avgPrice
+    // 평가 금액 = 보유 수량 * 현재 가격
+    val evalAmount = holdingAmount * currentPrice
+    // 평가 손익 = 평가 금액 - 총 매수 금액
+    val profit = evalAmount - totalBuyAmount
+    // 수익률 = 평가 손익 / 총 매수 금액 * 100 (%)
+    // 총 매수 금액이 0이면 0으로 처리
+    val profitRate = if (totalBuyAmount > 0) {
+        (profit / totalBuyAmount) * 100.0
+    } else {
+        0.0
+    }
 
     Box(
         modifier = Modifier
@@ -358,6 +387,108 @@ fun CoinOrderBuy(
                     contentColor = Color.White,
                 )
             ) { Text("총액 지정하여 매수") }
+
+            Spacer(Modifier.height(8.dp))
+
+            if (holdingAmount > 0.0) {
+                Column(
+                    Modifier.fillMaxWidth()
+                ) {
+
+                    Divider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                        thickness = 1.dp
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "총 보유자산",
+                        fontSize = 20.sp,
+                        color = Color.Black,
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "매수평균가",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = DecimalFormat("#,##0.##").format(avgPrice),
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "평가금액",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = DecimalFormat("#,##0").format(evalAmount),
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "평가손익",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = DecimalFormat("#,##0").format(profit),
+                            fontSize = 12.sp,
+                            color = when {
+                                profit > 0 -> Color.Red
+                                profit < 0 -> Color.Blue
+                                else -> Color.Black
+                            }
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "수익률",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = String.format("%.2f%%", profitRate),
+                            fontSize = 12.sp,
+                            color = when {
+                                profitRate > 0 -> Color.Red
+                                profitRate < 0 -> Color.Blue
+                                else -> Color.Black
+                            }
+                        )
+                    }
+                }
+            }
 
             // 총액 지정 다이얼로그
             TotalAmountDialog(
