@@ -28,6 +28,10 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,12 +40,28 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
+import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyPageScreen(navController: NavHostController,
                  myPageViewModel: MyPageViewModel = hiltViewModel())
 {
+
+    var textFieldQuery by remember { mutableStateOf("") }
+
+    // 숫자 포맷터들
+    val dfInt = remember { DecimalFormat("#,##0") }        // 정수용 (원화)
+    val dfDouble = remember { DecimalFormat("#,##0.##") }  // 소수 약간 있는 숫자용
+
+//    val filtered = if (textFieldQuery.isNotBlank()) {
+//        displayed.filter {
+//            it.koreanName.contains(textFieldQuery, true)
+//                    || it.englishName.contains(textFieldQuery, true)
+//                    || it.symbol.contains(textFieldQuery, true)
+//        }
+//    } else displayed
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -95,15 +115,23 @@ fun MyPageScreen(navController: NavHostController,
                     // 윗줄 (보유 KRW, 총 보유자산)
                     Row(Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("보유 KRW", fontSize = 13.sp, color = Color.Gray)
-                            Text("0", fontSize = 24.sp, color = Color.Black)
+                            Text("보유 KRW", fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                text = dfInt.format(myPageViewModel.balance),
+                                fontSize = 18.sp,
+                                color = Color.Black
+                            )
                         }
 
                         Spacer(Modifier.width(10.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("총 보유자산", fontSize = 13.sp, color = Color.Gray)
-                            Text("0", fontSize = 24.sp, color = Color.Black)
+                            Text("총 보유자산", fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                text = dfInt.format(myPageViewModel.totalAsset),
+                                fontSize = 18.sp,
+                                color = Color.Black
+                            )
                         }
                     }
 
@@ -115,8 +143,12 @@ fun MyPageScreen(navController: NavHostController,
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("총매수", fontSize = 13.sp, color = Color.Gray)
-                            Text("0", fontSize = 14.sp, color = Color.Black)
+                            Text("총매수", fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                text = dfInt.format(myPageViewModel.totalBuyAmount),
+                                fontSize = 12.sp,
+                                color = Color.Black
+                            )
                         }
 
                         Spacer(Modifier.width(10.dp))
@@ -125,12 +157,25 @@ fun MyPageScreen(navController: NavHostController,
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("평가손익", fontSize = 13.sp, color = Color.Gray)
-                            Text("0", fontSize = 14.sp, color = Color(0xFF1976D2)) // 파란색
+                            Text("평가손익", fontSize = 12.sp, color = Color.Gray)
+
+                            val profit = myPageViewModel.totalProfit
+                            val profitColor =
+                                when {
+                                    profit > 0 -> Color.Red
+                                    profit < 0 -> Color.Blue
+                                    else -> Color.Black
+                                }
+
+                            Text(
+                                text = dfInt.format(profit),
+                                fontSize = 12.sp,
+                                color = profitColor
+                            )
                         }
                     }
 
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(6.dp))
 
                     // 아랫줄 2 (총평가 / 수익률)
                     Row(Modifier.fillMaxWidth()) {
@@ -138,8 +183,12 @@ fun MyPageScreen(navController: NavHostController,
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("총평가", fontSize = 13.sp, color = Color.Gray)
-                            Text("0", fontSize = 14.sp, color = Color.Black)
+                            Text("총평가", fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                text = dfInt.format(myPageViewModel.totalEvalAmount),
+                                fontSize = 12.sp,
+                                color = Color.Black
+                            )
                         }
 
                         Spacer(Modifier.width(10.dp))
@@ -148,20 +197,34 @@ fun MyPageScreen(navController: NavHostController,
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("수익률", fontSize = 13.sp, color = Color.Gray)
-                            Text("0.00%", fontSize = 14.sp, color = Color(0xFF1976D2))
+                            Text("수익률", fontSize = 12.sp, color = Color.Gray)
+
+                            val rate = myPageViewModel.totalProfitRate
+                            val rateColor =
+                                when {
+                                    rate > 0 -> Color.Red
+                                    rate < 0 -> Color.Blue
+                                    else -> Color.Black
+                                }
+
+                            Text(
+                                text = String.format("%.2f%%", rate),
+                                fontSize = 12.sp,
+                                color = rateColor
+                            )
                         }
                     }
                 }
             }
+
             Row(
                 Modifier.padding(start = 16.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Filled.Search, contentDescription = null)
                 TextField(
-                    value = "",
-                    onValueChange = {  },
+                    value = textFieldQuery,
+                    onValueChange = { textFieldQuery = it },
                     placeholder = { Text("코인명/심볼 검색", color = Color.Gray) },
                     modifier = Modifier.weight(1f),
                     colors = TextFieldDefaults.colors(
