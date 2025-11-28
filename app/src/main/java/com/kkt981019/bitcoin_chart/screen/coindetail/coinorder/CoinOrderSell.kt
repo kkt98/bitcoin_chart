@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kkt981019.bitcoin_chart.util.callCoinPnl
 import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.TradeHistoryViewModel
 import java.text.DecimalFormat
@@ -72,19 +73,12 @@ fun CoinOrderSell(
 
     // 매수 평균 단가 (없으면 0)
     val avgPrice = myCoin?.avgPrice ?: 0.0
-    // 총 매수 금액 = 보유 수량 * 매수 평균 단가
-    val totalBuyAmount = holdingAmount * avgPrice
-    // 평가 금액 = 보유 수량 * 현재 가격
-    val evalAmount = holdingAmount * currentPrice
-    // 평가 손익 = 평가 금액 - 총 매수 금액
-    val profit = evalAmount - totalBuyAmount
-    // 수익률 = 평가 손익 / 총 매수 금액 * 100 (%)
-    // 총 매수 금액이 0이면 0으로 처리
-    val profitRate = if (totalBuyAmount > 0) {
-        (profit / totalBuyAmount) * 100.0
-    } else {
-        0.0
-    }
+
+    val pnl = callCoinPnl(
+        holdingAmount = holdingAmount,
+        avgPrice = avgPrice,
+        currentPrice = currentPrice
+    )
 
     Box(
         modifier = Modifier
@@ -431,7 +425,7 @@ fun CoinOrderSell(
                             color = Color.Gray
                         )
                         Text(
-                            text = DecimalFormat("#,##0").format(evalAmount),
+                            text = DecimalFormat("#,##0").format(pnl.evalAmount),
                             fontSize = 12.sp,
                             color = Color.Black
                         )
@@ -449,11 +443,11 @@ fun CoinOrderSell(
                             color = Color.Gray
                         )
                         Text(
-                            text = DecimalFormat("#,##0").format(profit),
+                            text = DecimalFormat("#,##0").format(pnl.profit),
                             fontSize = 12.sp,
                             color = when {
-                                profit > 0 -> Color.Red
-                                profit < 0 -> Color.Blue
+                                pnl.profit > 0 -> Color.Red
+                                pnl.profit < 0 -> Color.Blue
                                 else -> Color.Black
                             }
                         )
@@ -471,11 +465,11 @@ fun CoinOrderSell(
                             color = Color.Gray
                         )
                         Text(
-                            text = String.format("%.2f%%", profitRate),
+                            text = String.format("%.2f%%", pnl.profitRate),
                             fontSize = 12.sp,
                             color = when {
-                                profitRate > 0 -> Color.Red
-                                profitRate < 0 -> Color.Blue
+                                pnl.profitRate > 0 -> Color.Red
+                                pnl.profitRate < 0 -> Color.Blue
                                 else -> Color.Black
                             }
                         )

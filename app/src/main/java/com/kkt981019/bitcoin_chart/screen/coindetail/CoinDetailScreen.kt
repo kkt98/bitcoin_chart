@@ -210,7 +210,7 @@ fun CoinDetailScreen(
             //호가, 차트, 시세 스크린
             when (selectedTabIndex) {
                 0 -> OrderBookSection(orderbook, ticker, changeRate, symbol)
-                1 -> CoinOrderSection(orderbook, ticker, changeRate, symbol)
+                1 -> CoinOrderSection(orderbook, ticker, changeRate, symbol, koreanName)
                 2 -> ChartSection(symbol)
                 3 -> TradeSection(symbol, color)
             }

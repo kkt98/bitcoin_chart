@@ -1,9 +1,5 @@
 package com.kkt981019.bitcoin_chart.repository
 
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
 import com.kkt981019.bitcoin_chart.room.mycoin.MyCoinDao
 import com.kkt981019.bitcoin_chart.room.mycoin.MyCoinEntity
 import javax.inject.Inject
@@ -11,7 +7,7 @@ import javax.inject.Inject
 class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
 
     // 매수 처리 (평균 단가 자동 계산)
-    suspend fun buy(symbol: String, qty: Double, price: Double) {
+    suspend fun buy(symbol: String, qty: Double, price: Double, koreanName: String) {
         val existing = myCoinDao.getCoin(symbol)
 
         if (existing == null) {
@@ -20,7 +16,8 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
                 MyCoinEntity(
                     symbol = symbol,
                     amount = qty,
-                    avgPrice = price
+                    avgPrice = price,
+                    koreanName = koreanName
                 )
             )
         } else {

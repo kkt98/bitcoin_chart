@@ -1,6 +1,5 @@
 package com.kkt981019.bitcoin_chart.screen.coindetail.coinorder
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +37,7 @@ fun CoinOrderSection(
     ticker: WebsocketResponse?,
     changeRate: String,
     symbol: String,
+    koreanName: String,
 ) {
     val currentPrice = ticker?.trade_price?.toDoubleOrNull() ?: 0.0
     val units = orderbook?.orderbook_units ?: emptyList()
@@ -239,7 +239,7 @@ fun CoinOrderSection(
                 }
             }
             when (selectedTab) {
-                0 -> CoinOrderBuy(currentPrice, format, context, symbol)
+                0 -> CoinOrderBuy(currentPrice, format, context, symbol, koreanName)
                 1 -> CoinOrderSell(currentPrice, format, context, symbol)
                 2 -> CoinOrderHistory(context, symbol)
             }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -28,6 +29,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,14 +41,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import java.text.DecimalFormat
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyPageScreen(navController: NavHostController,
-                 myPageViewModel: MyPageViewModel = hiltViewModel())
+                 myPageViewModel: MyPageViewModel = hiltViewModel(),
+                 myCoinViewModel: MyCoinViewModel = hiltViewModel()
+                 )
 {
+
+    val myCoins = myPageViewModel.myCoins
 
     var textFieldQuery by remember { mutableStateOf("") }
 
@@ -114,6 +124,7 @@ fun MyPageScreen(navController: NavHostController,
                 Column {
                     // 윗줄 (보유 KRW, 총 보유자산)
                     Row(Modifier.fillMaxWidth()) {
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text("보유 KRW", fontSize = 12.sp, color = Color.Gray)
                             Text(
@@ -139,6 +150,7 @@ fun MyPageScreen(navController: NavHostController,
 
                     // 아랫줄 1 (총매수 / 평가손익)
                     Row(Modifier.fillMaxWidth()) {
+
                         Row(
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -179,6 +191,7 @@ fun MyPageScreen(navController: NavHostController,
 
                     // 아랫줄 2 (총평가 / 수익률)
                     Row(Modifier.fillMaxWidth()) {
+
                         Row(
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -236,6 +249,182 @@ fun MyPageScreen(navController: NavHostController,
                     )
                 )
             }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+
+                items(myCoins) { item ->
+
+                    // ---- 여기서 코인별 숫자 계산 ----
+                    val currentPrice = myPageViewModel.getCurrentPrice(
+                        symbol   = item.symbol,
+                        avgPrice = item.avgPrice
+                    )
+                    val holdingAmount = item.amount
+                    val avgPrice = item.avgPrice
+
+                    val buyAmount  = holdingAmount * avgPrice            // 매수금액
+                    val evalAmount = holdingAmount * currentPrice        // 평가금액
+                    val profit     = evalAmount - buyAmount              // 평가손익
+                    val profitRate =
+                        if (buyAmount > 0.0) (profit / buyAmount) * 100.0 else 0.0
+
+                    val profitColor = when {
+                        profit > 0 -> Color.Red
+                        profit < 0 -> Color.Blue
+                        else       -> Color.Black
+                    }
+
+                    Divider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                        thickness = 1.dp
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp)
+                    ) {
+                        // ───── 1줄 : 코인명 / 평가손익 / 수익률 ─────
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text(
+                                    text = item.koreanName,
+                                    fontSize = 18.sp,
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = item.symbol,
+                                    fontSize = 14.sp,
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = "현재가 ${dfDouble.format(currentPrice)}",
+                                    fontSize = 12.sp,
+                                    color = Color.Red
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("평가손익", fontSize = 14.sp, color = Color.Black)
+                                    Text(
+                                        text = dfInt.format(profit),
+                                        fontSize = 14.sp,
+                                        color = profitColor
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("수익률", fontSize = 14.sp, color = Color.Black)
+                                    Text(
+                                        text = String.format("%.2f%%", profitRate),
+                                        fontSize = 14.sp,
+                                        color = profitColor
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // ───── 2줄 : 보유수량 / 매수평균가 ─────
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.End
+                            ){
+                                Text(
+                                    text = "${dfDouble.format(holdingAmount)} ${item.symbol}",
+                                    fontSize = 12.sp,
+                                    color = Color.Black
+                                )
+                                Text("보유수량", fontSize = 10.sp, color = Color.Gray)
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Text(
+                                    text = "${dfDouble.format(item.avgPrice)} KRW",
+                                    fontSize = 12.sp,
+                                    color = Color.Black
+                                )
+                                Text("매수평균가", fontSize = 10.sp, color = Color.Gray)
+                            }
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+
+                        // ───── 3줄 : 평가금액 / 매수금액 ─────
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Text(
+                                    text = "${dfInt.format(evalAmount)} KRW",
+                                    fontSize = 12.sp,
+                                    color = Color.Black
+                                )
+                                Text("평가금액", fontSize = 10.sp, color = Color.Gray)
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Text(
+                                    text = "${dfInt.format(buyAmount)} KRW",
+                                    fontSize = 12.sp,
+                                    color = Color.Black
+                                )
+                                Text("매수금액", fontSize = 10.sp, color = Color.Gray)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
+data class DummyHoldingUi(
+    val koreanName: String,
+    val englishName: String,
+    val symbol: String,
+    val currentPrice: Double,
+    val holdingAmount: Double,
+    val evalAmount: Long,
+    val avgPrice: Double,
+    val buyAmount: Long,
+    val profit: Long,
+    val profitRate: Double
+)

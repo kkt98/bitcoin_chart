@@ -36,9 +36,9 @@ class MyCoinViewModel @Inject constructor(
     }
 
     // 매수 처리
-    fun onBuy(symbol: String, qty: Double, price: Double) {
+    fun onBuy(symbol: String, qty: Double, price: Double, koreanName: String) {
         viewModelScope.launch {
-            myCoinRepository.buy(symbol, qty, price)
+            myCoinRepository.buy(symbol, qty, price, koreanName)
             // 전체 리스트 갱신
             refreshMyCoins()
             // 방금 매수한 심볼에 대한 단일 코인 정보도 다시 가져오기

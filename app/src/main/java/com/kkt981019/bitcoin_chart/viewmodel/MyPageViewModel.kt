@@ -2,6 +2,7 @@ package com.kkt981019.bitcoin_chart.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -31,7 +32,7 @@ class MyPageViewModel  @Inject constructor(
         private set
 
     // 실시간 현재가(심볼 , 가격)
-    private var priceMap: MutableMap<String, Double> = mutableMapOf()
+    private val priceMap = mutableStateMapOf<String, Double>()
     private var tickerSocket: WebSocket? = null
 
     // 총 매수 금액 (보유수량 * 매수평균가 총합)
@@ -102,11 +103,11 @@ class MyPageViewModel  @Inject constructor(
             // ws.trade_price 가 String이면 toDoubleOrNull() 사용
             val price = ws.trade_price.toDoubleOrNull() ?: return@startTickerSocket
 
-            // 실시간 가격 맵 업데이트
-            priceMap[ws.code] = price
-
-            // 가격 바뀔 때마다 요약 재계산
             viewModelScope.launch {
+                // 1) 실시간 가격 상태 업데이트 (이게 Compose 상태!)
+                priceMap[ws.code] = price
+
+                // 2) 상단 요약 재계산
                 recomputeSummary()
             }
         }
@@ -138,6 +139,9 @@ class MyPageViewModel  @Inject constructor(
         totalAsset = balance + eval // 총 보유자산
     }
 
+    fun getCurrentPrice(symbol: String, avgPrice: Double): Double {
+        return priceMap[symbol] ?: avgPrice
+    }
     override fun onCleared() {
         super.onCleared()
         tickerSocket?.close(1000, "MyPageViewModel cleared")
