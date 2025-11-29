@@ -47,6 +47,7 @@ import java.text.DecimalFormat
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,17 +61,11 @@ fun MyPageScreen(navController: NavHostController,
 
     var textFieldQuery by remember { mutableStateOf("") }
 
+    var sortType by remember { mutableStateOf(SortType.NONE) }
+
     // 숫자 포맷터들
     val dfInt = remember { DecimalFormat("#,##0") }        // 정수용 (원화)
     val dfDouble = remember { DecimalFormat("#,##0.##") }  // 소수 약간 있는 숫자용
-
-//    val filtered = if (textFieldQuery.isNotBlank()) {
-//        displayed.filter {
-//            it.koreanName.contains(textFieldQuery, true)
-//                    || it.englishName.contains(textFieldQuery, true)
-//                    || it.symbol.contains(textFieldQuery, true)
-//        }
-//    } else displayed
 
     Scaffold(
         topBar = {
@@ -250,13 +245,127 @@ fun MyPageScreen(navController: NavHostController,
                 )
             }
 
+            Spacer(Modifier.width(8.dp))
+
+            Divider(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                thickness = 1.dp
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                TextButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        sortType = when (sortType) {
+                            SortType.NAME_ASC  -> SortType.NAME_DESC   // 오름 → 내림
+                            SortType.NAME_DESC -> SortType.NONE        // 내림 → 해제
+                            else               -> SortType.NAME_ASC    // 나머지 → 오름
+                        }
+                    }
+                ) {
+                    val text = when (sortType) {
+                        SortType.NAME_ASC  -> "이름↑"
+                        SortType.NAME_DESC -> "이름↓"
+                        else               -> "이름↑↓"
+                    }
+
+                    Text(
+                        text = text,
+                        color = if (sortType == SortType.NAME_ASC || sortType == SortType.NAME_DESC)
+                            Color.Blue
+                        else
+                            Color.Gray
+                    )
+                }
+
+                TextButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        sortType = when (sortType) {
+                            SortType.PROFIT_DESC -> SortType.PROFIT_ASC  // 내림 → 오름
+                            SortType.PROFIT_ASC  -> SortType.NONE        // 오름 → 해제
+                            else                 -> SortType.PROFIT_DESC // 나머지 → 내림(기본)
+                        }
+                    }
+                ) {
+                    val text = when (sortType) {
+                        SortType.PROFIT_DESC -> "수익률↓"
+                        SortType.PROFIT_ASC  -> "수익률↑"
+                        else                 -> "수익률↑↓"
+                    }
+
+                    Text(
+                        text = text,
+                        color = if (sortType == SortType.PROFIT_ASC || sortType == SortType.PROFIT_DESC)
+                            Color.Blue
+                        else
+                            Color.Gray
+                    )
+                }
+            }
+
+            Divider(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                thickness = 1.dp
+            )
+
+            // 검색어 기준으로 필터링
+            val filteredCoins = if (textFieldQuery.isBlank()) {
+                myCoins
+            } else {
+                myCoins.filter { coin ->
+                    coin.koreanName.contains(textFieldQuery, ignoreCase = true) ||
+                            coin.symbol.contains(textFieldQuery, ignoreCase = true)
+                }
+            }
+
+            // 정렬 적용
+            val sortedCoins = when (sortType) {
+                SortType.NONE -> filteredCoins
+
+                SortType.NAME_ASC -> {
+                    filteredCoins.sortedBy { it.koreanName }
+                }
+
+                SortType.NAME_DESC -> {
+                    filteredCoins.sortedByDescending { it.koreanName }
+                }
+
+                SortType.PROFIT_ASC -> {
+                    filteredCoins.sortedBy { coin ->
+                        val currentPrice = myPageViewModel.getCurrentPrice(
+                            symbol = coin.symbol,
+                            avgPrice = coin.avgPrice
+                        )
+                        val buyAmount  = coin.amount * coin.avgPrice
+                        val evalAmount = coin.amount * currentPrice
+                        val profit     = evalAmount - buyAmount
+                        if (buyAmount > 0.0) (profit / buyAmount) * 100.0 else 0.0
+                    }
+                }
+
+                SortType.PROFIT_DESC -> {
+                    filteredCoins.sortedByDescending { coin ->
+                        val currentPrice = myPageViewModel.getCurrentPrice(
+                            symbol = coin.symbol,
+                            avgPrice = coin.avgPrice
+                        )
+                        val buyAmount  = coin.amount * coin.avgPrice
+                        val evalAmount = coin.amount * currentPrice
+                        val profit     = evalAmount - buyAmount
+                        if (buyAmount > 0.0) (profit / buyAmount) * 100.0 else 0.0
+                    }
+                }
+            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
             ) {
-
-                items(myCoins) { item ->
+                items(sortedCoins) { item ->
 
                     // ---- 여기서 코인별 숫자 계산 ----
                     val currentPrice = myPageViewModel.getCurrentPrice(
@@ -277,11 +386,6 @@ fun MyPageScreen(navController: NavHostController,
                         profit < 0 -> Color.Blue
                         else       -> Color.Black
                     }
-
-                    Divider(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                        thickness = 1.dp
-                    )
 
                     Column(
                         modifier = Modifier
@@ -409,6 +513,11 @@ fun MyPageScreen(navController: NavHostController,
                                 Text("매수금액", fontSize = 10.sp, color = Color.Gray)
                             }
                         }
+
+                        Divider(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                            thickness = 1.dp
+                        )
                     }
                 }
             }
@@ -416,15 +525,10 @@ fun MyPageScreen(navController: NavHostController,
     }
 }
 
-data class DummyHoldingUi(
-    val koreanName: String,
-    val englishName: String,
-    val symbol: String,
-    val currentPrice: Double,
-    val holdingAmount: Double,
-    val evalAmount: Long,
-    val avgPrice: Double,
-    val buyAmount: Long,
-    val profit: Long,
-    val profitRate: Double
-)
+enum class SortType {
+    NONE,
+    NAME_ASC,
+    NAME_DESC,
+    PROFIT_ASC,
+    PROFIT_DESC
+}
