@@ -292,8 +292,8 @@ fun MyPageScreen(navController: NavHostController,
                     }
                 ) {
                     val text = when (sortType) {
+                        SortType.PROFIT_ASC -> "수익률↑"
                         SortType.PROFIT_DESC -> "수익률↓"
-                        SortType.PROFIT_ASC  -> "수익률↑"
                         else                 -> "수익률↑↓"
                     }
 
