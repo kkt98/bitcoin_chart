@@ -88,7 +88,7 @@ fun CoinOrderBuy(
     Box(
         modifier = Modifier
             .fillMaxHeight()
-//            .padding(12.dp)
+            .padding(8.dp)
     ) {
 
         Column(Modifier.fillMaxSize()) {

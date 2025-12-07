@@ -222,7 +222,7 @@ fun CoinOrderSection(
                             text = {
                                 Text(
                                     text = title,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     color = if (selectedTab == idx) {
                                         when (idx) {
                                             0 -> Color.Red    // 매수

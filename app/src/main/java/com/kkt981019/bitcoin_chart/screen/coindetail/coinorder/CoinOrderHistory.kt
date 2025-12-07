@@ -47,11 +47,13 @@ fun CoinOrderHistory(
     val trades by tradeHistoryViewModel.trades.collectAsState()
 
     LazyColumn {
+
         items(items = trades) { trade ->
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(8.dp),
             ) {
                 // 1) 매수/매도 + 심볼
                 Row(

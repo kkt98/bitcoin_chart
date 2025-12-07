@@ -51,10 +51,7 @@ import androidx.compose.material3.TextButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyPageScreen(navController: NavHostController,
-                 myPageViewModel: MyPageViewModel = hiltViewModel(),
-                 myCoinViewModel: MyCoinViewModel = hiltViewModel()
-                 )
+fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewModel = hiltViewModel())
 {
 
     val myCoins = myPageViewModel.myCoins
@@ -95,7 +92,7 @@ fun MyPageScreen(navController: NavHostController,
                             contentColor = Color.Black,
                             containerColor = Color.Transparent
                         ),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF8F8F8)),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF000000)),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     ) {
                         Text("KRW 충전", fontSize = 13.sp)
@@ -360,6 +357,7 @@ fun MyPageScreen(navController: NavHostController,
                     }
                 }
             }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -514,11 +512,12 @@ fun MyPageScreen(navController: NavHostController,
                             }
                         }
 
-                        Divider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                            thickness = 1.dp
-                        )
                     }
+
+                    Divider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                        thickness = 1.dp
+                    )
                 }
             }
         }
