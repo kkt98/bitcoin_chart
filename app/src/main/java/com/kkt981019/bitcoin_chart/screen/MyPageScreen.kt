@@ -2,6 +2,7 @@ package com.kkt981019.bitcoin_chart.screen
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +30,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import java.text.DecimalFormat
 import androidx.compose.foundation.lazy.items
@@ -112,6 +111,7 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                     .fillMaxWidth()
                     .background(Color(0xFFF8F8F8))
                     .padding(16.dp)
+
             ) {
                 Column {
                     // 윗줄 (보유 KRW, 총 보유자산)
@@ -314,7 +314,7 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                 myCoins
             } else {
                 myCoins.filter { coin ->
-                    coin.koreanName.contains(textFieldQuery, ignoreCase = true) ||
+                    coin.korName.contains(textFieldQuery, ignoreCase = true) ||
                             coin.symbol.contains(textFieldQuery, ignoreCase = true)
                 }
             }
@@ -324,11 +324,11 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                 SortType.NONE -> filteredCoins
 
                 SortType.NAME_ASC -> {
-                    filteredCoins.sortedBy { it.koreanName }
+                    filteredCoins.sortedBy { it.korName }
                 }
 
                 SortType.NAME_DESC -> {
-                    filteredCoins.sortedByDescending { it.koreanName }
+                    filteredCoins.sortedByDescending { it.korName }
                 }
 
                 SortType.PROFIT_ASC -> {
@@ -388,6 +388,11 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable {
+                                navController.navigate(
+                                    "coin_detail/${item.symbol}/${item.korName}/${item.engName}"
+                                )
+                            }
                             .padding(vertical = 12.dp)
                     ) {
                         // ───── 1줄 : 코인명 / 평가손익 / 수익률 ─────
@@ -400,7 +405,7 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                                 horizontalAlignment = Alignment.Start
                             ) {
                                 Text(
-                                    text = item.koreanName,
+                                    text = item.korName,
                                     fontSize = 18.sp,
                                     color = Color.Black
                                 )

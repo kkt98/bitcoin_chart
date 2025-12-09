@@ -59,6 +59,7 @@ fun CoinOrderBuy(
     context: Context,      // Toast 등에서 사용할 Context
     symbol: String,        // 코인 심볼 (예: "KRW-BTC")
     koreanName: String,
+    englishName: String,
     myPageViewModel: MyPageViewModel = hiltViewModel(), // 잔액 관리용 ViewModel
     myCoinViewModel: MyCoinViewModel = hiltViewModel(),  // 보유 코인 관리용 ViewModel
     tradeHistoryViewModel: TradeHistoryViewModel = hiltViewModel()
@@ -346,7 +347,8 @@ fun CoinOrderBuy(
                             symbol = symbol,
                             qty = qtyNum,
                             price = currentPrice,
-                            koreanName = koreanName
+                            korName = koreanName,
+                            engName = englishName
                         )
 
                         tradeHistoryViewModel.addTrade(symbol, "BUY", currentPrice, qtyNum, total)

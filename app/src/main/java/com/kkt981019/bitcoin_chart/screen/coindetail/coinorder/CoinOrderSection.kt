@@ -38,6 +38,7 @@ fun CoinOrderSection(
     changeRate: String,
     symbol: String,
     koreanName: String,
+    englishName: String
 ) {
     val currentPrice = ticker?.trade_price?.toDoubleOrNull() ?: 0.0
     val units = orderbook?.orderbook_units ?: emptyList()
@@ -239,7 +240,7 @@ fun CoinOrderSection(
                 }
             }
             when (selectedTab) {
-                0 -> CoinOrderBuy(currentPrice, format, context, symbol, koreanName)
+                0 -> CoinOrderBuy(currentPrice, format, context, symbol, koreanName, englishName)
                 1 -> CoinOrderSell(currentPrice, format, context, symbol)
                 2 -> CoinOrderHistory(context, symbol)
             }

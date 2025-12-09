@@ -7,7 +7,7 @@ import javax.inject.Inject
 class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
 
     // 매수 처리 (평균 단가 자동 계산)
-    suspend fun buy(symbol: String, qty: Double, price: Double, koreanName: String) {
+    suspend fun buy(symbol: String, qty: Double, price: Double, korName: String, engName: String) {
         val existing = myCoinDao.getCoin(symbol)
 
         if (existing == null) {
@@ -17,7 +17,8 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
                     symbol = symbol,
                     amount = qty,
                     avgPrice = price,
-                    koreanName = koreanName
+                    korName = korName,
+                    engName = engName
                 )
             )
         } else {

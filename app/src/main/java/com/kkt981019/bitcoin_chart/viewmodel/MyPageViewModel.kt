@@ -104,7 +104,7 @@ class MyPageViewModel  @Inject constructor(
             val price = ws.trade_price.toDoubleOrNull() ?: return@startTickerSocket
 
             viewModelScope.launch {
-                // 1) 실시간 가격 상태 업데이트 (이게 Compose 상태!)
+                // 1) 실시간 가격 상태 업데이트
                 priceMap[ws.code] = price
 
                 // 2) 상단 요약 재계산

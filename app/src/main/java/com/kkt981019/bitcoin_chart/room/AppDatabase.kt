@@ -14,7 +14,7 @@ import com.kkt981019.bitcoin_chart.room.trade_history.TradeHistoryEntity
 @Database(entities = [FavoriteEntity::class,
                      UserMoneyEntity::class,
                         MyCoinEntity::class,
-                        TradeHistoryEntity::class], version = 5)
+                        TradeHistoryEntity::class], version = 6)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun favoriteDao(): FavoriteDao
