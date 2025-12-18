@@ -89,4 +89,7 @@ dependencies {
     kapt (libs.androidx.room.compiler)
     //AutosizeText
     implementation (libs.autosizetext.compose.v030)
+    //AutosizeText
+    implementation(platform("androidx.compose:compose-bom:2025.05.01")) // 또는 그 이상
+    implementation("androidx.compose.foundation:foundation")
 }

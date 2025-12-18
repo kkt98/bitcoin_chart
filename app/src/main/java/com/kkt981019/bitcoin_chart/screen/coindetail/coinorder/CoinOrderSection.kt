@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -96,7 +99,7 @@ fun CoinOrderSection(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(IntrinsicSize.Max)
+                            .height(44.dp)
                             .background(Color.Transparent)
                             .border(
                                 width = if (isCurrent) 1.dp else 0.dp,
@@ -133,14 +136,19 @@ fun CoinOrderSection(
                             contentAlignment = Alignment.CenterEnd
                         ) {
 
-                            AutoSizeText(
+                            BasicText(
                                 text = amountText,
                                 modifier = Modifier.align(Alignment.CenterEnd),
                                 maxLines = 1,
-                                fontSize = 12.sp,
-                                minFontSize = 1.sp,
-                                lineHeight = 14.sp,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    lineHeight = 14.sp,
+                                ),
+                                autoSize = TextAutoSize.StepBased(
+                                    minFontSize = 5.sp,
+                                    maxFontSize = 12.sp,
+                                )
                             )
                         }
                     }
