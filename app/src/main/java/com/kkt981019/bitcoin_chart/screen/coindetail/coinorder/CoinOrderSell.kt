@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kkt981019.bitcoin_chart.util.callCoinPnl
 import com.kkt981019.bitcoin_chart.viewmodel.MyCoinViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.TradeHistoryViewModel
 import java.text.DecimalFormat
 
@@ -58,6 +59,7 @@ fun CoinOrderSell(
     context: Context, // Toast 등 UI 용
     symbol: String, // 예: "KRW-BTC"
     myCoinViewModel: MyCoinViewModel = hiltViewModel(), // 매도 로직 / 보유 코인 정보 조회 ViewModel
+    myPageViewModel: MyPageViewModel = hiltViewModel(),
     tradeHistoryViewModel: TradeHistoryViewModel = hiltViewModel()
 ) {
 
@@ -73,6 +75,9 @@ fun CoinOrderSell(
 
     // 매수 평균 단가 (없으면 0)
     val avgPrice = myCoin?.avgPrice ?: 0.0
+
+    // 보유 코인의 원화 환산 금액
+    val korMoney = holdingAmount * currentPrice
 
     val pnl = callCoinPnl(
         holdingAmount = holdingAmount,
@@ -113,7 +118,7 @@ fun CoinOrderSell(
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    "= ${DecimalFormat("#,##0").format(holdingAmount * currentPrice)} ${symbol.substringBefore("-")}",
+                    "= ${DecimalFormat("#,##0").format(korMoney)} ${symbol.substringBefore("-")}",
                     color = Color.Gray,
                     fontSize = 10.sp
                 )
@@ -343,6 +348,8 @@ fun CoinOrderSell(
                         myCoinViewModel.onSell(symbol = symbol, qty = amount)
 
                         tradeHistoryViewModel.addTrade(symbol = symbol, "SELL", currentPrice, amount, total)
+
+                        myPageViewModel.onCharge(korMoney.toLong())
 
                         amountText = "0"
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,11 +48,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
+import com.kkt981019.bitcoin_chart.viewmodel.TradeHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewModel = hiltViewModel())
-{
+fun MyPageScreen(
+    navController: NavHostController,
+    myPageViewModel: MyPageViewModel = hiltViewModel(),
+    tradeHistoryViewModel: TradeHistoryViewModel = hiltViewModel()
+) {
 
     val myCoins = myPageViewModel.myCoins
 
@@ -85,7 +90,8 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                         },
                         modifier = Modifier
                             .padding(end = 8.dp)
-                            .height(36.dp),
+                            .height(28.dp)
+                            .defaultMinSize(minWidth = 0.dp, minHeight = 0.dp), // 기본 최소 크기 제거,
                         shape = RoundedCornerShape(6.dp),
                         colors = ButtonDefaults.buttonColors(
                             contentColor = Color.Black,
@@ -94,7 +100,30 @@ fun MyPageScreen(navController: NavHostController, myPageViewModel: MyPageViewMo
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF000000)),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     ) {
-                        Text("KRW 충전", fontSize = 13.sp)
+                        Text("KRW 충전", fontSize = 11.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            Toast.makeText(
+                                navController.context,
+                                "삭제 완료",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .height(28.dp)
+                            .defaultMinSize(minWidth = 0.dp, minHeight = 0.dp), // 기본 최소 크기 제거,
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = Color.Black,
+                            containerColor = Color.Transparent
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF000000)),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    ) {
+                        Text("전체 거래내역 삭제", fontSize = 11.sp)
                     }
                 }
             )

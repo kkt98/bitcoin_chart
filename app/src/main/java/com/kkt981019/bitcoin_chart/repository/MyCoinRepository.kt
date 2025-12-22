@@ -42,7 +42,7 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
 
         val remaining = existing.amount - qty
 
-        if (remaining <= 0) {
+        if (remaining <= 0.0) {
             myCoinDao.delete(existing) // 전량 매도 → 기록 삭제
         } else {
             myCoinDao.updateAmount(symbol, remaining)

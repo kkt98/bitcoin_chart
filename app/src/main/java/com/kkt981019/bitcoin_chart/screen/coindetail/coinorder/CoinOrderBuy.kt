@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
@@ -85,6 +86,11 @@ fun CoinOrderBuy(
         avgPrice = avgPrice,
         currentPrice = currentPrice
     )
+
+    var lastRatio by remember { mutableStateOf<Double?>(null) }
+
+    // 수량 입력 필드 포커스 상태
+    var isQtyFocused by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -142,8 +148,11 @@ fun CoinOrderBuy(
             val qtyNum = qty.toDoubleOrNull() ?: 0.0
 
             // 총 매수 금액 = 수량 * 현재가
-            val total = qtyNum * currentPrice
-
+            val total = if (lastRatio == 1.0) {
+                balance.toDouble()          // 최대 선택이면 잔액 그대로
+            } else {
+                qtyNum * currentPrice
+            }
             // "총액 지정하여 매수" 다이얼로그 열림 상태
             var showAmountDialog by remember { mutableStateOf(false) }
 
@@ -180,6 +189,7 @@ fun CoinOrderBuy(
                         onValueChange = { s ->
                             // 숫자와 소수점만 입력 허용
                             qty = s.filter { it.isDigit() || it == '.' }
+                            lastRatio = null
                         },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(
@@ -189,14 +199,22 @@ fun CoinOrderBuy(
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         cursorBrush = SolidColor(Color(0xFF000000)),
+                        modifier = Modifier
+                            .widthIn(min = 24.dp)
+                            .onFocusChanged { focusState ->
+                                isQtyFocused = focusState.isFocused
+                            },
                         decorationBox = { inner ->
                             Box(
-                                modifier = Modifier.widthIn(min = 24.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
-                                // 비어 있을 때는 0 표시
-                                if (qty.isBlank()) {
-                                    Text("0", color = Color(0x80000000), fontSize = 12.sp)
+                                // ✅ 포커스 없고 비어 있을 때만 0 표시
+                                if (!isQtyFocused && qty.isBlank()) {
+                                    Text(
+                                        text = "0",
+                                        color = Color(0x80000000),
+                                        fontSize = 12.sp
+                                    )
                                 }
                                 inner()
                             }
@@ -242,6 +260,7 @@ fun CoinOrderBuy(
                                 },
                                 onClick = {
                                     ratioMenuExpanded = false
+                                    lastRatio = ratio // 마지막으로 선택한 비율 기억
 
                                     // 잔액이 0 이하인 경우
                                     if (balance <= 0L) {
@@ -258,6 +277,11 @@ fun CoinOrderBuy(
 
                                     // 수량 = 사용할 금액 / 현재가
                                     val computedQty = useAmount / currentPrice
+
+                                    if (currentPrice <= 0.0) {
+                                        Toast.makeText(context, "유효한 가격이 아닙니다.", Toast.LENGTH_SHORT).show()
+                                        return@DropdownMenuItem
+                                    }
 
                                     // 소수 8자리까지 포맷팅해서 수량에 반영
                                     qty = DecimalFormat("0.########").format(computedQty)
@@ -331,14 +355,20 @@ fun CoinOrderBuy(
                             return@Button
                         }
 
+                        val spend = if (lastRatio == 1.0) {
+                            balance                // 🔹 그냥 잔액 전부 차감
+                        } else {
+                            total.toLong()
+                        }
+
                         // 잔액 부족 체크
-                        if (total.toLong() > balance) {
+                        if (spend > balance) {
                             Toast.makeText(context, "잔액이 부족합니다.", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
 
                         // 잔액 차감 (user_money 테이블 업데이트)
-                        myPageViewModel.onSpend(total.toLong())
+                        myPageViewModel.onSpend(spend)
 
                         // 보유 코인 저장 (평균 단가 포함)
                         // qtyNum: 이번에 매수한 수량
@@ -351,10 +381,11 @@ fun CoinOrderBuy(
                             engName = englishName
                         )
 
-                        tradeHistoryViewModel.addTrade(symbol, "BUY", currentPrice, qtyNum, total)
+                        tradeHistoryViewModel.addTrade(symbol, "BUY", currentPrice, qtyNum, spend.toDouble())
 
                         //수량 0 으로 초기화
                         qty = "0"
+                        lastRatio = null
 
                         Toast.makeText(context, "매수완료", Toast.LENGTH_SHORT).show()
                     },
@@ -503,6 +534,7 @@ fun CoinOrderBuy(
                     // 총액 기반으로 수량 계산 후 입력 필드에 반영
                     val computedQty = amount / currentPrice
                     qty = DecimalFormat("0.########").format(computedQty)
+                    lastRatio = null   // 🔹 총액으로 설정하면 비율모드 해제
 
                     Toast.makeText(
                         context,
