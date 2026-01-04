@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +25,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -206,18 +209,19 @@ fun DailyList(
                 )
 
                 // 거래량
-                AutoSizeText(
+                BasicText(
                     text = DecimalFormat("#,###.########").format(candle.candleAccTradeVolume),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .padding(10.dp),
-                    textAlign = TextAlign.End,
                     maxLines = 1,
-                    fontSize = 13.sp,
-                    minFontSize = 1.sp,
-                    lineHeight = 14.sp,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        lineHeight = 14.sp,
+                        textAlign = TextAlign.End
+                    )
                 )
             }
             Divider() // 각 row 아래 가로줄
