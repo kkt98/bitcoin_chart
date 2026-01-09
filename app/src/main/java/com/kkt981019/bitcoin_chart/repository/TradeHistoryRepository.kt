@@ -31,4 +31,9 @@ class TradeHistoryRepository @Inject constructor(
 
     suspend fun getTrades(symbol: String) =
         tradeHistoryDao.getTradesBySymbol(symbol)
+
+    suspend fun getAllDelete() =
+        tradeHistoryDao.getAllDelete()
+
+
 }

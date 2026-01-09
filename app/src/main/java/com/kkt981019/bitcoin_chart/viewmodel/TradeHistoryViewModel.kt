@@ -42,10 +42,9 @@ class TradeHistoryViewModel @Inject constructor(
     }
 
     // 해당 코인 거래내역 전부 삭제
-    fun deleteHistory(symbol: String) {
+    fun deleteHistory() {
         viewModelScope.launch {
-            tradeHistoryRepository.deleteHistory(symbol)
-            _trades.value = emptyList()
+            tradeHistoryRepository.getAllDelete()
         }
     }
 }

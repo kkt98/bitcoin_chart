@@ -12,6 +12,11 @@ import com.kkt981019.bitcoin_chart.repository.MyPageRepository
 import com.kkt981019.bitcoin_chart.repository.WebSocketRepository
 import com.kkt981019.bitcoin_chart.room.mycoin.MyCoinEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
 import javax.inject.Inject
@@ -21,130 +26,126 @@ class MyPageViewModel  @Inject constructor(
     private val myPageRepository: MyPageRepository,
     private val myCoinRepository: MyCoinRepository,
     private val webSocketRepository: WebSocketRepository
-) : ViewModel(){
+) : ViewModel() {
 
     // 보유 잔액
-    var balance by mutableStateOf(0L)
-        private set
+    private val _balance = MutableStateFlow(0L)
+    val balance: StateFlow<Long> = _balance.asStateFlow()
 
-    // 보유코인
-    var myCoins by mutableStateOf<List<MyCoinEntity>>(emptyList())
-        private set
+    // StateFlow 로 보유코인 스트림
+    val myCoins: StateFlow<List<MyCoinEntity>> =
+        myCoinRepository
+            .getAllCoinsFlow()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = emptyList()
+            )
 
     // 실시간 현재가(심볼 , 가격)
     private val priceMap = mutableStateMapOf<String, Double>()
     private var tickerSocket: WebSocket? = null
 
-    // 총 매수 금액 (보유수량 * 매수평균가 총합)
     var totalBuyAmount by mutableStateOf(0.0)
         private set
-
-    // 총 평가 금액 (보유수량 * 현재가 총합)
     var totalEvalAmount by mutableStateOf(0.0)
         private set
-
-    // 평가 손익 (총 평가 - 총 매수)
     var totalProfit by mutableStateOf(0.0)
         private set
-
-    // 수익률 (평가손익 / 총매수 * 100)
     var totalProfitRate by mutableStateOf(0.0)
         private set
-
-    // 총 보유자산 (보유 KRW + 총 평가금액)
     var totalAsset by mutableStateOf(0.0)
         private set
 
     init {
+        // 잔액 초기화
         viewModelScope.launch {
             myPageRepository.initBalanceIfNeeded()
-            balance = myPageRepository.getUserMoney()
-
-            loadMyCoins()
-
-            // 보유 코인 심볼들로 웹소켓 구독 시작
-            startTickerSocket()
-
-            recomputeSummary()
+            _balance.value = myPageRepository.getUserMoney()
         }
 
+        // ✅ 코인 목록 Flow 를 계속 구독하면서
+        //    - 소켓 재구독
+        //    - 요약값 재계산
+        viewModelScope.launch {
+            myCoins.collect { coins ->
+                restartTickerSocket(coins)
+                recomputeSummary(coins)
+            }
+        }
+    }
+
+    fun refreshBalance() {
+        viewModelScope.launch {
+            _balance.value = myPageRepository.getUserMoney()
+            recomputeSummary(myCoins.value)
+        }
     }
 
     fun onCharge(amount: Long) {
         viewModelScope.launch {
             myPageRepository.charge(amount)
-            balance = myPageRepository.getUserMoney()
-            recomputeSummary()
+            _balance.value = myPageRepository.getUserMoney()
+            recomputeSummary(myCoins.value)
         }
     }
 
     fun onSpend(amount: Long) {
         viewModelScope.launch {
             myPageRepository.spend(amount)
-            balance = myPageRepository.getUserMoney()
-            recomputeSummary()
+            _balance.value = myPageRepository.getUserMoney()
+            recomputeSummary(myCoins.value)
         }
     }
 
-    /** Room 에서 내 모든 코인 불러오기 */
-    private suspend fun loadMyCoins() {
-        myCoins = myCoinRepository.getAllCoins()
-    }
-
-    private fun startTickerSocket() {
-        // 기존 소켓 정리
+    private fun restartTickerSocket(coins: List<MyCoinEntity>) {
         tickerSocket?.close(1000, "MyPage closed")
 
-        if (myCoins.isEmpty()) return
+        if (coins.isEmpty()) return
 
-        val markets = myCoins.map { it.symbol }
+        val markets = coins.map { it.symbol }
 
         tickerSocket = webSocketRepository.startTickerSocket(markets) { ws ->
-            // ws.trade_price 가 String이면 toDoubleOrNull() 사용
             val price = ws.trade_price.toDoubleOrNull() ?: return@startTickerSocket
 
             viewModelScope.launch {
-                // 1) 실시간 가격 상태 업데이트
                 priceMap[ws.code] = price
-
-                // 2) 상단 요약 재계산
-                recomputeSummary()
+                // 실시간 가격 반영해서 요약값 다시 계산
+                recomputeSummary(myCoins.value)
             }
         }
     }
 
     /** 상단 요약 박스용 값 재계산 */
-    private fun recomputeSummary() {
-        val coins = myCoins
+    private fun recomputeSummary(coins: List<MyCoinEntity>) {
 
-        // 총 매수 금액 = 각 코인 (보유수량 * 매수평균가) 합
         val buy = coins.sumOf { coin ->
             coin.amount * coin.avgPrice
         }
 
-        // 총 평가 금액 = 각 코인 (보유수량 * 현재가) 합
-        // 현재가가 아직 안 들어온 코인은 avgPrice 를 임시로 사용
         val eval = coins.sumOf { coin ->
             val currentPrice = priceMap[coin.symbol] ?: coin.avgPrice
             coin.amount * currentPrice
         }
 
+
+
         val profit = eval - buy
         val rate = if (buy > 0.0) (profit / buy) * 100.0 else 0.0
 
-        totalBuyAmount = buy // 총 매수 금액
-        totalEvalAmount = eval // 총 평가 금액
-        totalProfit = profit // 평가 손익
-        totalProfitRate = rate // 수익률
-        totalAsset = balance + eval // 총 보유자산
+        totalBuyAmount = buy
+        totalEvalAmount = eval
+        totalProfit = profit
+        totalProfitRate = rate
+        totalAsset = _balance.value + eval
     }
 
     fun getCurrentPrice(symbol: String, avgPrice: Double): Double {
         return priceMap[symbol] ?: avgPrice
     }
+
     override fun onCleared() {
         super.onCleared()
         tickerSocket?.close(1000, "MyPageViewModel cleared")
     }
-
 }

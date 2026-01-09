@@ -67,7 +67,7 @@ fun CoinOrderBuy(
 ) {
 
     // 현재 보유 KRW 잔액 (Room에서 가져와서 ViewModel에 보관 중인 값)
-    val balance = myPageViewModel.balance
+    val balance by myPageViewModel.balance.collectAsState()
 
     LaunchedEffect(symbol) {
         myCoinViewModel.loadCoin(symbol)

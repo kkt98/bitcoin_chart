@@ -42,7 +42,7 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
 
         val remaining = existing.amount - qty
 
-        if (remaining <= 0.0) {
+        if (remaining <= 0) {
             myCoinDao.delete(existing) // 전량 매도 → 기록 삭제
         } else {
             myCoinDao.updateAmount(symbol, remaining)
@@ -54,4 +54,6 @@ class MyCoinRepository @Inject constructor(private val myCoinDao: MyCoinDao) {
 
     // 전체 보유 코인 조회
     suspend fun getAllCoins() = myCoinDao.getAllCoins()
+
+    fun getAllCoinsFlow() = myCoinDao.getAllCoinsFlow()
 }

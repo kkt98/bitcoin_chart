@@ -48,6 +48,7 @@ import com.kkt981019.bitcoin_chart.screen.coindetail.trade.TradeSection
 import com.kkt981019.bitcoin_chart.util.DecimalFormat.getTradeFormatters
 import com.kkt981019.bitcoin_chart.viewmodel.CoinDtOrderBookViewModel
 import com.kkt981019.bitcoin_chart.viewmodel.FavoriteViewModel
+import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +59,7 @@ fun CoinDetailScreen(
     englishName: String,
     navController: NavController,
     viewModel: CoinDtOrderBookViewModel = hiltViewModel(), // Hilt로 주입받음
-    favoriteViewModel: FavoriteViewModel = hiltViewModel()
+    favoriteViewModel: FavoriteViewModel = hiltViewModel(),
 ) {
     // 화면 진입 시, 해당 심볼로 웹소켓 연결 시작
     LaunchedEffect(symbol) {

@@ -25,6 +25,9 @@ interface MyCoinDao {
     @Query("SELECT * FROM my_coin ORDER BY symbol ASC")
     suspend fun getAllCoins(): List<MyCoinEntity>
 
+    @Query("SELECT * FROM my_coin ORDER BY symbol ASC")
+    fun getAllCoinsFlow(): kotlinx.coroutines.flow.Flow<List<MyCoinEntity>>
+
     // 수량만 업데이트
     @Query("UPDATE my_coin SET amount = :amount WHERE symbol = :symbol")
     suspend fun updateAmount(symbol: String, amount: Double)

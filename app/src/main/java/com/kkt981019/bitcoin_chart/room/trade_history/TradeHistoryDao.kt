@@ -20,4 +20,7 @@ interface TradeHistoryDao {
     @Query("SELECT * FROM trade_history ORDER BY time DESC")
     suspend fun getAllTrades(): List<TradeHistoryEntity>
 
+    @Query("DELETE FROM trade_history")
+    suspend fun getAllDelete()
+
 }

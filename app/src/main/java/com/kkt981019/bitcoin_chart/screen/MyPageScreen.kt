@@ -31,6 +31,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
 import com.kkt981019.bitcoin_chart.viewmodel.TradeHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +60,8 @@ fun MyPageScreen(
     tradeHistoryViewModel: TradeHistoryViewModel = hiltViewModel()
 ) {
 
-    val myCoins = myPageViewModel.myCoins
+    val myCoins by myPageViewModel.myCoins.collectAsState()
+    val balance by myPageViewModel.balance.collectAsState()
 
     var textFieldQuery by remember { mutableStateOf("") }
 
@@ -67,6 +70,10 @@ fun MyPageScreen(
     // 숫자 포맷터들
     val dfInt = remember { DecimalFormat("#,##0") }        // 정수용 (원화)
     val dfDouble = remember { DecimalFormat("#,##0.##") }  // 소수 약간 있는 숫자용
+
+    LaunchedEffect(Unit) {
+        myPageViewModel.refreshBalance()
+    }
 
     Scaffold(
         topBar = {
@@ -110,6 +117,8 @@ fun MyPageScreen(
                                 "삭제 완료",
                                 Toast.LENGTH_SHORT
                             ).show()
+
+                            tradeHistoryViewModel.deleteHistory()
                         },
                         modifier = Modifier
                             .padding(end = 8.dp)
@@ -149,7 +158,7 @@ fun MyPageScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("보유 KRW", fontSize = 12.sp, color = Color.Gray)
                             Text(
-                                text = dfInt.format(myPageViewModel.balance),
+                                text = dfInt.format(balance),
                                 fontSize = 18.sp,
                                 color = Color.Black
                             )

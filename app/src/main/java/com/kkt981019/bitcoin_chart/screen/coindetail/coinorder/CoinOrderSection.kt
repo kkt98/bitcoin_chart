@@ -28,9 +28,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.idapgroup.autosizetext.AutoSizeText
 import com.kkt981019.bitcoin_chart.network.Data.OrderbookResponse
 import com.kkt981019.bitcoin_chart.network.Data.WebsocketResponse
+import com.kkt981019.bitcoin_chart.viewmodel.MyPageViewModel
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -41,7 +41,7 @@ fun CoinOrderSection(
     changeRate: String,
     symbol: String,
     koreanName: String,
-    englishName: String
+    englishName: String,
 ) {
     val currentPrice = ticker?.trade_price?.toDoubleOrNull() ?: 0.0
     val units = orderbook?.orderbook_units ?: emptyList()
